@@ -1,8 +1,8 @@
 ﻿<ul b-aboutpanel>
-   @((MarkupString)content)
+    @((MarkupString)lis)
 </ul>
 
 @code {
-   [Parameter]
-   public string content { get; set; } = "";
+    [Parameter]
+    public string lis { get; set; } = "";
 }

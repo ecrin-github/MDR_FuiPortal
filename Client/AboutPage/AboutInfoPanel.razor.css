@@ -54,9 +54,21 @@ h4 {
 }
 
 
-.tableHdr {
+
+.dark_th {
     background-color: slategrey;
     color: var(--link-colour);
+}
+
+.blue_th {
+    background-color: #ADD8E6;
+    margin-bottom: 0;
+    padding: 0.5rem 0;
+}
+
+.lightblue_th {
+    background-color: #DEEAF6;
+    margin-top: 0;
 }
 
 
@@ -66,6 +78,14 @@ td, th {
     font: var(--normal-text);
 }
 
+.blue_th td {
+    padding: 0.25rem 0;
+}
+
+.lightblue_th td {
+    padding: 0.25rem 0;
+}
+
 ul {
     list-style: none;
     margin-top: -1rem;
@@ -73,18 +93,27 @@ ul {
 
 li::before {
     font-size: 1.5rem;
-    content: "\2022"; color: var(--txt-emph-colour);
-    display: inline-block; width: 1rem;
+    content: "\2022";
+    color: var(--txt-emph-colour);
+    display: inline-block;
+    width: 1rem;
     margin-left: -1rem;
 }
 
 
-p, li{
+p, li, span {
     font: var(--normal-text);
 }
 
-li{
-    margin-bottom: 0.4rem;
+li {
+    margin-bottom: 0.3rem;
+}
+
+.plist {
+    margin-left: 1rem;
+    margin-bottom: 0.5rem;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 .link {
@@ -93,15 +122,46 @@ li{
     text-decoration: underline;
 }
 
-.link:hover {
-    cursor:pointer;
-}
+    .link:hover {
+        cursor: pointer;
+    }
 
-.img_wide {
-    aspect-ratio: 5 / 1;
+.img_41 {
+    aspect-ratio: 4 / 1;
     width: 100%;
     object-fit: contain;
     max-width: 1600px;
+    margin-left: 2rem;
+}
+
+.img_31 {
+    aspect-ratio: 3 / 1;
+    width: 100%;
+    object-fit: contain;
+    max-width: 1600px;
+    margin-left: 2rem;
+}
+
+.img_21 {
+    aspect-ratio: 2 / 1;
+    width: 100%;
+    object-fit: contain;
+    max-width: 1200px;
+    margin-left: 2rem;
+}
+
+.img_11 {
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    object-fit: contain;
+    max-width: 1200px;
+    margin-left: 2rem;
+}
+
+.caption {
+    font: var(--normal-text);
+    font-weight: bold;
+    margin: 0 0 1rem 2rem;
 }
 
 .codeBlock {
@@ -135,9 +195,17 @@ li{
     text-align: center;
 }
 
-.m5r {
+.m5r, .m5rb, .m5rr {
     width: 5rem;
     text-align: center;
+}
+
+.m5rb {
+    color: #2E74B5;
+}
+
+.m5rr {
+    color: #800000;
 }
 
 .m7r {
@@ -145,10 +213,10 @@ li{
     text-align: center;
 }
 
-.l22p{
+.l22p {
     width: 22%;
 }
 
-.l30p{
+.l30p {
     width: 30%;
 }

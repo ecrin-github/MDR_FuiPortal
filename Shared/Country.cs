@@ -2,9 +2,6 @@
 
 namespace MDR_FuiPortal.Shared;
 
-
-
-
 public class Country
 {
     // As used chiefly within the country dropdown

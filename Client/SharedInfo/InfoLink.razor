@@ -1,0 +1,18 @@
+﻿<span b-aboutpanel class="link" @onclick="RequestPage">@link_text</span>
+
+@code {
+    [Parameter]
+    public string link_text { get; set; } = "";
+    
+    [Parameter]
+    public string id_to_request { get; set; } = "";
+    
+    [Parameter]
+    public EventCallback<string> RequestPageEvent { get; set; }
+
+    private void RequestPage()
+    {
+        RequestPageEvent.InvokeAsync(id_to_request);
+    }
+    
+}

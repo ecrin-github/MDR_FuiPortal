@@ -1,7 +1,6 @@
 ﻿using Dapper;
 using MDR_FuiPortal.Shared;
 using Npgsql;
-using System.Security.Cryptography;
 
 namespace MDR_FuiPortal.Server;
 
@@ -96,7 +95,6 @@ public class StudyRepo : IStudyRepo
         return await GetSingleRecord<string>(sql_string);
 
     }
-
 
 
     public async Task<IEnumerable<IECLine>?> FetchStudyIEC(int study_id)

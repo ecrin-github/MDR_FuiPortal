@@ -34,6 +34,7 @@
 <div class="filter-line"><FluentCheckbox @bind-Value="b26">Manual&nbsp;of&nbsp;procedures</FluentCheckbox></div>
 <div class="filter-line"><FluentCheckbox @bind-Value="b31">SAP*</FluentCheckbox></div>
 <div class="filter-line"><FluentCheckbox @bind-Value="b32">Clinical&nbsp;study&nbsp;report</FluentCheckbox></div>
+<div class="filter-line"><FluentCheckbox @bind-Value="b53">Available samples</FluentCheckbox></div>
 <div class="filter-line"><FluentCheckbox @bind-Value="b33">Data&nbsp;summary</FluentCheckbox></div>
 <div class="filter-line"><FluentCheckbox @bind-Value="b36">Other&nbsp;study&nbsp;resource*</FluentCheckbox></div>
 <div class="filter-line"><FluentCheckbox @bind-Value="b41">Other&nbsp;info.&nbsp;resource*</FluentCheckbox></div>
@@ -49,12 +50,13 @@
 
 
 
+
 @code {
 
     string? feedbackBase = "Object type one of (";
     string? sqlBase = "object_type_id in (";
 
-    bool _b12, _b21, _b22, _b23, _b24, _b25, _b26;
+    bool _b12, _b21, _b22, _b23, _b24, _b25, _b26, _b53;
     bool _b31, _b32, _b33, _b34, _b36, _b41, _b51, _b52, _b99;
 
     [Parameter]
@@ -66,27 +68,27 @@
     string object_sql = "";
     string object_fback = "";
 
-    public bool b12
+    private bool b12
     {
-        get { return _b12; }
+        get => _b12;
         set
         {
             _b12 = value;
             process_state();
         }
     }
-    public bool b21
+    private bool b21
     {
-        get { return _b21; }
+        get => _b21;
         set
         {
             _b21 = value;
             process_state();
         }
     }
-    public bool b22
+    private bool b22
     {
-        get { return _b22; }
+        get => _b22;
         set
         {
             _b22 = value;
@@ -94,27 +96,27 @@
         }
 
     }
-    public bool b23
+    private bool b23
     {
-        get { return _b23; }
+        get => _b23;
         set
         {
             _b23 = value;
             process_state();
         }
     }
-    public bool b24
+    private bool b24
     {
-        get { return _b24; }
+        get => _b24;
         set
         {
             _b24 = value;
             process_state();
         }
     }
-    public bool b25
+    private bool b25
     {
-        get { return _b25; }
+        get => _b25;
         set
         {
             _b25 = value;
@@ -122,9 +124,9 @@
         }
 
     }
-    public bool b26
+    private bool b26
     {
-        get { return _b26; }
+        get => _b26;
         set
         {
             _b26 = value;
@@ -132,18 +134,18 @@
         }
     }
 
-    public bool b31
+    private bool b31
     {
-        get { return _b31; }
+        get => _b31;
         set
         {
             _b31 = value;
             process_state();
         }
     }
-    public bool b32
+    private bool b32
     {
-        get { return _b32; }
+        get => _b32;
         set
         {
             _b32 = value;
@@ -151,63 +153,72 @@
         }
 
     }
-    public bool b33
+    private bool b33
     {
-        get { return _b33; }
+        get => _b33;
         set
         {
             _b33 = value;
             process_state();
         }
     }
-    public bool b34
+    private bool b34
     {
-        get { return _b34; }
+        get => _b34;
         set
         {
             _b34 = value;
             process_state();
         }
     }
-    public bool b36
+    private bool b36
     {
-        get { return _b36; }
+        get => _b36;
         set
         {
             _b36 = value;
             process_state();
         }
     }
-    public bool b41
+    private bool b41
     {
-        get { return _b41; }
+        get => _b41;
         set
         {
             _b41 = value;
             process_state();
         }
     }
-     public bool b51
+    private bool b51
     {
-        get { return _b51; }
+        get => _b51;
         set
         {
             _b51 = value;
             process_state();
         }
     }
-    public bool b52
+    private bool b52
     {
-        get { return _b52; }
+        get => _b52;
         set
         {
             _b52 = value;
             process_state();
         }
     }
-    public bool b99
+    private bool b53
     {
-        get { return _b99; }
+        get => _b53;
+        set
+        {
+            _b53 = value;
+            process_state();
+        }
+    }
+    private bool b99
+    {
+        get => _b99;
         set
         {
             _b99 = value;
@@ -218,15 +229,15 @@
     private void process_state()
     {
         if (!_b12 && !_b21 && !_b22 && !_b23 && !_b24 && !_b25 && !_b26
-            && !_b31 && !_b32 && !_b33 && !_b34 && !_b36 && !_b41 
-            && !_b51 && !_b52 && !_b99)
+            && !_b31 && !_b32 && !_b33 && !_b34 && !_b36 && !_b41
+            && !_b51 && !_b52 && !_b53 && !_b99)
         {
             OnFeedbackChange!.Invoke("");
             OnSQLChange!.Invoke("");
         }
         else if (_b12 && _b21 && _b22 && _b23 && _b24 && _b25 && _b26
-                 && _b31 && _b32 && _b33 && _b34 && _b36 && _b41 
-                 && _b51 && _b52 && _b99)
+                 && _b31 && _b32 && _b33 && _b34 && _b36 && _b41
+                 && _b51 && _b52 && _b53 && _b99)
         {
             OnFeedbackChange!.Invoke("All allocation options");
             OnSQLChange!.Invoke("");
@@ -248,6 +259,7 @@
             object_fback_string += _b41 ? ", Other info. resource" : "";
             object_fback_string += _b51 ? ", Website" : "";
             object_fback_string += _b52 ? ", Software" : "";
+            object_fback_string += _b53 ? ", Samples description" : "";
             object_fback_string += _b99 ? ", Other" : "";
             object_fback = feedbackBase + object_fback_string[2..] + ")";
             OnFeedbackChange!.Invoke(object_fback);
@@ -267,6 +279,7 @@
             object_sql_string += _b41 ? ", 41" : "";
             object_sql_string += _b51 ? ", 51" : "";
             object_sql_string += _b52 ? ", 52" : "";
+            object_sql_string += _b53 ? ", 53" : "";
             object_sql_string += _b99 ? ", 99" : "";
             object_sql = sqlBase + object_sql_string[2..] + ")";
             OnSQLChange!.Invoke(object_sql);
@@ -283,6 +296,6 @@
         b33 = check_state; b34 = check_state;
         b36 = check_state; b41 = check_state;
         b51 = check_state; b52 = check_state;
-        b99 = check_state;
+        b53 = check_state; b99 = check_state;
     }
 }

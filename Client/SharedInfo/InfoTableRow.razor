@@ -1,0 +1,12 @@
+﻿<table b-aboutpanel>
+    <tr>
+        @((MarkupString)row)
+    </tr>
+</table>
+
+@code {
+
+    [Parameter]
+    public string row { get; set; } = "";
+
+}

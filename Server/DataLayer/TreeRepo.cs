@@ -17,7 +17,7 @@ public class TreeRepo : ITreeRepo
     {
         var sql_string = $@"select level as Level, tree_id as Id, title as Title, 
                             is_parent as IsParent, is_closed as IsClosed 
-                              from core.tree_pages 
+                              from tree.pages 
                               where tree = '{TreeName}'
                               order by tree_seq";
 
@@ -38,21 +38,21 @@ public class TreeRepo : ITreeRepo
     public async Task<page_info?> GetPageContent(string tree_id)
     {
         await using var conn = new NpgsqlConnection(_dbConnString);
-        string sql_string = $@"select title, last_edited
-                            from core.tree_text_headers 
-	                        where tree_page_id = '{tree_id}'";
+        string sql_string = $@"select page_header, last_edited
+                            from tree.pages
+	                        where tree_id = '{tree_id}'";
         page_info_header? header = await conn.QuerySingleOrDefaultAsync<page_info_header>(sql_string);
 
         if (header is null)
         {
             return null;
         }
-        page_info pi = new(header.title, header.last_edited);
+        page_info pi = new(header.page_header, header.last_edited);
 
-        sql_string = $@"select type, seq_num, markup
-                        from core.tree_info tt
+        sql_string = $@"select seq_num, type, parameters, content
+                        from tree.content 
 	                    where tree_page_id = '{tree_id}'
-	                    order by tt.seq_num";
+	                    order by seq_num";
 
         List<info_component> res = (await conn.QueryAsync<info_component>(sql_string)).ToList();
         if (res.Any())
@@ -61,5 +61,5 @@ public class TreeRepo : ITreeRepo
             return pi;
         }
         return null; // as fallback
-     }
+    }
 }

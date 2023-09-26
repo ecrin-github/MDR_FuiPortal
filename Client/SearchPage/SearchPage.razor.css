@@ -231,6 +231,30 @@ input[type=text] {
 }
 
 
+
+/* feedback area */
+/* generally shown during development - ?? not clear if to optionally make visible */
+
+#feedback {
+    flex: 1 1;
+    padding: 0 1rem;
+    display: flex;
+}
+
+#fb-container {
+    flex: 1 1;
+    background-color: honeydew;
+    margin-right: 2rem;
+}
+
+#sql-container {
+    flex: 1 1;
+    background-color: honeydew;
+    margin-right: 2rem;
+}
+
+
+
 /* Results Summary and buttons at the top */
 
 #results-heading {

@@ -1,0 +1,10 @@
+﻿
+<p b-aboutpanel class="@para_class">@((MarkupString)para_text)</p>
+
+@code {
+    [Parameter]
+    public string para_class { get; set; } = "";
+    
+    [Parameter]
+    public string para_text { get; set; } = "";
+}

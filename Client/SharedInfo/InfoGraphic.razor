@@ -1,5 +1,18 @@
-﻿<h3>InfoGraphic</h3>
+﻿
+<img b-aboutpanel class="@graphic_class" src="@src_url" alt="@alt_text" />
+<p b-aboutpanel class="caption">@caption</p>
 
 @code {
-    
+    [Parameter]
+    public string? graphic_class { get; set; }
+
+    [Parameter]
+    public string? src_url { get; set; }
+
+    [Parameter]
+    public string? alt_text { get; set; }
+
+    [Parameter]
+    public string? caption { get; set; }
+
 }

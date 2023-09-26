@@ -111,25 +111,46 @@
                     </div>
                 </div>
 
-                <!--
-                <div id="sql-container">
-                    <p class="small-text-italic">
-                        @if (searchType == 1)
-                        {
-                            <span>KEY WORDS SEARCH, using @searchParamsValue, in @scope_fback; <br />
-                            FILTER(S): @filter_fback</span>
-                        }
-                        @if (searchType == 2)
-                        {
-                            <span>ID SEARCH, using type: @idType, identifier: @idText</span>
-                        }
-                        @if (searchType == 3)
-                        {
-                            <span>PMID SEARCH, using @searchParamsValue</span>
-                        }
-                    </p>
+                <div id="feedback">
+                    <div id="fb-container">
+                        <p class="small-text-italic">
+                            @if (searchType == 1)
+                            {
+                                <span>
+                                    KEY WORDS SEARCH, using @searchParamsValue, in @scope_fback; <br />
+                                    FILTER(S): @filter_fback
+                                </span>
+                            }
+                            @if (searchType == 2)
+                            {
+                                <span>ID SEARCH, using type: @idType (@idText), ID: @searchParamsValue</span>
+                            }
+                            @if (searchType == 3)
+                            {
+                                <span>PMID SEARCH, using @searchParamsValue</span>
+                            }
+                        </p>
+                    </div>
+                    <div id="sql-container">
+                        <p class="small-text-italic">
+                            @if (searchType == 1)
+                            {
+                                <span>
+                                    @search_url <br />
+                                    FILTER(S): @filter_sql
+                                </span>
+                            }
+                            @if (searchType == 2)
+                            {
+                                <span>@search_url</span>
+                            }
+                            @if (searchType == 3)
+                            {
+                                <span>@search_url</span>
+                            }
+                        </p>
+                    </div>
                 </div>
-                -->
 
                 <div id="results-heading">
                     <div id="results-found">
@@ -181,14 +202,16 @@
     List<string>? BaseSet;
     List<string>? ShowSet;
     List<string>? PageSet = null;
-
     PageControl? pagecon;
+
     int rec_num;
     int num_pages;
     int num_recs_per_page = 10;
     string rec_num_indicator = "No search yet run";
     int current_page = 1;
     string page_indicator = "";
+    string search_url = "";
+
 
     bool filtersBarShowing = true;
 
@@ -207,10 +230,10 @@
         isLoading = true;
         isEmpty = false;
 
-        string search_url = "api/Study/";
+        search_url = "api/Study/";
         if (searchType == 1)
         {
-            int search_scope = searchInTTs ? 1 : 0; 
+            int search_scope = searchInTTs ? 1 : 0;
             search_scope += searchInConds ? 2 : 0;
 
             if (!string.IsNullOrEmpty(searchParamsValue))
@@ -223,7 +246,7 @@
         if (searchType == 2)
         {
 
-            search_url += "ByRegId/11/NCT01746290";
+            search_url += $"ByRegId/{idType}/{searchParamsValue}";
         }
 
         if (searchType == 3)
@@ -231,6 +254,7 @@
             string? pmid = searchParamsValue;
             if (pmid is null || !int.TryParse(pmid, out int _))
             {
+                string fb_message = "The PMID input must be an integer";
                 // need some sort of message
                 // saying this is not valid
             }
@@ -325,8 +349,43 @@
         // provide the where clause for a SQL query (though this may be modified
         // at the server). Returns true or false dependent on whether query is possible.
 
-        return false;  // for now
+        search_url = "api/Study/";
+        if (searchType == 1)
+        {
+            int search_scope = searchInTTs ? 1 : 0;
+            search_scope += searchInConds ? 2 : 0;
+
+            if (!string.IsNullOrEmpty(searchParamsValue))
+            {
+                string processedPars = ProcessSearchParams(searchParamsValue);
+                search_url += $"BySearch/{search_scope}/{processedPars}";
+            }
+        }
+
+        if (searchType == 2)
+        {
+
+            search_url += $"ByRegId/{idType}/{searchParamsValue}";
+        }
+
+        if (searchType == 3)
+        {
+            string? pmid = searchParamsValue;
+            if (pmid is null || !int.TryParse(pmid, out int _))
+            {
+                string fb_message = "The PMID input must be an integer";
+                // need some sort of message
+                // saying this is not valid
+            }
+            else
+            {
+                search_url += $"ByPMID/{searchParamsValue}";
+            }
+        }
+
+        return true;  // for now
     }
+
 
     private string ProcessSearchParams(string in_pars)
     {
