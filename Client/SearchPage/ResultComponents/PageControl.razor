@@ -45,7 +45,7 @@
     public EventCallback<Tuple<int, int>> ObtainRange { get; set; }
 
     string page_indicator = "";
-    int recs_per_page = 10;
+    public int recs_per_page = 10;
     int current_page = 0;
     int num_pages = 0;
     public int old_num_recs = 0;
@@ -196,7 +196,8 @@
 
     protected override void OnParametersSet()
     {
-        // new (probably) total_recs;
+        // New (probably) total_recs;
+
         if (old_num_recs != total_recs)
         {
             ResetPages();

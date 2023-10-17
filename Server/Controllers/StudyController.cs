@@ -1,6 +1,8 @@
 ﻿using MDR_FuiPortal.Shared;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Sockets;
+
 namespace MDR_FuiPortal.Server.Controllers;
 
 [Route("api/[controller]")]
@@ -14,29 +16,47 @@ public class StudyController :  BaseApiController
         _studyRepo = studyRepo ?? throw new ArgumentNullException(nameof(studyRepo));
     }
 
-    [HttpGet("BySearch/{search_scope:int}/{search_string}")]
-    public async Task<List<string>?> GetStudiesBySearch(int search_scope, string search_string)
+    [HttpGet("BySearch/{search_scope:int}/{search_string}/{bucket:int}")]
+    public async Task<List<string>> GetStudiesBySearch(int search_scope, string search_string, int bucket)
     {
-        var res = await _studyRepo.FetchStudiesBySearch(search_scope, search_string);
-        var listres = res is not null ? res.ToList() : null;
-        return listres;
-
+        var res = await _studyRepo.FetchStudiesBySearch(search_scope, search_string, bucket);
+        if (res?.Any() != true)
+        {
+            string res_content = "null result";
+            return new List<string>() { res_content };
+        }
+        else
+        {
+            return res.ToList();
+        }
     }
 
 
     [HttpGet("ByRegId/{type_id:int}/{reg_id}")]
-    public async Task<List<string>?> GetStudyByTypeAndId(int type_id, string reg_id)
+    public async Task<List<string>> GetStudyByTypeAndId(int type_id, string reg_id)
     {
         var res =  await _studyRepo.FetchStudyByTypeAndId(type_id, reg_id);
-        return res is not null ? new List<string>() { res } : null;
+        if (res is null)
+        {
+            res = "null result";
+        }
+        return new List<string>() { res };
     }
 
 
     [HttpGet("ByPMID/{pmid:int}")]
-    public async Task<IEnumerable<string>?> FetchStudiesByPMID(int pmid)
+    public async Task<List<string>> FetchStudiesByPMID(int pmid)
     {
         var res = await _studyRepo.FetchStudiesByPMID(pmid);
-        return res is not null ? res.ToList() : null;
+        if (res?.Any() != true)
+        {
+            string res_content = "null result";
+            return new List<string>() { res_content };
+        }
+        else
+        {
+            return res.ToList();
+        }
     }
 
 

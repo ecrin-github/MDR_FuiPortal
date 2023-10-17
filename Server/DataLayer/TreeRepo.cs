@@ -17,9 +17,9 @@ public class TreeRepo : ITreeRepo
     {
         var sql_string = $@"select level as Level, tree_id as Id, title as Title, 
                             is_parent as IsParent, is_closed as IsClosed 
-                              from tree.pages 
-                              where tree = '{TreeName}'
-                              order by tree_seq";
+                            from tree.pages 
+                            where tree = '{TreeName}'
+                            order by tree_seq";
 
         await using var conn = new NpgsqlConnection(_dbConnString);
         try
@@ -57,7 +57,7 @@ public class TreeRepo : ITreeRepo
         List<info_component> res = (await conn.QueryAsync<info_component>(sql_string)).ToList();
         if (res.Any())
         {
-            pi.info_dyncs = res.ToList();
+            pi.info_dyncs = res;
             return pi;
         }
         return null; // as fallback

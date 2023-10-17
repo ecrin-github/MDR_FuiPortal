@@ -49,7 +49,7 @@ public class StudyRepo : IStudyRepo
 
     public async Task<string?> FetchStudyByTypeAndId(int type_id, string reg_Id)
     {
-        var sql_string = $@"select study_json from core.search_idents
+        var sql_string = $@"select study_json from search.idents
                               where ident_type = {type_id} and ident_value = '{reg_Id}'";
         return await GetSingleRecord<string>(sql_string);
 
@@ -58,28 +58,29 @@ public class StudyRepo : IStudyRepo
 
     public async Task<IEnumerable<string>?> FetchStudiesByPMID(int pmid)
     {
-        var sql_string = $@"select study_json from core.search_pmids
+        var sql_string = $@"select study_json from search.pmids
                               where pmid = {pmid}";
         return await GetIEnumerable<string>(sql_string);
     }
 
 
-    public async Task<IEnumerable<string>?> FetchStudiesBySearch(int search_scope, string search_string)
+    public async Task<IEnumerable<string>?> FetchStudiesBySearch(int search_scope, string search_string, int bucket)
     {
-        string sql_string = "select study_json from core.search_lexemes ";
+        string sql_string = $"select study_json from search.lexemes where bucket = {bucket} ";
         if (search_scope == 1)
         {
-            sql_string += $" where  tt_lex @@ to_tsquery('core.mdr_english_config2', '{search_string}')";
+            sql_string += $" and (tt_lex @@ to_tsquery('core.mdr_english_config2', '{search_string}')) ";
         }
         else if (search_scope == 2)
         {
-            sql_string += $" where  conditions_lex @@ to_tsquery('core.mdr_english_config2', '{search_string}')";
+            sql_string += $" and (conditions_lex @@ to_tsquery('core.mdr_english_config2', '{search_string}')) ";
         }
         else if (search_scope == 3)
         {
-            sql_string += $@" where  tt_lex @@ to_tsquery('core.mdr_english_config2', '{search_string}') 
-                                 or conditions_lex @@ to_tsquery('core.mdr_english_config2', '{search_string}')";
+            sql_string += $@" and (tt_lex @@ to_tsquery('core.mdr_english_config2', '{search_string}') 
+                                 or conditions_lex @@ to_tsquery('core.mdr_english_config2', '{search_string}')) ";
         }
+
         return await GetIEnumerable<string>(sql_string);
     }
 
@@ -90,7 +91,7 @@ public class StudyRepo : IStudyRepo
         // ...in the real system a full json equivalent of the study need to be returned
 
         string sql_string = $@"select s.study_json
-                             from core.search_lexemes s
+                             from search.lexemes s
                              where s.study_id = {study_id}";
         return await GetSingleRecord<string>(sql_string);
 

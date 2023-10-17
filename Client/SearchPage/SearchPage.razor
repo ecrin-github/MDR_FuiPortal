@@ -114,6 +114,7 @@
                 <div id="feedback">
                     <div id="fb-container">
                         <p class="small-text-italic">
+                            <span>This box visible during development only <br /></span>
                             @if (searchType == 1)
                             {
                                 <span>
@@ -133,6 +134,7 @@
                     </div>
                     <div id="sql-container">
                         <p class="small-text-italic">
+                            <span>This box visible during development only <br /></span>
                             @if (searchType == 1)
                             {
                                 <span>
@@ -200,7 +202,8 @@
 @code {
 
     List<string>? BaseSet;
-    List<string>? ShowSet;
+    List<string>? BucketSet;
+    List<string>? ShowSet = null;
     List<string>? PageSet = null;
     PageControl? pagecon;
 
@@ -210,8 +213,8 @@
     string rec_num_indicator = "No search yet run";
     int current_page = 1;
     string page_indicator = "";
+    string search_url_stem = "api/Study";
     string search_url = "";
-
 
     bool filtersBarShowing = true;
 
@@ -230,78 +233,138 @@
         isLoading = true;
         isEmpty = false;
 
-        search_url = "api/Study/";
         if (searchType == 1)
         {
             int search_scope = searchInTTs ? 1 : 0;
             search_scope += searchInConds ? 2 : 0;
+            int page_size = pagecon?.recs_per_page ?? 10;
 
             if (!string.IsNullOrEmpty(searchParamsValue))
             {
+                BaseSet = new List<string>();
+
+                int running_total = 0;
+                int percent_done = 0;
+                if (pagecon is not null)
+                {
+                    pagecon.old_num_recs = 0;   // reset the page control's property
+                }
+                bool first_page_loaded = false;
+
                 string processedPars = ProcessSearchParams(searchParamsValue);
-                search_url += $"BySearch/{search_scope}/{processedPars}";
+                for (int bucket = 1; bucket <= 20; bucket++)
+                {
+                    search_url = $"{search_url_stem}/BySearch/{search_scope}/{processedPars}/{bucket}";
+                    BucketSet = await Http.GetFromJsonAsync<List<string>>(search_url);
+
+                    if (BucketSet?.Any() == true)
+                    {
+                        if (BucketSet.Count == 1 && BucketSet[0] == "null result")
+                        {
+                            // don't add this null indicator record
+                        }
+                        else
+                        {
+                            running_total += BucketSet.Count;
+                            if (bucket == 1 || running_total <= 250)
+                            {
+
+
+                                BaseSet.AddRange(BucketSet);
+                                if (running_total > page_size && !first_page_loaded)
+                                {
+                                    rec_num = running_total;
+                                    StateHasChanged();
+                                    first_page_loaded = true;
+                                }
+                            }
+
+                            rec_num_indicator = $"{running_total} Record";
+                            rec_num_indicator += rec_num == 1 ? "" : "s";
+                            rec_num_indicator += $" found, from {bucket} bucket";
+                            rec_num_indicator += bucket == 1 ? "" : "s";
+                            StateHasChanged();
+
+                        }
+
+                    }
+                    percent_done += 5;
+                }
+
+                ShowSet = BaseSet;  // for now, no filters!
+                rec_num = ShowSet.Count;
             }
-        }
-
-        if (searchType == 2)
-        {
-
-            search_url += $"ByRegId/{idType}/{searchParamsValue}";
-        }
-
-        if (searchType == 3)
-        {
-            string? pmid = searchParamsValue;
-            if (pmid is null || !int.TryParse(pmid, out int _))
-            {
-                string fb_message = "The PMID input must be an integer";
-                // need some sort of message
-                // saying this is not valid
-            }
-            else
-            {
-                search_url += $"ByPMID/{searchParamsValue}";
-            }
-        }
-
-        BaseSet = await Http.GetFromJsonAsync<List<string>?>(search_url);
-        if (BaseSet?.Any() == true)
-        {
-            // if filter(s) set - apply filter using linq
-
-            if (pagecon is not null)
-            {
-                pagecon.old_num_recs = 0;   // reset this page control's property
-            }
-
-            ShowSet =  BaseSet;  // for now, no filters!
-
-            rec_num = ShowSet.Count;
-            rec_num_indicator = ShowSet.Count.ToString() + " Record";
-            rec_num_indicator += rec_num == 1 ? "" : "s";
-            rec_num_indicator += " found";
-
-
-            // setting rec_num will trigger the page control
-            // to set up the initial page contents call, 1 to n
-            // After that the page control's buttons will get the
-            // relevant portion of the 'show set'
-
-            // may be better to use two separate mechnanisms here!
-            // One for navigating through a set, one for the initial
-            // 1 to n set... needs further thought. Perhaps don't have 
-            // num_recs as a parameter - instead set as a property
-            // using ref - stops the infinite loop that is set up otherwise
         }
         else
         {
+            if (searchType == 2)
+            {
 
-            // post a 'none found message somewhere
-            rec_num_indicator = "No records found";
-            isEmpty = true;
+                search_url = $"{search_url_stem}/ByRegId/{idType}/{searchParamsValue}";
+                BaseSet = await Http.GetFromJsonAsync<List<string>>(search_url);
+            }
+
+            if (searchType == 3)
+            {
+                string? pmid = searchParamsValue;
+                if (pmid is null || !int.TryParse(pmid, out int _))
+                {
+                    string fb_message = "The PMID input must be an integer";
+
+                    // need some sort of message
+                    // saying this is not valid
+                }
+                else
+                {
+                    search_url = $"{search_url_stem}/ByPMID/{searchParamsValue}";
+                    BaseSet = await Http.GetFromJsonAsync<List<string>>(search_url);
+                }
+            }
+
+
+            if (BaseSet is not null)
+            {
+                if (BaseSet.Any())
+                {
+
+                    if (BaseSet.Count == 1 && BaseSet[0] == "null result")
+                    {
+                        // post a 'none found message somewhere
+                        rec_num_indicator = "No records found";
+                        isEmpty = true;
+                    }
+                    else
+                    {
+                        // if filter(s) set - apply filter using linq
+
+                        if (pagecon is not null)
+                        {
+                            pagecon.old_num_recs = 0;   // reset the page control's property
+                        }
+
+                        ShowSet = BaseSet;  // for now, no filters!
+
+                        rec_num = ShowSet.Count;
+                        rec_num_indicator = ShowSet.Count.ToString() + " Record";
+                        rec_num_indicator += rec_num == 1 ? "" : "s";
+                        rec_num_indicator += " found";
+
+
+                        // setting rec_num will trigger the page control
+                        // to set up the initial page contents call, 1 to n
+                        // After that the page control's buttons will get the
+                        // relevant portion of the 'show set'
+
+                        // may be better to use two separate mechnanisms here!
+                        // One for navigating through a set, one for the initial
+                        // 1 to n set... needs further thought. Perhaps don't have 
+                        // num_recs as a parameter - instead set as a property
+                        // using ref - stops the infinite loop that is set up otherwise
+                    }
+                }
+            }
         }
         isLoading = false;
-
     }
 
 

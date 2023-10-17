@@ -35,7 +35,7 @@
     {
         ItemRequested.InvokeAsync(reqId);
     }
-    
+
     string content = ""; 
     string title = ""; 
     string last_edited = "";
@@ -47,7 +47,7 @@
     }
 
     List<DynCompDef>? dyncs;
-    
+
     protected async override Task OnParametersSetAsync()
     {
         if (ItemIdToDisplay is not null && ItemIdToDisplay != "0")
@@ -65,73 +65,135 @@
                 {
                     foreach (var info_dync in returned_data.info_dyncs)
                     {
-                        DynCompDef dync = new();
-                        dync.type = info_dync.type switch
-                        {
-                            "para" => typeof(InfoPara),
-                            "para_plus" => typeof(InfoParaPlus),
-                            "h3" => typeof(InfoH3),
-                            "h4" => typeof(InfoH4),
-                            "table_hdr" => typeof(InfoTableHdr),
-                            "table_row" => typeof(InfoTableRow),
-                            "code" => typeof(InfoCode),
-                            "ul" => typeof(InfoUL),
-                            "graphic" => typeof(InfoGraphic),
-                            "link" => typeof(InfoLink),
-                            "span" => typeof(InfoSpan),
-                            "markup" => typeof(InfoMarkup),
-                            _ => typeof(InfoMarkup)
-                        };
-
                         string? par = info_dync.parameters;
                         string? dc_content = info_dync.content;
 
-                        if (par is not null && dc_content is not null)
+                        if (info_dync.type == "embedded_link" && dc_content is not null)
                         {
-                            if (info_dync.type is "table_hdr" or "para_plus")
+                            // needs to be decomposed into spans and links
+                            // these are separated by $$ delimiters, 
+                            // the first one must be a normal text span
+
+                            string[] spans = dc_content.Split("$$", StringSplitOptions.TrimEntries);
+                            if (spans.Length > 1)
                             {
-                                // a pair of parameters and corresponding values, as named
-                                // (header_class and header_row for table hdr, para_class and para_text for para_plus)
+                                int n = 0;
+                                foreach (string sp in spans)
+                                {
+                                    DynCompDef dync = new();
+                                    if (n % 2 == 0)  // a span
+                                    {
+                                        dync.type = typeof(InfoSpan);
+                                        dync.pars = new Dictionary<string, object> { { "span_text", sp } };
+                                    }
+                                    else             // a link, string has link text and link target
+                                    {
+                                        dync.type = typeof(InfoLink);
+                                        string[] values = sp.Split("@@", StringSplitOptions.TrimEntries);
+                                        dync.pars = new Dictionary<string, object> { { "link_text", values[0] }, { "id_to_request", values[1] } };
+                                        dync.pars.Add("RequestPageEvent", EventCallback.Factory.Create<string>(this, SetSelectedId));
+                                    }
+                                    dyncs.Add(dync);
+                                    n++;
+                                }
 
-                                string[] pars = par.Split(',', StringSplitOptions.TrimEntries);
-                                string[] values = dc_content.Split("@@", StringSplitOptions.TrimEntries);
-                                dync.pars = new Dictionary<string, object> { { pars[0], values[0] }, { pars[1], values[1] } };
-                            }
-                            else if (info_dync.type == "graphic")
-                            {
-                                // will need 4 parameters - for class, url, alt and caption
+                                // add a spacer beneath the line
 
-                                string[] pars = par.Split(',', StringSplitOptions.TrimEntries);
-                                string[] values = dc_content.Split("@@", StringSplitOptions.TrimEntries);
-                                dync.pars = new Dictionary<string, object> { {pars[0], values[0]},
-                                             {pars[1], values[1]},  {pars[2], values[2]}, {pars[3], values[3]} };
-                            }
-                            else if (info_dync.type == "link")
-                            {
-                                // two set parameters, link_text and id_to_request, but add the event as wedll
-
-                                string[] pars = par.Split(',', StringSplitOptions.TrimEntries);
-                                string[] values = dc_content.Split("@@", StringSplitOptions.TrimEntries);
-                                dync.pars = new Dictionary<string, object> { { pars[0], values[0] }, { pars[1], values[1] } };
-                                dync.pars.Add("RequestPageEvent", EventCallback.Factory.Create<string>(this, SetSelectedId));
-
+                                DynCompDef vdync = new();
+                                vdync.type = typeof(InfoParaPlus);
+                                vdync.pars = new Dictionary<string, object> { { "para_class", "vspacer" }, { "para_text", "&nbsp;"} };
+                                dyncs.Add(vdync);
                             }
                             else
                             {
-                                // a single parameter and corresponding value
+                                // treat as paragraph
 
-                                if (info_dync.type == "code")
-                                {
-                                    dc_content = dc_content.Replace("|", "\n"); // re-insert CRs
-                                }
-                                if (info_dync.type == "ul")
-                                {
-                                    dc_content = dc_content.Replace("<li>", "<li b-aboutpanel>");
-                                    dc_content = dc_content.Replace("<p>", "<p b-aboutpanel>");
-                                }
-                                dync.pars = new Dictionary<string, object> { { par, dc_content } };
+                                DynCompDef dync = new();
+                                dync.type = typeof(InfoPara);
+                                dync.pars = new Dictionary<string, object> { { "para_text", dc_content } };
+                                dyncs.Add(dync);
                             }
-                            dyncs.Add(dync);
+                        }
+                        else
+                        {
+                            // a single dynamic component definition
+
+                            DynCompDef dync = new();
+                            dync.type = info_dync.type switch
+                            {
+                                "para" => typeof(InfoPara),
+                                "para_plus" => typeof(InfoParaPlus),
+                                "h3" => typeof(InfoH3),
+                                "h4" => typeof(InfoH4),
+                                "table_hdr" => typeof(InfoTableHdr),
+                                "table_row" => typeof(InfoTableRow),
+                                "code" => typeof(InfoCode),
+                                "ul" => typeof(InfoUL),
+                                "graphic" => typeof(InfoGraphic),
+                                "link" => typeof(InfoLink),
+                                "listed_link" => typeof(InfoListedLink),
+                                "span" => typeof(InfoSpan),
+                                "markup" => typeof(InfoMarkup),
+                                _ => typeof(InfoMarkup)
+                            };
+
+                            if (par is not null && dc_content is not null)
+                            {
+                                if (info_dync.type is "table_hdr" or "para_plus")
+                                {
+                                    // a pair of parameters and corresponding values, as named
+                                    // (header_class and header_row for table hdr, para_class and para_text for para_plus)
+
+                                    string[] pars = par.Split(',', StringSplitOptions.TrimEntries);
+                                    string[] values = dc_content.Split("@@", StringSplitOptions.TrimEntries);
+                                    dync.pars = new Dictionary<string, object> { { pars[0], values[0] }, { pars[1], values[1] } };
+                                }
+                                else if (info_dync.type is "graphic")
+                                {
+                                    // will need 5 parameters - for class, url, alt, caption, and max width - may only have 4
+
+                                    List<string> pars  = par.Split(',', StringSplitOptions.TrimEntries).ToList();
+                                    if (pars.Count == 4)
+                                    {
+                                        pars.Add("max_width");
+                                    }
+                                    List<string> values = dc_content.Split("@@", StringSplitOptions.TrimEntries).ToList();
+                                    if (values.Count == 4)
+                                    {
+                                        values.Add("800px");  // default value
+                                    }
+
+                                    dync.pars = new Dictionary<string, object> { {pars[0], values[0]},
+                                             {pars[1], values[1]},  {pars[2], values[2]},
+                                             {pars[3], values[3]},  {pars[4], values[4]} };
+
+                                }
+                                else if (info_dync.type is "link" or "listed_link")
+                                {
+                                    // two set parameters, link_text and id_to_request, but add the event as well
+
+                                    string[] pars = par.Split(',', StringSplitOptions.TrimEntries);
+                                    string[] values = dc_content.Split("@@", StringSplitOptions.TrimEntries);
+                                    dync.pars = new Dictionary<string, object> { { pars[0], values[0] }, { pars[1], values[1] } };
+                                    dync.pars.Add("RequestPageEvent", EventCallback.Factory.Create<string>(this, SetSelectedId));
+                                }
+                                else
+                                {
+                                    // a single parameter and corresponding value
+
+                                    if (info_dync.type == "code")
+                                    {
+                                        dc_content = dc_content.Replace("££", "\n"); // re-insert CRs (new method)
+                                    }
+                                    if (info_dync.type == "ul")
+                                    {
+                                        dc_content = dc_content.Replace("<li>", "<li b-aboutpanel>");
+                                        dc_content = dc_content.Replace("<p>", "<p b-aboutpanel>");
+                                    }
+                                    dync.pars = new Dictionary<string, object> { { par, dc_content } };
+                                }
+                                dyncs.Add(dync);
+                            }
                         }
                     }
                 }

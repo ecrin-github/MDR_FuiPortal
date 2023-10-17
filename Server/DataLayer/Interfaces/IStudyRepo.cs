@@ -8,7 +8,7 @@ public interface IStudyRepo
 
     public Task<IEnumerable<string>?> FetchStudiesByPMID(int pmid);
 
-    public Task<IEnumerable<string>?> FetchStudiesBySearch(int search_scope, string search_string);
+    public Task<IEnumerable<string>?> FetchStudiesBySearch(int search_scope, string search_string, int bucket);
 
      public Task<string?> FetchStudyById(int study_id);
 

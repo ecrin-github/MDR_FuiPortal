@@ -1,5 +1,5 @@
 ﻿
-<img b-aboutpanel class="@graphic_class" src="@src_url" alt="@alt_text" />
+<img b-aboutpanel class="@graphic_class" src="@src_url" alt="@alt_text" style="max-width:@max_width"/>
 <p b-aboutpanel class="caption">@caption</p>
 
 @code {
@@ -14,5 +14,8 @@
 
     [Parameter]
     public string? caption { get; set; }
+
+    [Parameter]
+    public string? max_width { get; set; }
 
 }
