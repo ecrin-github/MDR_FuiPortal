@@ -1,7 +1,6 @@
 ﻿using MDR_FuiPortal.Shared;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Sockets;
+using System.Text.Json;
 
 namespace MDR_FuiPortal.Server.Controllers;
 
@@ -16,10 +15,43 @@ public class StudyController :  BaseApiController
         _studyRepo = studyRepo ?? throw new ArgumentNullException(nameof(studyRepo));
     }
 
-    [HttpGet("BySearch/{search_scope:int}/{search_string}/{bucket:int}")]
-    public async Task<List<string>> GetStudiesBySearch(int search_scope, string search_string, int bucket)
+    [HttpGet("BySearch/{spj}")]
+    public async Task<List<string>> GetStudiesBySearch(string spj)
     {
-        var res = await _studyRepo.FetchStudiesBySearch(search_scope, search_string, bucket);
+        SearchParams? sp = JsonSerializer.Deserialize<SearchParams>(spj);
+        if (sp is not null)
+        {
+            if (sp.count_only)
+            {
+                int count_res = await _studyRepo.FetchCountBySearch(sp.scope, sp.pars!, sp.bucket, sp.fp);
+                return new List<string>() { $"count:{count_res}" };
+            }
+            else
+            {
+                var res = await _studyRepo.FetchStudiesBySearch(sp.scope, sp.pars!, sp.bucket, sp.fp);
+                if (res?.Any() != true)
+                {
+                    string res_content = "null result";
+                    return new List<string>() { res_content };
+                }
+                else
+                {
+                    return res.ToList();
+                }
+            }
+        }
+        else
+        {
+            string res_content = "null result";
+            return new List<string>() { res_content };
+        }
+    }
+
+
+    [HttpGet("ByRegId/{type_id:int}/{reg_id}")]
+    public async Task<List<string>> GetStudyByTypeAndId(int type_id, string reg_id)
+    {
+        var res =  await _studyRepo.FetchStudyByTypeAndId(type_id, reg_id);
         if (res?.Any() != true)
         {
             string res_content = "null result";
@@ -29,18 +61,6 @@ public class StudyController :  BaseApiController
         {
             return res.ToList();
         }
-    }
-
-
-    [HttpGet("ByRegId/{type_id:int}/{reg_id}")]
-    public async Task<List<string>> GetStudyByTypeAndId(int type_id, string reg_id)
-    {
-        var res =  await _studyRepo.FetchStudyByTypeAndId(type_id, reg_id);
-        if (res is null)
-        {
-            res = "null result";
-        }
-        return new List<string>() { res };
     }
 
 

@@ -165,7 +165,11 @@
     {
         if (total_recs > 0)
         {
-            num_pages = (total_recs / recs_per_page) + 1;
+            num_pages = (total_recs / recs_per_page);
+            if (total_recs % recs_per_page != 0)
+            {
+                num_pages++;
+            }
 
             current_page = 1;
             page_indicator = "1 of " + num_pages.ToString();

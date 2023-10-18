@@ -72,7 +72,7 @@
         OnFeedbackChange!.Invoke(scope_fback);
 
         _searchScope = _searchInTitles ? 1 : 0;
-          _searchScope += _searchInConditions ? 4 : 0;
+        _searchScope += _searchInConditions ? 2 : 0;
         OnScopeChange!.Invoke(_searchScope);
     }
 

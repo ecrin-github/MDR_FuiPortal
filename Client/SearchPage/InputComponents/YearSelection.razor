@@ -106,7 +106,7 @@
         {
             if (_compOption is "eq" or "gt" or "lt")
             {
-                if (isvalid(year1value))
+                if (isvalidyear(year1value))
                 {
                     string op = _compOption switch
                     {
@@ -119,18 +119,18 @@
                     year_fback = $"study start year {op} {year1value}";
                     OnFeedbackChange!.Invoke(year_fback);
 
-                    year_sql = $"study_start_year {op} {year1value}";
+                    year_sql = $"{op}, {year1value}";
                     OnSQLChange!.Invoke(year_sql);
                 }
             }
             else if (_compOption == "bw")
             {
-                if (isvalid(year1value) && isvalid(year2value))
+                if (isvalidyear(year1value) && isvalidyear(year2value))
                 {
                     year_fback = $"study start year between {year1value} and {year2value} (inc.)";
                     OnFeedbackChange!.Invoke(year_fback);
 
-                    year_sql = $"study_start_year between ({year1value}, {year2value})";
+                    year_sql = $"'between', {year1value}, {year2value}";
                     OnSQLChange!.Invoke(year_sql);
                 }
                 else
@@ -142,7 +142,7 @@
         }
     }
 
-    private bool isvalid(string? yearString)
+    private bool isvalidyear(string? yearString)
     {
         if (string.IsNullOrEmpty(yearString))
         {

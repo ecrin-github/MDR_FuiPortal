@@ -54,8 +54,7 @@
 @code {
 
     string? feedbackBase = "Object type one of (";
-    string? sqlBase = "object_type_id in (";
-
+    
     bool _b12, _b21, _b22, _b23, _b24, _b25, _b26, _b53;
     bool _b31, _b32, _b33, _b34, _b36, _b41, _b51, _b52, _b99;
 
@@ -261,7 +260,7 @@
             object_fback_string += _b52 ? ", Software" : "";
             object_fback_string += _b53 ? ", Samples description" : "";
             object_fback_string += _b99 ? ", Other" : "";
-            object_fback = feedbackBase + object_fback_string[2..] + ")";
+            object_fback = "Object type one of ("+ object_fback_string[2..] + ")";
             OnFeedbackChange!.Invoke(object_fback);
 
             string object_sql_string = _b12 ? ", 12" : "";
@@ -281,7 +280,7 @@
             object_sql_string += _b52 ? ", 52" : "";
             object_sql_string += _b53 ? ", 53" : "";
             object_sql_string += _b99 ? ", 99" : "";
-            object_sql = sqlBase + object_sql_string[2..] + ")";
+            object_sql = "(" + object_sql_string[2..] + ")";
             OnSQLChange!.Invoke(object_sql);
         }
     }

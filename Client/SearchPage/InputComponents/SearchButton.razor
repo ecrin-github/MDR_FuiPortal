@@ -12,8 +12,14 @@
     [Parameter]
     public EventCallback onClicked { get; set; }
 
+    [Parameter]
+    public bool enabled { get; set; } = true;
+
     private void clicked()
     {
-        onClicked.InvokeAsync();
+        if (enabled)
+        {
+            onClicked.InvokeAsync();
+        }
     }
 }

@@ -3,6 +3,7 @@
 @using MDR_FuiPortal.Client.SearchPage.InputComponents
 @using MDR_FuiPortal.Client.SearchPage.ResultComponents
 @using System.Text.RegularExpressions;
+@using System.Text.Json;
 
 <PageTitle>MDR Search</PageTitle>
 
@@ -138,7 +139,7 @@
                             @if (searchType == 1)
                             {
                                 <span>
-                                    @search_url <br />
+                                    @search_url_fb <br />
                                     FILTER(S): @filter_sql
                                 </span>
                             }
@@ -215,6 +216,35 @@
     string page_indicator = "";
     string search_url_stem = "api/Study";
     string search_url = "";
+    string search_url_fb = "";
+
+    string? searchText;
+    int searchType = 1;
+    string? idText;
+    int? idType = 1;
+    string? searchParamsValue;
+    string paramsLabelText = "Parameters";
+    bool SearchPossible = false;
+    string processedPars = "";
+
+    bool aggregateSearches = false;
+    bool searchInTTs = true;
+    bool searchInConds = true;
+    int search_scope = 3;
+
+    FilterParams currentFP = new FilterParams();
+    FilterParams? originalFP;
+    string filter_fback = "";
+    string filter_sql = "";
+
+    string type_fback = "";
+    string status_fback = "";
+    string year_fback = "";
+    string country_fback = "";
+    string object_fback = "";
+    string phase_fback = "";
+    string alloc_fback = "";
+    string scope_fback = "";
 
     bool filtersBarShowing = true;
 
@@ -232,67 +262,81 @@
     {
         isLoading = true;
         isEmpty = false;
+        rec_num_indicator = "Searching... ";
 
         if (searchType == 1)
         {
-            int search_scope = searchInTTs ? 1 : 0;
+            search_scope = searchInTTs ? 1 : 0;
             search_scope += searchInConds ? 2 : 0;
             int page_size = pagecon?.recs_per_page ?? 10;
 
-            if (!string.IsNullOrEmpty(searchParamsValue))
+            processedPars = ProcessSearchParams(searchParamsValue);
+            bool allow_search = true;
+
+            if (processedPars == "ALL STUDIES")
+            {
+                allow_search = AllowNoTermsSearch();
+                if (!allow_search)
+                {
+                    // post some sort of message
+                }
+            }
+
+            if (allow_search)
             {
                 BaseSet = new List<string>();
-
                 int running_total = 0;
-                int percent_done = 0;
                 if (pagecon is not null)
                 {
                     pagecon.old_num_recs = 0;   // reset the page control's property
                 }
-                bool first_page_loaded = false;
+                bool baseset_has_1000 = false;
+                int bucket = 1;
 
-                string processedPars = ProcessSearchParams(searchParamsValue);
-                for (int bucket = 1; bucket <= 20; bucket++)
+                while (!baseset_has_1000 && bucket <= 20)
                 {
-                    search_url = $"{search_url_stem}/BySearch/{search_scope}/{processedPars}/{bucket}";
+                    int results_needed_for_baseset = 1000 - running_total;
+                    SearchParams sp = new SearchParams(search_scope, processedPars, bucket, false, currentFP);
+                    string spj = JsonSerializer.Serialize(sp);
+                    search_url = $"{search_url_stem}/BySearch/{spj}/";
                     BucketSet = await Http.GetFromJsonAsync<List<string>>(search_url);
 
                     if (BucketSet?.Any() == true)
                     {
                         if (BucketSet.Count == 1 && BucketSet[0] == "null result")
                         {
-                            // don't add this null indicator record
+                            // do nothing - null indicator returned
                         }
                         else
                         {
-                            running_total += BucketSet.Count;
-                            if (bucket == 1 || running_total <= 250)
+                            if (BucketSet.Count > results_needed_for_baseset)
                             {
-
-
-                                BaseSet.AddRange(BucketSet);
-                                if (running_total > page_size && !first_page_loaded)
-                                {
-                                    rec_num = running_total;
-                                    StateHasChanged();
-                                    first_page_loaded = true;
-                                }
+                                BaseSet.AddRange(BucketSet.Take(results_needed_for_baseset));
                             }
+                            else
+                            {
+                                BaseSet.AddRange(BucketSet);
+                            }
+                            int baseset_num = BaseSet.Count;
 
-                            rec_num_indicator = $"{running_total} Record";
-                            rec_num_indicator += rec_num == 1 ? "" : "s";
-                            rec_num_indicator += $" found, from {bucket} bucket";
-                            rec_num_indicator += bucket == 1 ? "" : "s";
-                            StateHasChanged();
-
+                            baseset_has_1000 = baseset_num == 1000;
+                            running_total += BucketSet.Count;  // may be over 1000
                         }
-
                     }
-                    percent_done += 5;
+
+                    UpdateIndicator(running_total, bucket, BaseSet.Count);
+                    bucket++;
                 }
 
-                ShowSet = BaseSet;  // for now, no filters!
-                rec_num = ShowSet.Count;
+                // Display if we have reached a 1000 records or done all 20 bucket searches
+
+                if (baseset_has_1000 || bucket > 20)
+                {
+                    ShowSet = BaseSet; // for now - i.e. no in memory filters applied
+                    rec_num = baseset_has_1000 ? 1000 : ShowSet.Count;
+                    StateHasChanged();
+                    await DoRemainingBuckets(bucket, running_total);
+                }
             }
         }
         else
@@ -322,55 +366,135 @@
             }
 
 
-            if (BaseSet is not null)
+            if (BaseSet?.Any() == true)
             {
-                if (BaseSet.Any())
+
+                if (BaseSet.Count == 1 && BaseSet[0] == "null result")
                 {
-
-                    if (BaseSet.Count == 1 && BaseSet[0] == "null result")
-                    {
-                        // post a 'none found message somewhere
-                        rec_num_indicator = "No records found";
-                        isEmpty = true;
-                    }
-                    else
-                    {
-                        // if filter(s) set - apply filter using linq
-
-                        if (pagecon is not null)
-                        {
-                            pagecon.old_num_recs = 0;   // reset the page control's property
-                        }
-
-                        ShowSet = BaseSet;  // for now, no filters!
-
-                        rec_num = ShowSet.Count;
-                        rec_num_indicator = ShowSet.Count.ToString() + " Record";
-                        rec_num_indicator += rec_num == 1 ? "" : "s";
-                        rec_num_indicator += " found";
-
-
-                        // setting rec_num will trigger the page control
-                        // to set up the initial page contents call, 1 to n
-                        // After that the page control's buttons will get the
-                        // relevant portion of the 'show set'
-
-                        // may be better to use two separate mechnanisms here!
-                        // One for navigating through a set, one for the initial
-                        // 1 to n set... needs further thought. Perhaps don't have 
-                        // num_recs as a parameter - instead set as a property
-                        // using ref - stops the infinite loop that is set up otherwise
-                    }
+                    // post a 'none found message somewhere
+                    rec_num_indicator = "No records found";
+                    isEmpty = true;
                 }
+                else
+                {
+                    // if filter(s) set - apply filter using linq
+
+                    if (pagecon is not null)
+                    {
+                        pagecon.old_num_recs = 0;   // reset the page control's property
+                    }
+
+                    ShowSet = BaseSet;  // for now, no filters!
+                    UpdateIndicator(ShowSet.Count);
+
+                    // setting rec_num will trigger the page control
+                    // to set up the initial page contents call, 1 to n
+                    // After that the page control's buttons will get the
+                    // relevant portion of the 'show set'
+                }
+
             }
         }
         isLoading = false;
     }
 
 
+    private async Task DoRemainingBuckets(int bucket, int running_total)
+    {
+        while (bucket <= 20)
+        {
+            SearchParams sp = new SearchParams(search_scope, processedPars, bucket, true, currentFP);
+            string spj = JsonSerializer.Serialize(sp);
+            search_url = $"{search_url_stem}/BySearch/{spj}/";
+            BucketSet = await Http.GetFromJsonAsync<List<string>>(search_url);
+
+            if (BucketSet?.Any() == true)
+            {
+                if (BucketSet.Count == 1 && BucketSet[0].StartsWith("count:"))
+                {
+                    // get the count of records for this bucket
+                    string count_string = BucketSet[0][6..].Trim();
+                    if (int.TryParse(count_string, out int bucket_num))
+                    {
+                        running_total += bucket_num;
+                    }
+                }
+            }
+
+            UpdateIndicator(running_total, bucket, BaseSet!.Count);
+            bucket++;
+        }
+    }
+
+
+    private bool AllowNoTermsSearch()
+    {
+        // All this neds checking properly
+
+        if (currentFP is null || currentFP.has_any == false)
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(currentFP.start_year) || !string.IsNullOrEmpty(currentFP.countries))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(currentFP.study_type) 
+        && (currentFP.study_type.Contains("11") || currentFP.study_type.Contains("12")))
+        {
+            return false;
+        }    
+
+        if (!string.IsNullOrEmpty(currentFP.study_status)
+        && (currentFP.study_status.Contains("16") || currentFP.study_status.Contains("21")))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(currentFP.phase)
+        && (currentFP.phase.Contains("110") || currentFP.phase.Contains("115")))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(currentFP.alloc)
+        && (currentFP.alloc.Contains("205") || currentFP.alloc.Contains("210")))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(currentFP.objects)
+        && (currentFP.objects.Contains("28") || currentFP.objects.Contains("11")))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    private void UpdateIndicator (int record_count, int bucket = 0, int baseset_count = 0)
+    {
+        rec_num_indicator = $"{record_count} Record";
+        rec_num_indicator += record_count == 1 ? "" : "s";
+        rec_num_indicator += $" found"; 
+
+        if (bucket > 0)
+        {
+            rec_num_indicator += $", from { bucket} bucket";
+            rec_num_indicator += bucket == 1 ? "" : "s";
+            rec_num_indicator += $" - {baseset_count} records loaded";
+
+            int percent_done = bucket * 5;
+        }
+        StateHasChanged();
+    }
+
+
     private void ShowRange(Tuple<int, int> t)
     {
-        // PageSet = null;
         PageSet = ShowSet?.GetRange(t.Item1, t.Item2);
     }
 
@@ -389,77 +513,95 @@
         Console.WriteLine("boo - I am still removing the unchecked");
     }
 
-    string? searchText;
-    int searchType = 1;
-    string? idText;
-    int? idType = 1;
-    string? searchParamsValue;
-    string paramsLabelText = "Parameters";
-    bool SearchPossible = false;
-
-    bool aggregateSearches = false;
-    bool searchInTTs = true;
-    bool searchInConds = true;
 
     private void RecalculateSearchFeedback()
     {
-        // Provide the text for the 'SQL area'
+        // Provide the text for the 'SQL area' - Development only
 
-    }
-
-    private bool RecalculateSearchSQL()
-    {
-        // provide the where clause for a SQL query (though this may be modified
-        // at the server). Returns true or false dependent on whether query is possible.
-
-        search_url = "api/Study/";
         if (searchType == 1)
         {
-            int search_scope = searchInTTs ? 1 : 0;
-            search_scope += searchInConds ? 2 : 0;
-
-            if (!string.IsNullOrEmpty(searchParamsValue))
-            {
-                string processedPars = ProcessSearchParams(searchParamsValue);
-                search_url += $"BySearch/{search_scope}/{processedPars}";
-            }
+            search_url_fb = $"{search_url_stem}/BySearch/{search_scope}/{searchParamsValue}/bucket/has_1000/";
         }
 
         if (searchType == 2)
         {
-
-            search_url += $"ByRegId/{idType}/{searchParamsValue}";
+            search_url_fb = $"{search_url_stem}/ByRegId/{idType}/{searchParamsValue}";
         }
 
         if (searchType == 3)
         {
-            string? pmid = searchParamsValue;
-            if (pmid is null || !int.TryParse(pmid, out int _))
+            search_url_fb = $"{search_url_stem}/ByPMID/{searchParamsValue}";
+        }
+    }
+
+    private bool CheckSearchSQL()
+    {
+        bool result = true; 
+
+        // Checks that the parameters are OK, or at least plausible
+
+        if (searchType == 1)
+        {
+            // if search is using text then either a string of more than one letter 
+            // or a filter parameters object with at least one filter applied should be
+            // entered into the box ....            
+
+            string? search_pars = searchParamsValue?.Trim();
+            if (string.IsNullOrEmpty(search_pars))
             {
-                string fb_message = "The PMID input must be an integer";
-                // need some sort of message
-                // saying this is not valid
-            }
-            else
-            {
-                search_url += $"ByPMID/{searchParamsValue}";
+                if (!currentFP.has_any)
+                {
+                    string fb_message = "search parameters or filters must be entered";
+                    result = false;
+                }
             }
         }
 
-        return true;  // for now
+        // If search is using an Id then a value must be entered into the box
+
+        if (searchType == 2)
+        {
+            string? sid = searchParamsValue?.Trim(); ;
+            if (string.IsNullOrEmpty(sid) || sid.Length < 4)
+            {
+                string fb_message = "The identifier must have at least 4 characters";
+                result = false;
+            }
+        }
+
+        // if search is using PMID then an integer should be in the box
+
+        if (searchType == 3)
+        {
+            string? pmid = searchParamsValue?.Trim(); ;
+            if (pmid is null || !int.TryParse(pmid, out int _))
+            {
+                string fb_message = "The PMID input must be an integer";
+                result = false;
+            }
+
+        }
+        return result;
+
     }
 
 
     private string ProcessSearchParams(string in_pars)
     {
-        string new_st = in_pars.ToLower() + " ";  // ' ' added to catch final numbers below
+        if (string.IsNullOrEmpty(in_pars))
+        {
+            return "ALL STUDIES";
+        }
+
+        string new_st = in_pars.ToLower() + " ";  // ' ' added to catch final numbers and 'a's below
         new_st = new_st.Replace("'", "");      // simplifies things
         new_st = new_st.Replace("‘", "");
         new_st = new_st.Replace("’", "");
         new_st = new_st.Replace(".", "");      // simplifies things
         new_st = new_st.Replace("/", " ");     // split these words up
+        new_st = new_st.Replace("  ", " ");    // makes comparisons below safer
 
-        if (new_st.Contains("in "))
+        if (new_st.Contains(" in ") || new_st.StartsWith("in "))
         {
             new_st = new_st.Replace("in situ", "insitu");
             new_st = new_st.Replace("in vivo", "invivo");
@@ -533,22 +675,10 @@
             new_st = new_st.Replace("phase iii/iv ", "phase34 ");
         }
 
-        new_st = new_st.Replace(" or ", " | ");  
-        new_st = new_st.Replace(" not(", " !(");
-
         return new_st.Trim();
+ 
     }
 
-    string filter_sql = "", filter_fback = "";
-    string type_sql = "", type_fback = "";
-    string status_sql = "", status_fback = "";
-    string year_sql = "", year_fback = "";
-    string country_sql = "", country_fback = "";
-    string object_sql = "", object_fback = "";
-    string phase_sql = "", phase_fback = "";
-    string alloc_sql = "", alloc_fback = "";
-    string scope_fback = "";
-    int search_scope = 3;
 
     private void RecalcFilterFeedback()
     {
@@ -586,6 +716,7 @@
     private void updateCountryList(List<Country> countriesSelected)
     {
         string sqlparams = ""; string fback = "";
+        string country_sql = ""; country_fback = "";
         if (countriesSelected?.Any() == true)
         {
             foreach (Country c in countriesSelected)
@@ -593,9 +724,12 @@
                 fback += ", " + c.name;
                 sqlparams += ", " + c.id.ToString();
             }
+            country_fback = $"countries one of ({fback[2..]})";
+            country_sql = $"({sqlparams[2..]})";
         }
-        country_fback = $"countries include one of ({fback[2..]})";
-        country_sql = $"country_id in ({sqlparams[2..]})";
+        currentFP.countries = country_sql;
+        currentFP.countries_num = country_sql == "" ? 0 : currentFP.countries.Split(',').Length; ;
+
         RecalcFilterFeedback();
         RecalcFilterSQL();
     }
@@ -619,45 +753,78 @@
     private void RecalcFilterSQL()
     {
         string sql_string = "";
-        sql_string += type_sql == "" ? "" : ", " + type_sql;
-        sql_string += status_sql == "" ? "" : ", " + status_sql;
-        sql_string += year_sql == "" ? "" : ", " + year_sql;
-        sql_string += country_sql == "" ? "" : ", " + country_sql;
-        sql_string += object_sql == "" ? "" : ", " + object_sql;
-        sql_string += phase_sql == "" ? "" : ", " + phase_sql;
-        sql_string += alloc_sql == "" ? "" : ", " + alloc_sql;
+        sql_string += currentFP.study_type_num == 0 ? "" : $", Type [{currentFP.study_type_num}] : {currentFP.study_type}";
+        sql_string += currentFP.study_status_num == 0 ? "" : $", Status [{currentFP.study_status_num}] : {currentFP.study_status}";
+        sql_string += currentFP.start_year_num == 0 ? "" : $", Year [{currentFP.start_year_num}] : {currentFP.start_year}";
+        sql_string += currentFP.countries_num == 0 ? "" : $", Location [{currentFP.countries_num}] : {currentFP.countries}";
+        sql_string += currentFP.objects_num == 0 ? "" : $", Objects [{currentFP.objects_num}] :{currentFP.objects}";
+        sql_string += currentFP.phase_num == 0 ? "" : $", Phase [{currentFP.phase_num}] : {currentFP.phase}";
+        sql_string += currentFP.alloc_num == 0 ? "" : $", Alloc [{currentFP.alloc_num}] : {currentFP.alloc}";
+
+        currentFP.has_any = currentFP.study_type_num > 0 || currentFP.study_status_num > 0 || currentFP.start_year_num > 0
+              || currentFP.countries_num > 0 || currentFP.objects_num > 0 || currentFP.phase_num > 0 || currentFP.alloc_num > 0;
+
         filter_sql = sql_string == "" ? "" : "WITH " + sql_string[2..];
         StateHasChanged();
     }
 
+
+    private int GetEntryNum(string filter_sql)
+    {
+        int leftB_pos = filter_sql.IndexOf('(');
+        string values_string = filter_sql[leftB_pos..];
+        return values_string.Split(',').Length;
+    }
+
+    private int GetSimpleEntryNum(string filter_sql)
+    {
+        return filter_sql.Split(',').Length;
+    }
+
     private void updateTypeSQL(string sql)
     {
-        type_sql = sql; RecalcFilterSQL();
+        // type_sql a string of the form...
+        // 'study_type_id in (11, 16)'
+
+        currentFP.study_type = sql;
+        currentFP.study_type_num = sql == "" ? 0 : GetEntryNum(sql);
+        RecalcFilterSQL();
     }
 
     private void updateStatusSQL(string sql)
     {
-        status_sql = sql; RecalcFilterSQL();
+        currentFP.study_status = sql;
+        currentFP.study_status_num = sql == "" ? 0 : GetEntryNum(sql);
+        RecalcFilterSQL();
     }
 
     private void updateYearSQL(string sql)
     {
-        year_sql = sql; RecalcFilterSQL();
+        currentFP.start_year = sql;
+        currentFP.start_year_num = sql == "" ? 0 : currentFP.start_year.Split(',').Length;
+        RecalcFilterSQL();
+
     }
 
     private void updateObjectSQL(string sql)
     {
-        object_sql = sql; RecalcFilterSQL();
+        currentFP.objects = sql;
+        currentFP.objects_num = sql == "" ? 0 : currentFP.objects.Split(',').Length; ;
+        RecalcFilterSQL();
     }
 
     private void updatePhaseSQL(string sql)
     {
-        phase_sql = sql; RecalcFilterSQL();
+        currentFP.phase = sql;
+        currentFP.phase_num = sql == "" ? 0 : GetEntryNum(sql);
+        RecalcFilterSQL();
     }
 
     private void updateAllocSQL(string sql)
     {
-        alloc_sql = sql; RecalcFilterSQL();
+        currentFP.alloc = sql;
+        currentFP.alloc_num = sql == "" ? 0 : GetEntryNum(sql);
+        RecalcFilterSQL();
     }
 
 
@@ -717,13 +884,12 @@
 
         if (searchType == 1)
         {
-            idType = 11;
             searchParamsValue = "brca";
         }
 
         if (searchType == 2)
         {
-
+            idType = 11;
             searchParamsValue = "NCT01746290";
         }
 
@@ -734,7 +900,7 @@
         }
 
         RecalculateSearchFeedback();
-        SearchPossible = RecalculateSearchSQL();
+        SearchPossible = CheckSearchSQL();
 
     }
 
@@ -743,7 +909,7 @@
         idText = s?.Text ?? "None";
         idType = Int32.Parse(s?.Value ?? "0");
         RecalculateSearchFeedback();
-        SearchPossible = RecalculateSearchSQL();
+        SearchPossible = CheckSearchSQL();
 
         // for now - to make testing easier
         if (idType == 11)
