@@ -27,20 +27,18 @@
 
 
 @code {
-
-    string? feedbackBase = "Study type one of (";
-    string? sqlBase = "type_id in (";
-
     bool _t11, _t12, _t13, _t14, _t15, _t16;
-  
+
     [Parameter]
     public Action<string>? OnFeedbackChange { get; set; }
 
     [Parameter]
     public Action<string>? OnSQLChange { get; set; }
 
-    string type_sql = "";
-    string type_fback = "";
+    public void ClearFilters()
+    {
+        SetAllCheckboxes(false);
+    }
 
     public bool t11
     {
@@ -97,38 +95,42 @@
             process_state();
         }
     }
-    
+
     private void process_state()
     {
         if (!_t11 && !_t12 && !_t13 && !_t14 && !_t15 && !_t16)
         {
-            OnFeedbackChange!.Invoke("");
             OnSQLChange!.Invoke("");
         }
         else if (_t11 && _t12 && _t13 && _t14 && _t15 && _t16)
         {
-            OnFeedbackChange!.Invoke("All study type options");
             OnSQLChange!.Invoke("");
         }
         else
         {
-            string type_fback_string = _t11 ? ", Interventional" : "";
-            type_fback_string += _t12 ? ", Observational" : "";
-            type_fback_string += _t13 ? ", Patient registry" : "";
-            type_fback_string += _t14 ? ", Expanded access" : "";
-            type_fback_string += _t15 ? ", Funded programme" : "";
-            type_fback_string += _t16 ? ", Other" : "";
-            type_fback = feedbackBase + type_fback_string[2..] + ")";
-            OnFeedbackChange!.Invoke(type_fback);
+            //string type_fback_string = _t11 ? ", Interventional" : "";
+            //type_fback_string += _t12 ? ", Observational" : "";
+            //type_fback_string += _t13 ? ", Patient registry" : "";
+            //type_fback_string += _t14 ? ", Expanded access" : "";
+            //type_fback_string += _t15 ? ", Funded programme" : "";
+            //type_fback_string += _t16 ? ", Other" : "";
 
-            string type_sql_string = _t11 ? ", 11" : "";
+            string type_sql_string = "";
+            type_sql_string += _t11 ? ", 11" : "";
             type_sql_string += _t12 ? ", 12" : "";
             type_sql_string += _t13 ? ", 13" : "";
             type_sql_string += _t14 ? ", 14" : "";
             type_sql_string += _t15 ? ", 15" : "";
             type_sql_string += _t16 ? ", 16" : "";
-            type_sql = sqlBase + type_sql_string[2..] + ")";
-            OnSQLChange!.Invoke(type_sql);
+
+            if (type_sql_string == "")
+            {
+                OnSQLChange!.Invoke("");
+            }
+            else
+            {
+                OnSQLChange!.Invoke("type_id in (" + type_sql_string[2..] + ")");
+            }
         }
     }
 

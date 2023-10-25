@@ -49,6 +49,11 @@
     [Parameter]
     public Action<string>? OnSQLChange { get; set; }
 
+    public void ClearFilters()
+    {
+        _compOption = "none";
+    }
+
     string _compOption = "none";
     string? _year1value;
     string? _year2value;
@@ -99,7 +104,6 @@
         {
             year1value = "";
             year2value = "";
-            OnFeedbackChange!.Invoke("");
             OnSQLChange!.Invoke("");
         }
         else
@@ -108,18 +112,8 @@
             {
                 if (isvalidyear(year1value))
                 {
-                    string op = _compOption switch
-                    {
-                        "eq" => "=",
-                        "gt" => ">",
-                        "lt" => "<",
-                        _ => "",
-                    };
-
-                    year_fback = $"study start year {op} {year1value}";
-                    OnFeedbackChange!.Invoke(year_fback);
-
-                    year_sql = $"{op}, {year1value}";
+                    year_fback = $"study start year {_compOption} {year1value}";
+                    year_sql = $"{_compOption}, {year1value}";
                     OnSQLChange!.Invoke(year_sql);
                 }
             }
@@ -128,14 +122,11 @@
                 if (isvalidyear(year1value) && isvalidyear(year2value))
                 {
                     year_fback = $"study start year between {year1value} and {year2value} (inc.)";
-                    OnFeedbackChange!.Invoke(year_fback);
-
-                    year_sql = $"'between', {year1value}, {year2value}";
+                    year_sql = $"{_compOption}, {year1value}, {year2value}";
                     OnSQLChange!.Invoke(year_sql);
                 }
                 else
                 {
-                    OnFeedbackChange!.Invoke("");
                     OnSQLChange!.Invoke("");
                 }
             }

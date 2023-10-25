@@ -36,9 +36,6 @@
 
 @code {
 
-    string? feedbackBase = "Study status one of (";
-    string? sqlBase = "status_id in (";
-
     bool _s16, _s14, _s15, _s25, _s21, _s11, _s18, _s22, _s30;
 
     [Parameter]
@@ -47,8 +44,12 @@
     [Parameter]
     public Action<string>? OnSQLChange { get; set; }
 
+    public void ClearFilters()
+    {
+        SetAllCheckboxes(false);
+    }
+
     string status_sql = "";
-    string status_fback = "";
 
     public bool s16
     {
@@ -135,36 +136,33 @@
             process_state();
         }
     }
-       
+
     private void process_state()
     {
         if (!_s16 && !_s14 && !_s15 && !_s25 && !_s21 
             && !_s11 && !_s18 && !_s22 && !_s30)
         {
-            OnFeedbackChange!.Invoke("");
             OnSQLChange!.Invoke("");
         }
         else if (_s16 && _s14 && _s15 && _s25 && _s21 
             && _s11 && _s18 && _s22 && _s30 )
         {
-            OnFeedbackChange!.Invoke("All status options");
             OnSQLChange!.Invoke("");
         }
         else
         {
-            string status_fback_string = _s16 ? ", Not yet recruiting" : "";
-            status_fback_string += _s14 ? ", Recruiting" : "";
-            status_fback_string += _s15 ? ", Active, not recruiting" : "";
-            status_fback_string += _s25 ? ", Ongoing" : "";
-            status_fback_string += _s21 ? ", Completed" : "";
-            status_fback_string += _s11 ? ", Withdrawn" : "";
-            status_fback_string += _s18 ? ", Suspended" : "";
-            status_fback_string += _s22 ? ", Terminated" : "";
-            status_fback_string += _s30 ? ", Other" : "";
-            status_fback = feedbackBase + status_fback_string[2..] + ")";
-            OnFeedbackChange!.Invoke(status_fback);
+            //string status_fback_string = _s16 ? ", Not yet recruiting" : "";
+            //status_fback_string += _s14 ? ", Recruiting" : "";
+            //status_fback_string += _s15 ? ", Active, not recruiting" : "";
+            //status_fback_string += _s25 ? ", Ongoing" : "";
+            //status_fback_string += _s21 ? ", Completed" : "";
+            //status_fback_string += _s11 ? ", Withdrawn" : "";
+            //status_fback_string += _s18 ? ", Suspended" : "";
+            //status_fback_string += _s22 ? ", Terminated" : "";
+            //status_fback_string += _s30 ? ", Other" : "";
 
-            string status_sql_string = _s16 ? ", 16" : "";
+            string status_sql_string = "";
+            status_sql_string += _s16 ? ", 16" : "";
             status_sql_string += _s14 ? ", 14" : "";
             status_sql_string += _s15 ? ", 15" : "";
             status_sql_string += _s25 ? ", 25" : "";
@@ -173,8 +171,15 @@
             status_sql_string += _s18 ? ", 18" : "";
             status_sql_string += _s22 ? ", 22" : "";
             status_sql_string += _s30 ? ", 30" : "";
-            status_sql = sqlBase + status_sql_string[2..] + ")";
-            OnSQLChange!.Invoke(status_sql);
+
+            if (status_sql_string == "")
+            {
+                OnSQLChange!.Invoke("");
+            }
+            else
+            {
+                OnSQLChange!.Invoke("status_id in (" + status_sql_string[2..] + ")");
+            }
         }
     }
 

@@ -30,7 +30,39 @@
     }
 
 
-    public class FilterParams
+    public class SearchParamsPage     
+    {
+        public int scope { get; set; }
+        public string? pars { get; set; }
+        public int page_start { get; set; }
+        public int page_size { get; set; }
+        public bool count_only { get; set; }
+        public FilterParams? fp { get; set; }
+
+        public SearchParamsPage()
+        { }
+
+        public SearchParamsPage(int _scope, string _pars, int _page_start, int _page_size)
+        {
+            scope = _scope;
+            pars = _pars;
+            page_start = _page_start;
+            page_size = _page_size;
+        }
+
+        public SearchParamsPage(int _scope, string _pars, int _page_start, int _page_size, FilterParams _fp)
+        {
+            scope = _scope;
+            pars = _pars;
+            page_start = _page_start;
+            page_size = _page_size;
+            fp = _fp;
+        }
+    }
+
+
+
+    public class OldFilterParams
     {
         public bool has_any { get; set; } = false;
         public int study_type_num { get; set; } = 0;
@@ -47,6 +79,18 @@
         public string? objects { get; set; }
         public string? phase { get; set; }
         public string? alloc { get; set; }
-       
+    }
+
+
+    public class FilterParams
+    {
+        public string pars_list { get; set; } = "";
+        public string? study_type { get; set; }
+        public string? study_status { get; set; }
+        public string? start_year { get; set; }
+        public string? countries { get; set; }
+        public string? objects { get; set; }
+        public string? phase { get; set; }
+        public string? alloc { get; set; }
     }
 }

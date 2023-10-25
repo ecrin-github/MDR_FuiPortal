@@ -51,6 +51,12 @@
     white-space: nowrap;
 }
 
+.feedback-text {
+    text-align: left;
+    font: var(--normal-text);
+    color: darkred;
+}
+
 /* Three vertical divisions within the page */
 
 #left-bar {
@@ -233,7 +239,7 @@ input[type=text] {
 
 
 /* feedback area */
-/* generally shown during development - ?? not clear if to optionally make visible */
+/* generally shown during development */
 
 #feedback {
     flex: 1 1;
@@ -264,13 +270,37 @@ input[type=text] {
     margin-right: 1.5rem;
     border-bottom: 2px solid var(--txt-emph-colour);
     height: 1.7rem;
+
     display: flex;
     flex-wrap: wrap;
 }
 
+
 #results-found {
-    flex: 0 0;
+    flex: 0 0 15rem;
 }
+
+#buckets-progress-bar {
+    flex: 0 0 16rem;
+    height: 1rem;
+
+}
+
+.progress-outer {
+    background-color: cornsilk;
+    width: 100%;
+    border-width: 2px;
+    border-color: powderblue;
+    margin-top: -0.5rem;
+}
+
+.progress-inner {
+    background-color:powderblue;
+    text-align: center;
+    font-weight: bold;
+}
+
+
 
 #results-spacer {
     flex: 1 1;
@@ -282,8 +312,6 @@ input[type=text] {
 }
 
 
-
-
 /* For the listed results themselves*/
 #results-list {
     padding: 1rem 1.5rem 0.5rem 1rem;
@@ -291,8 +319,13 @@ input[type=text] {
 }
 
 
-
 /* Right hand column area */
+
+.search-feedback {
+    margin: 2rem 1rem;
+}
+
+
 
 /*
 #ShowWhere {

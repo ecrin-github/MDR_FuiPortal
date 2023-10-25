@@ -195,6 +195,22 @@
             old_num_recs = total_recs;
             recalc_range();
         }
+        else
+        {
+            // no records found or set has been cancelled by Clear Saerch
+
+            first_button_image = "/icons/step-back-dis.svg";
+            prev_button_image = "/icons/arr-left-dis.svg";
+            fb_disabled = true;
+            pb_disabled = true;
+            next_button_image = "/icons/arr-right-dis.svg";
+            last_button_image = "/icons/step-forw-dis.svg";
+            nb_disabled = true;
+            lb_disabled = true;
+
+            current_page = 0;
+            num_pages = 0;
+        }
     }
 
 

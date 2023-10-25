@@ -15,20 +15,23 @@ public class StudyController :  BaseApiController
         _studyRepo = studyRepo ?? throw new ArgumentNullException(nameof(studyRepo));
     }
 
-    [HttpGet("BySearch/{spj}")]
-    public async Task<List<string>> GetStudiesBySearch(string spj)
+
+    [HttpGet("BySearch/{scope:int}/{pars}/{bucket:int}/{count_only}/{fpj}")]
+    public async Task<List<string>> GetStudiesBySearch(int scope, string pars, int bucket, string count_only, string fpj)
     {
-        SearchParams? sp = JsonSerializer.Deserialize<SearchParams>(spj);
-        if (sp is not null)
+        FilterParams? fp = JsonSerializer.Deserialize<FilterParams>(fpj);
+        bool countOnly = count_only == "t";
+
+        if (fp is not null)
         {
-            if (sp.count_only)
+            if (countOnly)
             {
-                int count_res = await _studyRepo.FetchCountBySearch(sp.scope, sp.pars!, sp.bucket, sp.fp);
+                int count_res = await _studyRepo.FetchCountBySearchByBucket(scope, pars, bucket, fp);
                 return new List<string>() { $"count:{count_res}" };
             }
             else
             {
-                var res = await _studyRepo.FetchStudiesBySearch(sp.scope, sp.pars!, sp.bucket, sp.fp);
+                var res = await _studyRepo.FetchStudiesBySearchByBucket(scope, pars, bucket, fp);
                 if (res?.Any() != true)
                 {
                     string res_content = "null result";
@@ -44,6 +47,48 @@ public class StudyController :  BaseApiController
         {
             string res_content = "null result";
             return new List<string>() { res_content };
+        }
+    }
+
+
+    [HttpGet("ByPageSearch/{spj}")]
+    public async Task<List<string>> GetPageFromJsonAsync(string spj)
+    {
+        SearchParamsPage? sp = JsonSerializer.Deserialize<SearchParamsPage>(spj);
+        if (sp is not null)
+        {
+            var res = await _studyRepo.FetchPageStudiesBySearch(sp.scope, sp.pars!, sp.page_start, sp.page_size, sp.fp);
+            if (res?.Any() != true)
+            {
+                string res_content = "null result";
+                return new List<string>() { res_content };
+            }
+            else
+            {
+                return res.ToList();
+            }
+ 
+        }
+        else
+        {
+            string res_content = "null result";
+            return new List<string>() { res_content };
+        }
+    }
+
+
+
+    [HttpGet("SearchTotal/{spj}")]
+    public async Task<int> GetTotalNumBySearch(string spj)
+    {
+        SearchParams? sp = JsonSerializer.Deserialize<SearchParams>(spj);
+        if (sp is not null)
+        {
+            return await (_studyRepo.FetchStudyCountBySearch(sp.scope, sp.pars!, sp.fp));
+        }
+        else
+        {
+            return 0;
         }
     }
 

@@ -26,7 +26,6 @@
 
 @code {
 
-    string? feedbackBase = "Allocation type one of (";
     string? sqlBase = "alloc_id in (";
 
     [Parameter]
@@ -35,10 +34,13 @@
     [Parameter]
     public Action<string>? OnSQLChange { get; set; }
 
+    public void ClearFilters()
+    {
+        SetAllCheckboxes(false);
+    }
+
 
     bool _v205, _v210, _v200, _v215;
-    string alloc_sql = "";
-    string alloc_fback = "";
 
     public bool v205
     {
@@ -77,34 +79,38 @@
             process_state();
         }
     }
-    
+
     private void process_state()
     {
         if (!_v205 && !_v210 && !_v200 && !_v215)
         {
-            OnFeedbackChange!.Invoke("");
             OnSQLChange!.Invoke("");
         }
         else if (_v205 && _v210 && _v200 && _v215)
         {
-            OnFeedbackChange!.Invoke("All allocation options");
             OnSQLChange!.Invoke("");
         }
         else
         {
-            string alloc_fback_string = _v205 ? ", Randomised" : "";
-            alloc_fback_string += _v210 ? ", Nonrandomised" : "";
-            alloc_fback_string += _v200 ? ", Not applicable" : "";
-            alloc_fback_string += _v215 ? ", Not provided" : "";
-            alloc_fback = feedbackBase + alloc_fback_string[2..] + ")";
-            OnFeedbackChange!.Invoke(alloc_fback);
+            //string alloc_fback_string = _v205 ? ", Randomised" : "";
+            //alloc_fback_string += _v210 ? ", Nonrandomised" : "";
+            //alloc_fback_string += _v200 ? ", Not applicable" : "";
+            //alloc_fback_string += _v215 ? ", Not provided" : "";
 
-            string alloc_sql_string = _v205 ? ", 205" : "";
+            string alloc_sql_string = "";
+            alloc_sql_string += _v205 ? ", 205" : "";
             alloc_sql_string += _v210 ? ", 210" : "";
             alloc_sql_string += _v200 ? ", 200" : "";
             alloc_sql_string += _v215 ? ", 215" : "";
-            alloc_sql = sqlBase + alloc_sql_string[2..] + ")";
-            OnSQLChange!.Invoke(alloc_sql);
+
+            if (alloc_sql_string == "")
+            {
+                OnSQLChange!.Invoke("");
+            }
+            else
+            {
+                OnSQLChange!.Invoke("alloc_id in (" + alloc_sql_string[2..] + ")");
+            }
         }
     }
 

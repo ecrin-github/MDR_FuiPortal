@@ -8,10 +8,14 @@ public interface IStudyRepo
 
     public Task<IEnumerable<string>?> FetchStudiesByPMID(int pmid);
 
-    public Task<IEnumerable<string>?> FetchStudiesBySearch(int search_scope, string search_string, int bucket, FilterParams? sp);
+    public Task<IEnumerable<string>?> FetchStudiesBySearchByBucket(int search_scope, string search_string, int bucket, FilterParams? fp);
 
-    public Task<int> FetchCountBySearch(int search_scope, string search_string, int bucket, FilterParams? sp);
+    public Task<int> FetchCountBySearchByBucket(int search_scope, string search_string, int bucket, FilterParams? fp);
 
+    public Task<IEnumerable<string>?> FetchPageStudiesBySearch(int search_scope, string search_string,
+        int page_start, int page_size, FilterParams? fp);
+
+    public Task<int> FetchStudyCountBySearch(int search_scope, string search_string, FilterParams? fp);
     public Task<string?> FetchStudyById(int study_id);
 
     public Task<IEnumerable<IECLine>?> FetchStudyIEC(int study_id);

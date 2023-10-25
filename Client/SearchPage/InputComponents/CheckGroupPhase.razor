@@ -30,9 +30,6 @@
 
 @code {
 
-    string? feedbackBase = "Phase type is one of (";
-    string? sqlBase = "phase_id in (";
-
     bool _p105, _p110, _p115, _p120, _p125, _p130, _p135, _p100, _p140;
 
     [Parameter]
@@ -41,8 +38,12 @@
     [Parameter]
     public Action<string>? OnSQLChange { get; set; }
 
+    public void ClearFilters()
+    {
+        SetAllCheckboxes(false);
+    }
+
     string phase_sql = "";
-    string phase_fback = "";
 
     public bool p105
     {
@@ -129,36 +130,33 @@
         }
 
     }
-    
+
     private void process_state()
     {
         if (!_p105 && !_p110 && !_p115 && !_p120 && !_p125 
             && !_p130 && !_p135 && !_p100 && !_p140)
         {
-            OnFeedbackChange!.Invoke("");
             OnSQLChange!.Invoke("");
         }
         else if (_p105 && _p110 && _p115 && _p120 && _p125
             && _p130 && _p135 && _p100 && _p140)
         {
-            OnFeedbackChange!.Invoke("All phase options");
             OnSQLChange!.Invoke("");
         }
         else
         {
-            string phase_fback_string = _p105 ? ", Early phase 1" : "";
-            phase_fback_string += _p110 ? ", Phase 1" : "";
-            phase_fback_string += _p115 ? ", Phase 1/2" : "";
-            phase_fback_string += _p120 ? ", Phase 2" : "";
-            phase_fback_string += _p125 ? ", Phase 2/3" : "";
-            phase_fback_string += _p130 ? ", Phase 3" : "";
-            phase_fback_string += _p135 ? ", Phase 4" : "";
-            phase_fback_string += _p100 ? ", Not applicable" : "";
-            phase_fback_string += _p140 ? ", Not applicable" : "";
-            phase_fback = feedbackBase + phase_fback_string[2..] + ")";
-            OnFeedbackChange!.Invoke(phase_fback);
+            //string phase_fback_string = _p105 ? ", Early phase 1" : "";
+            //phase_fback_string += _p110 ? ", Phase 1" : "";
+            //phase_fback_string += _p115 ? ", Phase 1/2" : "";
+            //phase_fback_string += _p120 ? ", Phase 2" : "";
+            //phase_fback_string += _p125 ? ", Phase 2/3" : "";
+            //phase_fback_string += _p130 ? ", Phase 3" : "";
+            //phase_fback_string += _p135 ? ", Phase 4" : "";
+            //phase_fback_string += _p100 ? ", Not applicable" : "";
+            //phase_fback_string += _p140 ? ", Not applicable" : "";
 
-            string phase_sql_string = _p105 ? ", 105" : "";
+            string phase_sql_string = "";
+            phase_sql_string += _p105 ? ", 105" : "";
             phase_sql_string += _p110 ? ", 110" : "";
             phase_sql_string += _p115 ? ", 115" : "";
             phase_sql_string += _p120 ? ", 120" : "";
@@ -167,8 +165,15 @@
             phase_sql_string += _p135 ? ", 135" : "";
             phase_sql_string += _p100 ? ", 100" : "";
             phase_sql_string += _p140 ? ", 140" : "";
-            phase_sql = sqlBase + phase_sql_string[2..] + ")";
-            OnSQLChange!.Invoke(phase_sql);
+
+            if (phase_sql_string == "")
+            {
+                OnSQLChange!.Invoke("");
+            }
+            else
+            {
+                OnSQLChange!.Invoke("phase_id in (" + phase_sql_string[2..] + ")");
+            }
         }
     }
 

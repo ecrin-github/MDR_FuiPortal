@@ -2,6 +2,7 @@
 using MDR_FuiPortal.Shared;
 using Npgsql;
 using System.Data.SqlTypes;
+using System.Net.Sockets;
 
 namespace MDR_FuiPortal.Server;
 
@@ -68,24 +69,40 @@ public class StudyRepo : IStudyRepo
         int bucket, FilterParams? fp)
     {
         string sql_string = $"select study_json from search.lexemes lx ";
-        if (fp is not null && fp.has_any)
+        if (fp is not null && fp.pars_list != "")
         { 
             sql_string += ObtainSQLJoinClauses(fp);
         }
-        sql_string += ObtainSQLWhereClauses(search_scope, search_string, bucket, fp);
+        sql_string += ObtainSQLWhereClauses(search_scope, search_string, fp);
         return await GetIEnumerable<string>(sql_string);
     }
 
 
-    public async Task<int> FetchCountBySearch(int search_scope, string search_string, int bucket, FilterParams? fp)
+    public async Task<IEnumerable<string>?> FetchStudiesBySearchByBucket(int search_scope, string search_string,
+        int bucket, FilterParams? fp)
     {
-        string sql_string = $"select count(*) from search.lexemes lx ";
-        if (fp is not null && fp.has_any)
+        string sql_string = $"select study_json from search.lexemes lx ";
+        if (fp is not null && fp.pars_list != "")
         {
             sql_string += ObtainSQLJoinClauses(fp);
         }
-        sql_string += ObtainSQLWhereClauses(search_scope, search_string, bucket, fp);
-        
+        sql_string += $" where lx.bucket = {bucket} ";
+        sql_string += ObtainSQLWhereClauses(search_scope, search_string, fp, true);
+
+        return await GetIEnumerable<string>(sql_string);
+    }
+
+
+    public async Task<int> FetchCountBySearchByBucket(int search_scope, string search_string, int bucket, FilterParams? fp)
+    {
+        string sql_string = $"select count(*) from search.lexemes lx ";
+        if (fp is not null && fp.pars_list != "")
+        {
+            sql_string += ObtainSQLJoinClauses(fp);
+        }
+        sql_string += $" where lx.bucket = {bucket} ";
+        sql_string += ObtainSQLWhereClauses(search_scope, search_string, fp, true);
+
         using var conn = new NpgsqlConnection(_dbConnString);
         try
         {
@@ -100,23 +117,69 @@ public class StudyRepo : IStudyRepo
         }
     }
 
+
+    public async Task<IEnumerable<string>?> FetchPageStudiesBySearch(int search_scope, string search_string,
+        int page_start, int page_size, FilterParams? fp)
+    {
+        string sql_string = $"select study_json from search.lexemes lx ";
+        if (fp is not null && fp.pars_list != "")
+        {
+            sql_string += ObtainSQLJoinClauses(fp);
+        }
+        sql_string += ObtainSQLWhereClauses(search_scope, search_string, fp);
+        sql_string += $" order by study_id  offset {page_start} limit {page_size}";
+        return await GetIEnumerable<string>(sql_string);
+    }
+
+
+
+    public async Task<int> FetchStudyCountBySearch(int search_scope, string search_string, FilterParams? fp)
+    {
+        int total_count = 0;
+        for (int bucket = 1; bucket < 21; bucket++)
+        {
+            string sql_string = $"select count(*) from search.lexemes lx ";
+            if (fp is not null && fp.pars_list != "")
+            {
+                sql_string += ObtainSQLJoinClauses(fp);
+            }
+            sql_string += $" where lx.bucket = {bucket} ";
+
+            sql_string += ObtainSQLWhereClauses(search_scope, search_string, fp, true);
+
+            using var conn = new NpgsqlConnection(_dbConnString);
+            try
+            {
+                total_count += await conn.ExecuteScalarAsync<int>(sql_string);
+
+            }
+            catch (Exception e)
+            {
+                string s = e.Message;
+                return 0;
+            }
+        }
+        return total_count;
+    }
+
+
     private string ObtainSQLJoinClauses(FilterParams? fp)
     {
         string sql_join_clauses = "";
-        if (fp is not null && fp.has_any)
+        if (fp is not null && fp.pars_list != "")
         {
-            if (fp.study_type_num > 0 || fp.study_status_num > 0 || fp.start_year_num > 0
-                || fp.alloc_num > 0 || fp.phase_num > 0)
+            if (fp.pars_list.Contains('T') || fp.pars_list.Contains('S') || fp.pars_list.Contains('Y')
+                || fp.pars_list.Contains('A') || fp.pars_list.Contains('P'))
             {
                 sql_join_clauses += " inner join search.studies ss on lx.study_id = ss.study_id ";
             }
 
-            if (fp.objects_num > 0)
+            if (fp.pars_list.Contains('B'))
             {
                 sql_join_clauses += " inner join search.object_types ob on lx.study_id = ob.study_id ";
             }
 
-            if (fp.countries_num > 0)
+            if (fp.pars_list.Contains('C'))
             {
                 sql_join_clauses += " inner join search.countries cs on lx.study_id = cs.study_id "; 
             }
@@ -125,28 +188,104 @@ public class StudyRepo : IStudyRepo
 
     }
 
-    private string ObtainSQLWhereClauses(int search_scope, string search_string,  int bucket, FilterParams? fp)
+
+    private string ObtainSQLWhereClauses(int search_scope, string search_string, FilterParams? fp, bool preceding_term = false )
     {
-        string sql_where_clauses = $" where lx.bucket = {bucket} ";
+
+        string sql_where_clauses = preceding_term ? " and " : " where ";
+        bool prior_clause_added = false;
+
         if (search_string != "ALL STUDIES")
         {
             string s_string = process_search_string(search_string);
-            sql_where_clauses += get_scope_string(search_scope, s_string);
+            string scope_string = "";
+            if (search_scope == 1)
+            { 
+                scope_string = $" (tt_lex @@ to_tsquery('core.mdr_english_config2', '{s_string}')) ";
+            }
+            else if (search_scope == 2)
+            {
+                scope_string = $" (conditions_lex @@ to_tsquery('core.mdr_english_config2', '{s_string}')) ";
+            }
+            else if (search_scope == 3)
+            {
+                scope_string = $@"  (tt_lex @@ to_tsquery('core.mdr_english_config2', '{s_string}') 
+                                 or conditions_lex @@ to_tsquery('core.mdr_english_config2', '{s_string}')) ";
+            }
+            prior_clause_added = true;
+            sql_where_clauses += scope_string;
         }
-        if (fp is not null && fp.has_any)
+
+        if (fp is not null && fp.pars_list != "")
         {
-            sql_where_clauses += get_simple_filter_string(fp);
-
-            if (fp.objects_num > 0)
+            if (fp.pars_list.Contains('T'))
             {
-                sql_where_clauses += $" and ob.object_type_id in {fp.objects}";
+                string link_word = prior_clause_added ? " and " : "";
+                sql_where_clauses += link_word + fp.study_type ?? "";
+                prior_clause_added = true;
             }
 
-            if (fp.countries_num > 0)
+            if (fp.pars_list.Contains('S'))
             {
-                sql_where_clauses += $" and cs.country_id in {fp.countries}";
+                string link_word = prior_clause_added ? " and " : "";
+                sql_where_clauses += link_word + fp.study_status ?? "";
+                prior_clause_added = true;
+            }
+
+            if (fp.pars_list.Contains('Y'))
+            {
+                string year_pars = fp.start_year ?? "";
+                string[] pars = (year_pars.Split(',', StringSplitOptions.TrimEntries));
+                string link_word = prior_clause_added ? " and " : "";
+
+                if (pars.Length == 2)
+                {
+                    string op = pars[0] switch
+                    {
+                        "eq" => "=",
+                        "gt" => ">",
+                        "lt" => "<",
+                        _ => "",
+                    };
+                    sql_where_clauses += link_word + $" start_year {op} {pars[1]}";
+                }
+                if (pars.Length == 3 && pars[0] == "bw")
+                {
+                    sql_where_clauses += link_word + $" start_year between {pars[1]} and {pars[2]}";
+                }                
+                prior_clause_added = true;
+
+            }
+
+            if (fp.pars_list.Contains('P'))
+            {
+                string link_word = prior_clause_added ? " and " : "";
+                sql_where_clauses += link_word + fp.phase;
+                prior_clause_added = true;
+            }
+
+            if (fp.pars_list.Contains('A'))
+            {
+                string link_word = prior_clause_added ? " and " : "";
+                sql_where_clauses += link_word + fp.alloc;
+                prior_clause_added = true;
+            }
+
+            if (fp.pars_list.Contains('B'))
+            {
+                string link_word = prior_clause_added ? " and " : "";
+                sql_where_clauses += link_word + $" ob.object_type_id in {fp.objects}";
+                prior_clause_added = true;
+            }
+
+            if (fp.pars_list.Contains('C'))
+            {
+                string link_word = prior_clause_added ? " and " : "";
+                sql_where_clauses += link_word + $" cs.country_id in {fp.countries}";
+                prior_clause_added = true;
             }
         }
+
         return sql_where_clauses;
 
     }
@@ -182,70 +321,7 @@ public class StudyRepo : IStudyRepo
         }
         return st;
     }
-        
-    private string get_scope_string(int search_scope, string s_string)
-    {
-        if (search_scope == 1)
-        {
-            return $" and (tt_lex @@ to_tsquery('core.mdr_english_config2', '{s_string}')) ";
-        }
-        else if (search_scope == 2)
-        {
-            return $" and (conditions_lex @@ to_tsquery('core.mdr_english_config2', '{s_string}')) ";
-        }
-        else if (search_scope == 3)
-        {
-            return $@" and (tt_lex @@ to_tsquery('core.mdr_english_config2', '{s_string}') 
-                                 or conditions_lex @@ to_tsquery('core.mdr_english_config2', '{s_string}')) ";
-        }
-        else
-        {
-            return "";
-        }
-    }
-
-    private string get_simple_filter_string(FilterParams fp)
-    {
-        string filter_string = "";
-
-        if (fp.study_type_num > 0)
-        {
-            filter_string += " and " + fp.study_type ?? "";
-        }
-
-        if (fp.study_status_num > 0)
-        {
-            filter_string += " and " + fp.study_status ?? "";
-        }
-
-        if (fp.start_year_num > 0)
-        {
-            string year_pars = fp.start_year ?? "";
-            string[] pars = (year_pars.Split(',', StringSplitOptions.TrimEntries));
-
-            if (pars.Length == 2)
-            {
-                filter_string += $" and start_year {pars[0]} {pars[1]}";
-            }
-            if (pars.Length == 3)
-            {
-                filter_string += $" and start_year {pars[0]} {pars[1]} and {pars[2]}";
-            }
-        }
-
-        if (fp.phase_num > 0)
-        {
-            filter_string += " and " + fp.phase;
-        }
-
-        if (fp.alloc_num > 0)
-        {
-            filter_string += " and " + fp.alloc;
-        }
-
-        return filter_string;
-    }
-
+    
 
     public async Task<string?> FetchStudyById(int study_id)
     {

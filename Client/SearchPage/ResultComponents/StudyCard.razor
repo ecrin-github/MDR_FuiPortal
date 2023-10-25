@@ -94,6 +94,9 @@
     [Parameter]
     public string? JsonString { get; set; }
 
+    [Parameter]
+    public bool? ItemExpanded { get; set; }
+
     int study_id;
     string study_name = default!;
     string short_name = default!;
@@ -114,8 +117,6 @@
 
     string desc_source = "";
     string desc_link_text = "more >";
-
-    bool ItemExpanded = false;
 
     private void more_details_clicked()
     {

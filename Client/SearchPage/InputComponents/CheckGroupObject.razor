@@ -27,7 +27,7 @@
 <div class="filter-line"><FluentCheckbox @bind-Value="b12">Registry&nbsp;results&nbsp;summary</FluentCheckbox></div>
 <div class="filter-line"><FluentCheckbox @bind-Value="b21">Journal&nbsp;article</FluentCheckbox></div>
 <div class="filter-line"><FluentCheckbox @bind-Value="b22">Study&nbsp;protocol</FluentCheckbox></div>
-<div class="filter-line"><FluentCheckbox @bind-Value="b34">IPDnbsp/nbspData*</FluentCheckbox></div>
+<div class="filter-line"><FluentCheckbox @bind-Value="b34">IPD&nbsp;/&nbsp;Data*</FluentCheckbox></div>
 <div class="filter-line"><FluentCheckbox @bind-Value="b23">Study&nbsp;overview</FluentCheckbox></div>
 <div class="filter-line"><FluentCheckbox @bind-Value="b24">Patient&nbsp;consent/IS*</FluentCheckbox></div>
 <div class="filter-line"><FluentCheckbox @bind-Value="b25">Data&nbsp;collection&nbsp;forms</FluentCheckbox></div>
@@ -49,12 +49,7 @@
 
 
 
-
-
 @code {
-
-    string? feedbackBase = "Object type one of (";
-    
     bool _b12, _b21, _b22, _b23, _b24, _b25, _b26, _b53;
     bool _b31, _b32, _b33, _b34, _b36, _b41, _b51, _b52, _b99;
 
@@ -64,8 +59,10 @@
     [Parameter]
     public Action<string>? OnSQLChange { get; set; }
 
-    string object_sql = "";
-    string object_fback = "";
+    public void ClearFilters()
+    {
+        SetAllCheckboxes(false);
+    }
 
     private bool b12
     {
@@ -231,18 +228,17 @@
             && !_b31 && !_b32 && !_b33 && !_b34 && !_b36 && !_b41
             && !_b51 && !_b52 && !_b53 && !_b99)
         {
-            OnFeedbackChange!.Invoke("");
             OnSQLChange!.Invoke("");
         }
         else if (_b12 && _b21 && _b22 && _b23 && _b24 && _b25 && _b26
                  && _b31 && _b32 && _b33 && _b34 && _b36 && _b41
                  && _b51 && _b52 && _b53 && _b99)
         {
-            OnFeedbackChange!.Invoke("All allocation options");
             OnSQLChange!.Invoke("");
         }
         else
         {
+            /*
             string object_fback_string = _b12 ? ", Registry results summary" : "";
             object_fback_string += _b21 ? ", Journal article" : "";
             object_fback_string += _b22 ? ", Study protocol" : "";
@@ -260,10 +256,10 @@
             object_fback_string += _b52 ? ", Software" : "";
             object_fback_string += _b53 ? ", Samples description" : "";
             object_fback_string += _b99 ? ", Other" : "";
-            object_fback = "Object type one of ("+ object_fback_string[2..] + ")";
-            OnFeedbackChange!.Invoke(object_fback);
+            */
 
-            string object_sql_string = _b12 ? ", 12" : "";
+            string object_sql_string = "";
+            object_sql_string += _b12 ? ", 12" : "";
             object_sql_string += _b21 ? ", 21" : "";
             object_sql_string += _b22 ? ", 22" : "";
             object_sql_string += _b23 ? ", 23" : "";
@@ -280,8 +276,15 @@
             object_sql_string += _b52 ? ", 52" : "";
             object_sql_string += _b53 ? ", 53" : "";
             object_sql_string += _b99 ? ", 99" : "";
-            object_sql = "(" + object_sql_string[2..] + ")";
-            OnSQLChange!.Invoke(object_sql);
+
+            if (object_sql_string == "")
+            {
+                OnSQLChange!.Invoke("");
+            }
+            else
+            {
+                OnSQLChange!.Invoke(" (" + object_sql_string[2..] + ")");
+            }
         }
     }
 

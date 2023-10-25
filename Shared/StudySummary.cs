@@ -8,7 +8,17 @@ public class StudyJson
     string? study_json { get; set; }
 }
 
-public class StudySummary
+
+public class StudySearchResult
+{
+
+
+}
+
+
+
+
+    public class StudySummary
 {
     public int study_id { get; set; }
     public string? study_name { get; set; }
