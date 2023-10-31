@@ -10,17 +10,18 @@
 
     <title>MDR_FuiPortal</title>
     <!-- <base href="/" /> -->
+
     <script type="text/javascript">
         var appBase = document.createElement('base');
         appBase.href = "/";
-        if (window.location.href.indexOf("localhost") > -1)
-        {
+        if (window.location.href.indexOf("localhost") > -1) {
             appBase.href = "/";
         }
         document.head.appendChild(appBase);
     </script>
+
     <link href="_content/Microsoft.Fast.Components.FluentUI/css/reboot.css" rel="stylesheet" />
-    <link href="css/spinkit.css"  rel="stylesheet" />
+    <link href="css/spinkit.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="MDR_FuiPortal.Client.styles.css" rel="stylesheet" />
@@ -40,7 +41,16 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
+
     <script src="_framework/blazor.webassembly.js"></script>
+    <script type="text/javascript">
+            setWindowName = (nm) => {
+                window.name = nm;
+            };
+    </script>
+
 </body>
 
-</html>
+
+
+</html >

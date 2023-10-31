@@ -90,7 +90,7 @@
                         </div>
                         <div id="params-text">
                             <input type="text" @bind="@searchParamsValue" @bind:event="oninput"
-                                               style="width: 100%;" />
+                            @onkeydown="HandleKeyDown" style="width: 100%;" />
                         </div>
                     </div>
                 </div>
@@ -205,12 +205,53 @@
         </div>
 
         <div id="right-bar">
-            <SearchButton id="SearchButton" Caption="Search" onClicked="Search" />
+            <div class="search-button-container">
+                <button class="big-button big-button-text" id="SearchButton" @onclick="() => SearchClicked()">Search</button>
+            </div>
+
             <div class="search-feedback">
                 <p class="feedback-text">
                     @searchFeedback
                 </p>
             </div>
+
+            <div class="export-button-container">
+                <button class="big-button big-button-text" id="ExportButton" hidden=@noResults 
+                @onclick="@(()=> open = !open)">Export</button>
+            </div>
+
+            <FluentMenu Anchor="ExportButton" @bind-Open="open" @onmenuchange=OnMenuChange>
+                <FluentMenuItem OnClick="@((e) => Console.WriteLine("Item 1 Clicked"))">
+                    Download JSON
+                </FluentMenuItem>
+                <FluentMenuItem OnClick="@((e) => Console.WriteLine("Item 2 Clicked"))">
+                    Download CSV
+                </FluentMenuItem>
+                <FluentMenuItem OnClick="@((e) => Console.WriteLine("Item 3 Clicked"))">
+                    Download PDF
+                </FluentMenuItem>
+            </FluentMenu>
+
+            <p>@status</p>
+
+            <div class="export-button-container">
+                <button class="big-button big-button-text" id="StoreButton" 
+                @onclick="@(()=> open2 = !open2)">
+                    Search Store
+                </button>
+            </div>
+
+            <FluentMenu Anchor="StoreButton" @bind-Open="open2" @onmenuchange=OnMenuChange2>
+                <FluentMenuItem OnClick="@((e) => Console.WriteLine("Item 1 Clicked"))">
+                    Store this search
+                </FluentMenuItem>
+                <FluentMenuItem OnClick="@((e) => Console.WriteLine("Item 2 Clicked"))">
+                    Restore search
+                </FluentMenuItem>
+            </FluentMenu>
+
+            <p>@status2</p>
+
         </div>
     </div>
 </div>
@@ -276,6 +317,9 @@
     string scope_fback = "";
 
     bool filtersBarShowing = true;
+    bool isLoading = false;
+    bool isEmpty = false;
+    bool noResults = true;
 
     private Dictionary<string, string> roman_suffixes = default!;
 
@@ -284,13 +328,12 @@
         filtersBarShowing = visibility;
     }
 
-    bool isLoading = false;
-    bool isEmpty = false;
 
-    private async Task Search()
+    private async Task SearchClicked()
     {
         isLoading = true;
         isEmpty = false;
+        noResults = true;
         rec_num_indicator = "Searching... ";
 
         if (searchType == 1)
@@ -404,6 +447,7 @@
                     {
                         ShowSet = BaseSet; // for now - i.e. no in memory filters applied
                         rec_num = baseset_has_1000 ? 1000 : ShowSet.Count;
+                        noResults = false;
                         StateHasChanged();
                         await DoRemainingBuckets(bucket, running_total, fpj);
                     }
@@ -414,6 +458,7 @@
                         rec_num = 0;
                         rec_num_indicator = "No records found";
                         isEmpty = true;
+                        noResults = true;
                         StateHasChanged();
                     }
                     HideProgress = true;
@@ -464,6 +509,7 @@
                 {
                     rec_num_indicator = "No records found";
                     isEmpty = true;
+                    noResults = true;
                 }
                 else
                 {
@@ -471,12 +517,11 @@
                     {
                         pagecon.old_num_recs = 0;   // reset the page control's property
                     }
-
                     ShowSet = BaseSet;  // for now, no filters! Apply filters to these options?
                     rec_num = ShowSet.Count;
+                    noResults = false;
                     UpdateIndicator(ShowSet.Count);
                 }
-
             }
         }
         isLoading = false;
@@ -635,6 +680,14 @@
     }
 
 
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            await SearchClicked();
+        }
+    }
+
 
     private string ProcessSearchParams(string? in_pars)
     {
@@ -726,7 +779,6 @@
         }
 
         return new_st.Trim();
-
     }
 
     /*
@@ -738,68 +790,68 @@
     fb_string += year_fback == "" ? "" : " AND " + year_fback;
     fb_string += country_fback == "" ? "" : " AND " + country_fback;
     fb_string += object_fback == "" ? "" : " AND HAS " + object_fback;
-    fb_string += phase_fback == "" ? "" : " AND " + phase_fback;
+        fb_string += phase_fback == "" ? "" : " AND " + phase_fback;
     fb_string += alloc_fback == "" ? "" : " AND " + alloc_fback;
     filter_fback = fb_string == "" ? "" : fb_string[5..];
         if (filter_fback == "")
         {
-        filter_fback = "None applied";
+    filter_fback = "None applied";
     }
     StateHasChanged();
     }
 
     private void updateTypeFBack(string fback)
-    {
+        {
         type_fback = fback;  //RecalcFilterFeedback();
     }
 
     private void updateStatusFBack(string fback)
-    {
+        {
         status_fback = fback; //RecalcFilterFeedback(); 
     }
 
     private void updateYearFBack(string fback)
     {
         year_fback = fback; //RecalcFilterFeedback();
-    }
+        }
 
-    private void updateCountryList(List<Country> countriesSelected)
-    {
-        string sqlparams = ""; string? country_sql = "";
-        if (countriesSelected?.Any() == true)
-        {
+        private void updateCountryList(List<Country> countriesSelected)
+            {
+            string sqlparams = ""; string? country_sql = "";
+                if (countriesSelected?.Any() == true)
+                {
             foreach (Country c in countriesSelected)
             {
-                sqlparams += ", " + c.id.ToString();
+            sqlparams += ", " + c.id.ToString();
             }
             country_sql = $"({sqlparams[2..]})";
 
-            if (!currentFP.pars_list.Contains('C'))
-            {
-                currentFP.pars_list += 'C';
-            }
-        }
-        else
+                if (!currentFP.pars_list.Contains('C'))
         {
+            currentFP.pars_list += 'C';
+            }
+            }
+            else
+            {
             currentFP.countries = null;
-            currentFP.pars_list.Replace("C", "");
+        currentFP.pars_list.Replace("C", "");
         }
-        //RecalcFilterFeedback();
-        RecalcFilterSQL();
+    //RecalcFilterFeedback();
+    RecalcFilterSQL();
     }
 
     private void updateObjectFBack(string fback)
-    {
+        {
         object_fback = fback; //RecalcFilterFeedback();
     }
 
     private void updatePhaseFBack(string fback)
-    {
+        {
         phase_fback = fback; //RecalcFilterFeedback();
     }
 
     private void updateAllocFBack(string fback)
-    {
+        {
         alloc_fback = fback; //RecalcFilterFeedback();
     }
     */
@@ -819,7 +871,7 @@
         filter_sql = sql_string == "" ? "" : "WITH " + sql_string[2..];
         StateHasChanged();
     }
- 
+
 
     private void updateTypeSQL(string sql)
     {
@@ -1050,6 +1102,23 @@
         {
             searchParamsValue = "19.05.CLI";
         }
+    }
+
+    bool open = false;
+    bool open2 = false;
+    private string status = "";
+    private string status2 = "";
+
+    private void OnMenuChange(MenuChangeEventArgs args)
+    {
+        if (args is not null && args.Value is not null)
+            status = $"Item \"{args.Value}\" clicked";
+    }
+
+    private void OnMenuChange2(MenuChangeEventArgs args)
+    {
+        if (args is not null && args.Value is not null)
+            status2 = $"Item \"{args.Value}\" clicked";
     }
 
 }

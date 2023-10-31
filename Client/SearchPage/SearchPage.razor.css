@@ -76,9 +76,8 @@
 
 
 #right-bar {
-    flex: 0 0 11rem;
+    flex: 0 0 13rem;
     overflow-y: auto;
-    min-width: 11rem;
 }
 
 
@@ -325,7 +324,67 @@ input[type=text] {
     margin: 2rem 1rem;
 }
 
+.search-button-container {
+    margin: 2rem 1rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
 
+.export-button-container {
+    margin: 3rem 1rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.big-button {
+    flex: 0 0;
+    width: 9rem;
+    height: 2rem;
+    background-color: var(--link-bg-colour);
+    outline: 0.2rem solid var(--txt-emph-colour);
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.big-button-text {
+    font: var(--normal-text);
+    font-weight: bold;
+    text-align: center;
+    color: var(--link-colour);
+}
+
+
+#SearchButton {
+    background-color: var(--link-bg-colour);
+}
+    #SearchButton:hover {
+        background-color: var(--link-hover-colour);
+        outline: 0.2rem solid var(--graphic-emph-colour);
+    }
+
+
+#ExportButton {
+    background-color: darkgrey;
+}
+    #ExportButton:hover {
+        background-color: var(--link-hover-colour);
+        outline: 0.2rem solid var(--graphic-emph-colour);
+    }
+
+#StoreButton {
+    background-color: mediumslateblue;
+}
+
+    #StoreButton:hover {
+        background-color: var(--link-hover-colour);
+        outline: 0.2rem solid var(--graphic-emph-colour);
+    }
+
+    
 
 /*
 #ShowWhere {

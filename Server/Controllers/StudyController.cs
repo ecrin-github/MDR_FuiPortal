@@ -50,7 +50,7 @@ public class StudyController :  BaseApiController
         }
     }
 
-
+    /*
     [HttpGet("ByPageSearch/{spj}")]
     public async Task<List<string>> GetPageFromJsonAsync(string spj)
     {
@@ -75,9 +75,10 @@ public class StudyController :  BaseApiController
             return new List<string>() { res_content };
         }
     }
+    */
 
 
-
+    /*
     [HttpGet("SearchTotal/{spj}")]
     public async Task<int> GetTotalNumBySearch(string spj)
     {
@@ -91,6 +92,7 @@ public class StudyController :  BaseApiController
             return 0;
         }
     }
+    */
 
 
     [HttpGet("ByRegId/{type_id:int}/{reg_id}")]

@@ -1,17 +1,24 @@
-﻿<div id="this-control">
+﻿
+<div id="this-control">
 
     @if (num_pages > 0)
     {
         <div id="items-cb-label">
-            <p class="small-text no-wrap-text">items per page</p>
+            <p class="small-text no-wrap-text">Items per page</p>
         </div>
 
-        <div id="items-cb">
-            <select id="page_num_select" @onchange="(e) => combo_changed(e)">
-                <option>10</option>
-                <option>25</option>
-                <option>50</option>
-            </select>
+        <div id="num-per-page-buttons">
+        <button id="n10" class="num-per-page-button @np10_selected" @onclick="() => n10_button_clicked()">
+            10
+        </button>
+             <span class="npp-spacer">-</span>
+        <button id="n10" class="num-per-page-button @np25_selected" @onclick="() => n25_button_clicked()">
+            25
+        </button>
+            <span class="npp-spacer">-</span>
+        <button id="n10" class="num-per-page-button @np50_selected" @onclick="() => n50_button_clicked()">
+            50
+        </button>
         </div>
 
 
@@ -33,7 +40,6 @@
         </button>
     </div>
     }
-    
 
 </div>
 
@@ -60,6 +66,10 @@
     bool nb_disabled = true;
     bool lb_disabled = true;
 
+    string np10_selected = "greyed";
+    string np25_selected = "greyed";
+    string np50_selected = "greyed";
+
     private void recalc_range()
     {
         page_indicator = current_page.ToString() + " of " + num_pages.ToString();
@@ -72,15 +82,32 @@
         ObtainRange.InvokeAsync(Tuple.Create(start_pos, num_recs_on_page));
     }
 
-
-    private void combo_changed(ChangeEventArgs e)
+    
+    private void n10_button_clicked()
     {
-        if (int.TryParse(e.Value!.ToString(), out int intValue))
-        {
-            recs_per_page = intValue;
-            ResetPages();
-        }
+        recs_per_page = 10;
+        np10_selected = "active";
+        np25_selected = "greyed";
+        np50_selected = "greyed";
+        ResetPages();
+    }
 
+    private void n25_button_clicked()
+    {
+        recs_per_page = 25;
+        np10_selected = "greyed";
+        np25_selected = "active";
+        np50_selected = "greyed";
+        ResetPages();
+    }
+
+    private void n50_button_clicked()
+    {
+        recs_per_page = 50;
+        np10_selected = "greyed";
+        np25_selected = "greyed";
+        np50_selected = "active";
+        ResetPages();
     }
 
     private void first_button_clicked()
@@ -222,6 +249,12 @@
         {
             ResetPages();
         }
+    }
+
+
+    protected override void OnInitialized()
+    {
+        n10_button_clicked();
     }
 
 }

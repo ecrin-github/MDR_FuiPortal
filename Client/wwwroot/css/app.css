@@ -18,19 +18,19 @@
 
     --bg-colour: #FEFEFC;
     --txt-colour: black;
-    --txt-emph-colour: royalblue;
+    --txt-emph-colour: #0078D4;
     --graphic-emph-colour: #00BFFF;
     --hbar-colour: darkblue;
     --link-bg-colour: #212529;
     --link-colour: white;
     --link-hover-colour: royalblue;
     --h1-colour: darkblue;
-    --h3-colour: royalblue;
+    --h3-colour: #0078D4;
     --jt-bg-colour: #565e64;
     --jt-colour: white;
     --top-bar-bg-colour: #ecedee;
     --top-bar-pri-colour: darkblue;
-    --top-bar-sec-colour: royalblue;
+    --top-bar-sec-colour: #0078D4;
     --btm-bar-border-colour: #d6d5d5;
     --btm-bar-link-colour: rgb(33, 37, 41);
 }

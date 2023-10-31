@@ -1,5 +1,6 @@
 ﻿namespace MDR_FuiPortal.Shared
 {
+    /*
     public class SearchParams
     {
         public int scope { get; set; }
@@ -80,7 +81,7 @@
         public string? phase { get; set; }
         public string? alloc { get; set; }
     }
-
+    */
 
     public class FilterParams
     {

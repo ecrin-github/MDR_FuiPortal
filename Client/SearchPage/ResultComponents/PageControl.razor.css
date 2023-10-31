@@ -19,6 +19,36 @@
     }
 
 
+.num-per-page-button {
+    display: flex 0 0;
+    height: 1rem;
+    line-height: 1;
+    margin: -0.1rem 0 0 0;
+    border: none;
+    padding: 0.1rem;
+    text-align: center;
+    border-radius: 4px;
+}
+    .num-per-page-button:hover {
+        background-color: lightskyblue;
+    }
+
+.greyed {
+    color: gray;
+    background-color: var(--bg-colour);
+}
+
+.active {
+    color: whitesmoke;
+    background-color: #0078D4;
+}
+
+.npp-spacer {
+    font-weight: bold;
+    margin: -0.3rem 0.2rem 0 0.2rem;
+    display: flex 0 0;
+}
+
 .small-text {
         font: var(--small-text);
         text-align: left;
@@ -32,20 +62,19 @@
     padding-right: 0.5rem;
 }
 
-#items-cb {
-    flex: 0 0 content;
-    display: flex;
-    margin-top: -0.4rem;
-    font-size: 12px;
-    height: 1.3rem;
-    margin-right: 6rem;
-    border-radius: 5px;
-    border: 1px solid var(--bg-colour);
-}
 
+#num-per-page-buttons {
+    flex: 0 0 content;
+    margin-right: 2.5rem;
+
+    display: flex;
+    flex-direction: row;
+
+}
 
 #results-buttons {
     flex: 0 0 content;
+
     display: flex;
     flex-direction: row;
 }

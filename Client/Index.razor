@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject NavigationManager NavManager
+@inject IJSRuntime _jsRuntime;
 
 <PageTitle>MDR Home</PageTitle>
 
@@ -120,7 +121,7 @@
             </div>
             <div id="arrow-area">
                 <div class="rt-arrow-button">
-                    <a href="/Search" target="_blank" class="link-as-large-button" >
+                    <a href="/Search" target="search" class="link-as-large-button" >
                        Search the MDR >>>
                     </a>
                 </div>
@@ -131,13 +132,20 @@
 
 
 @code {
-    
+
     void NavigateToSearch()
     {
         NavManager.NavigateTo("/Search");
-        
-        // onclick ="@(() => NavigateToSearch)
     }  
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _jsRuntime.InvokeVoidAsync("setWindowName", "home");
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
 
 }
 

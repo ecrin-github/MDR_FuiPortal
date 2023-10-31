@@ -5,7 +5,7 @@
            OptionValue="@(i => i?.Value)"
            OptionSelected="@(i => i == null ? false : i.Selected)"
            SelectedOptionChanged="HandleSelectedOptionChanged"
-           Position="SelectPosition.Below" />
+           Position="SelectPosition.Below"></FluentCombobox>
 
 @code {
     [Parameter]
@@ -13,6 +13,7 @@
 
     [Parameter]
     public EventCallback<Option<string>> HandleSelectedOptionChanged { get; set; }
+
 }
 
 

@@ -1,11 +1,4 @@
 ﻿
-.search-button-container {
-    padding: 1rem 1.5rem 1rem 0.5rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
 
 .search-button {
     flex: 0 0;
@@ -23,7 +16,6 @@
     text-align: center;
     color: var(--link-colour);
 }
-
 
 
 #SearchButton {

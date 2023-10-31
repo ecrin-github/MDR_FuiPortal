@@ -42,21 +42,10 @@
 
         <div class="tb-spacer">&nbsp;</div>
 
-        <div class="tb-file">
-            <div class="tb-link-text">
-                <span>File</span>
-            </div>
-        </div>
-
 
         <div class="tb-spacer">&nbsp;</div>
 
-        <div class="tb-export">
-            <div class="tb-link-text">
-                <span>Export</span>
-            </div>
-        </div>
- 
+        
         <div class="tb-spacer">&nbsp;</div>
 
         <!--
@@ -115,6 +104,9 @@
     [Parameter]
     public EventCallback<bool> onOptionsBarVisibilityChanged { get; set; }
 
+    [Parameter]
+    public EventCallback onExportButtonClicked { get; set; }
+
     private async Task HandleFiltersBarVisibilityChanged(EventArgs e, bool visibility)
     {
         filtersBarShowing = visibility;
@@ -127,6 +119,13 @@
         await onOptionsBarVisibilityChanged.InvokeAsync(visibility);
     }
 
+    bool open = false;
+    private string status = "";
+
+    private async Task ExportClicked()
+    {
+        await onExportButtonClicked.InvokeAsync();
+    }
     
 
 }
