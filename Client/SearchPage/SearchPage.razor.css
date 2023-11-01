@@ -218,13 +218,15 @@ input[type=text] {
 }
 
 #switch-spacer {    
-    flex: 2 2;
-    display: flex;
+    flex: 1 1;
 }
 
 #small-switch-spacer {
-    flex: 1 1;
-    display: flex;
+    flex: 0 0 2rem;
+}
+
+#show-switch {
+    flex: 0 0;
 }
 
 #tt-switch {
@@ -241,21 +243,15 @@ input[type=text] {
 /* generally shown during development */
 
 #feedback {
-    flex: 1 1;
     padding: 0 1rem;
     display: flex;
 }
 
 #fb-container {
     flex: 1 1;
-    background-color: honeydew;
-    margin-right: 2rem;
-}
-
-#sql-container {
-    flex: 1 1;
-    background-color: honeydew;
-    margin-right: 2rem;
+    background-color: #ecede0;
+    margin-right: 1rem;
+    padding: 0.3rem 0;
 }
 
 

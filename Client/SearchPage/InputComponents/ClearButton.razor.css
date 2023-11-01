@@ -5,6 +5,7 @@
 
 .clear-button-text {
     font: var(--normal-text);
+    font-size: 0.9rem;
     line-height: 1;
     text-align: center;
     color: var(--txt-emph-colour);
@@ -12,11 +13,11 @@
 
 
 .clear-button {
-    width: 8rem;
-    height: 1.2rem;
+    width: 7rem;
+    height: 1.1rem;
     border: none;
     outline: 0.2rem solid #466ecc;
-    border-radius: 8px;
+    border-radius: 6px;
 }
 
 

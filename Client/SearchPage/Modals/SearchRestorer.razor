@@ -1,0 +1,22 @@
+﻿@implements IDialogContentComponent<string>
+
+<p>Please select a search from the list of saved searches below.</p>
+
+ <FluentListbox Id="people-listbox"
+    Height="150px"
+    TOption="string"
+/>
+
+@code {
+
+    [Parameter]
+    public string? Content { get; set; }
+
+    [Parameter]
+    public string? SearchName { get; set; }
+
+    protected override void OnInitialized()
+    {
+
+    }
+}

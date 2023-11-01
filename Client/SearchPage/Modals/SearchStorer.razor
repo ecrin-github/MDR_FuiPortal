@@ -1,0 +1,26 @@
+﻿@implements IDialogContentComponent<SearchParams>
+
+<p>The current search will be saved using the name below. Please edit this name if you wish, before saving (max 60 chars).</p>
+<FluentTextArea Rows="1" Cols="60" Value="@SearchName"></FluentTextArea>
+<p></p>
+<FluentTextArea Rows="3" Cols="60" Value="@Content?.fb_string" Appearance="FluentInputAppearance.Filled"
+                style="color:darkblue" Readonly="true">Current search details:</FluentTextArea>
+<p></p>
+<p style="color:darkred">Please note that the search is stored only in this browser, and will not be available on other browsers or machines.</p>
+
+@code {
+    [Parameter]
+    public SearchParams? Content { get; set; }
+
+    [Parameter]
+    public string? StartName { get; set; }
+
+    string SearchName = "";
+
+    protected override void OnInitialized()
+    {
+        string date_string = DateTime.Now.ToString("yyyyMMdd");
+        SearchName = Content?.pars + "_" + date_string;
+    }
+}
+

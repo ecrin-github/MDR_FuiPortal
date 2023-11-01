@@ -7,6 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="SearchPage\Modals\SearchStorer.razor.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="SearchPage\Modals\SearchStorer.razor.css" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="wwwroot\icons\arrow-right-icon.svg" />
     <None Include="wwwroot\icons\homepage-icon.svg" />
     <None Include="wwwroot\icons\information-mark-sign-icon.svg" />
@@ -15,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Blazored.Modal" Version="7.1.0" />
     <PackageReference Include="BlazorPro.Spinkit" Version="1.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="7.0.13" PrivateAssets="all" />

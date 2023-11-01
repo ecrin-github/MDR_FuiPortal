@@ -42,61 +42,13 @@
 
         <div class="tb-spacer">&nbsp;</div>
 
-
-        <div class="tb-spacer">&nbsp;</div>
-
-        
-        <div class="tb-spacer">&nbsp;</div>
-
-        <!--
-        @if (optionsBarShowing)
-        {
-            <Tooltip Text="Collapse Options" Position="left">
-            <div class="end-arrows" @onclick="(e) => HandleOptionsBarVisibilityChanged(e, false)">
-                <img height="18" width="18"
-                src="/icons/forward-icon.svg"
-                alt="left-arrow icon" />
-            </div>
-            </Tooltip>
-        }
-        -->
     </div>
 
-    <!--
-    <div class="tb-options">
-
-        @if (optionsBarShowing)
-        {
-            <div class="tb-options-visible">
-                <div class="tb-options-text">
-                    <span>Options</span>
-                </div>
-            </div>
-        }
-
-        @if (!optionsBarShowing)
-        {
-            <div class="tb-options-invisible">
-                <Tooltip Text="Expand Options" Position="left">
-                <div class="end-arrows" @onclick="(e) => HandleOptionsBarVisibilityChanged(e, true)">
-                    <img height="18" width="18"
-                    src="/icons/backward-icon.svg"
-                    alt="left-arrow icon" />
-                </div>
-                </Tooltip>
-               <div class="tb-options-text">
-                    <span>Options</span>
-                </div>
-            </div>
-        }
-    </div>
-    -->
 </div>
 
 
 @code {
     bool filtersBarShowing = true;
-    bool optionsBarShowing = true;
 
     [Parameter]
     public EventCallback<bool> onFiltersBarVisibilityChanged { get; set; }
@@ -113,19 +65,7 @@
         await onFiltersBarVisibilityChanged.InvokeAsync(visibility);
     }
 
-    private async Task HandleOptionsBarVisibilityChanged(EventArgs e, bool visibility)
-    {
-        optionsBarShowing = visibility;
-        await onOptionsBarVisibilityChanged.InvokeAsync(visibility);
-    }
-
-    bool open = false;
-    private string status = "";
-
-    private async Task ExportClicked()
-    {
-        await onExportButtonClicked.InvokeAsync();
-    }
-    
+    //bool open = false;
+    //private string status = "";
 
 }

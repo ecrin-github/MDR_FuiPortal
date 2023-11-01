@@ -1,7 +1,10 @@
 ﻿@page "/Search"
 @inject HttpClient Http
+@inject IDialogService DialogService
+
 @using MDR_FuiPortal.Client.SearchPage.InputComponents
 @using MDR_FuiPortal.Client.SearchPage.ResultComponents
+@using MDR_FuiPortal.Client.SearchPage.Modals
 @using System.Text.RegularExpressions;
 @using System.Text.Json;
 
@@ -90,7 +93,7 @@
                         </div>
                         <div id="params-text">
                             <input type="text" @bind="@searchParamsValue" @bind:event="oninput"
-                            @onkeydown="HandleKeyDown" style="width: 100%;" />
+                            @onkeyup="HandleKeyUp" style="width: 100%;" />
                         </div>
                     </div>
                 </div>
@@ -100,10 +103,17 @@
                     <div id="small-switch-spacer"></div>
                     <ClearButton id="ClearSearch" Caption="Clear Search" onClicked="ClearSearch" />
                     <div id="switch-spacer"></div>
+
+                    <div id="show-switch" class="small-text no-wrap-text">
+                        <FluentSwitch @bind-Value=showSearches style="margin-inline-end: 12px;">Show Search Details</FluentSwitch>
+                    </div>
+                    <div id="small-switch-spacer"></div>
                     <div id="agg-switch" class="small-text no-wrap-text">
                         <FluentSwitch @bind-Value=aggregateSearches style="margin-inline-end: 12px;">Aggregate Results</FluentSwitch>
                     </div>
+
                     <div id="switch-spacer"></div>
+
                     <div id="tt-switch" class="small-text no-wrap-text">
                         <FluentSwitch @bind-Value=searchInTTs style="margin-inline-end: 12px;">Search in Titles and Topics</FluentSwitch>
                     </div>
@@ -112,50 +122,16 @@
                     </div>
                 </div>
 
-                <!--
-                <div id="feedback">
-                    <div id="fb-container">
-                        <p class="small-text-italic">
-                            <span>This box visible during development only <br /></span>
-                            @if (searchType == 1)
-                            {
-                                <span>
-                                    KEY WORDS SEARCH, using @searchParamsValue, in @scope_fback; <br />
-                                    FILTER(S): @filter_fback
-                                </span>
-                            }
-                            @if (searchType == 2)
-                            {
-                                <span>ID SEARCH, using type: @idType (@idText), ID: @searchParamsValue</span>
-                            }
-                            @if (searchType == 3)
-                            {
-                                <span>PMID SEARCH, using @searchParamsValue</span>
-                            }
-                        </p>
+                @if (showSearches)
+                {
+                    <div id="feedback" visible="@showSearches">
+                        <div id="fb-container">
+                            <p class="small-text-italic">
+                                <span>Current search details: @search_fb</span>
+                            </p>
+                        </div>
                     </div>
-                    <div id="sql-container">
-                        <p class="small-text-italic">
-                            <span>This box visible during development only <br /></span>
-                            @if (searchType == 1)
-                            {
-                                <span>
-                                    @search_url_fb <br />
-                                    FILTER(S): @filter_sql
-                                </span>
-                            }
-                            @if (searchType == 2)
-                            {
-                                <span>@search_url</span>
-                            }
-                            @if (searchType == 3)
-                            {
-                                <span>@search_url</span>
-                            }
-                        </p>
-                    </div>
-                </div>
-                -->
+                }
 
                 <div id="results-heading">
                     <div id="results-found">
@@ -242,22 +218,15 @@
             </div>
 
             <FluentMenu Anchor="StoreButton" @bind-Open="open2" @onmenuchange=OnMenuChange2>
-                <FluentMenuItem OnClick="@((e) => Console.WriteLine("Item 1 Clicked"))">
-                    Store this search
-                </FluentMenuItem>
-                <FluentMenuItem OnClick="@((e) => Console.WriteLine("Item 2 Clicked"))">
-                    Restore search
-                </FluentMenuItem>
+                <FluentMenuItem>Store this search</FluentMenuItem>
+                <FluentMenuItem>Restore search</FluentMenuItem>
             </FluentMenu>
-
-            <p>@status2</p>
 
         </div>
     </div>
 </div>
 
 @code {
-
     CheckGroupType? StudyTypeFilter;
     CheckGroupStatus? StudyStatusFilter;
     YearSelection? StudyYearFilter;
@@ -281,7 +250,7 @@
     string page_indicator = "";
     string search_url_stem = "api/Study";
     string search_url = "";
-    string search_url_fb = "";
+    string search_fb = "";
 
     string? searchText;
     int searchType = 1;
@@ -294,15 +263,49 @@
     string searchFeedback = "";
     bool HideProgress = true;
 
+    private bool _searchInTTs = true;
+    private bool _searchInConds = true;
+    private bool _showSearches = false;
+
+    public bool searchInTTs
+    {
+        get => _searchInTTs;
+        set
+        {
+            _searchInTTs = value;
+            RecalculateSearchFeedback();
+        }
+    }
+
+    public bool searchInConds
+    {
+        get => _searchInConds;
+        set
+        {
+            _searchInConds = value;
+            RecalculateSearchFeedback();
+        }
+    }
+
+    public bool showSearches
+    {
+        get => _showSearches;
+        set
+        {
+            _showSearches = value;
+            RecalculateSearchFeedback();
+        }
+    }
+
     bool aggregateSearches = false;
-    bool searchInTTs = true;
-    bool searchInConds = true;
+
     int search_scope = 3;
     int percent_done = 0; 
 
     FilterParams currentFP = new FilterParams();
     FilterParams? originalFP;
-    string fpj;
+    SearchParams? sp;   
+    string fpj = default!;
 
     string filter_fback = "";
     string filter_sql = "";
@@ -328,7 +331,6 @@
         filtersBarShowing = visibility;
     }
 
-
     private async Task SearchClicked()
     {
         isLoading = true;
@@ -341,8 +343,8 @@
             search_scope = searchInTTs ? 1 : 0;
             search_scope += searchInConds ? 2 : 0;
             int page_size = pagecon?.recs_per_page ?? 10;
-
             processedPars = ProcessSearchParams(searchParamsValue);
+            RecalculateSearchFeedback();
             bool search_allowed = true;
 
             if (processedPars == "ALL STUDIES")
@@ -612,11 +614,8 @@
         rec_num_indicator += record_count == 1 ? "" : "s";
         rec_num_indicator += $" found"; 
 
-
         if (bucket > 0)
         {
-            //rec_num_indicator += $", from { bucket} bucket";
-            //rec_num_indicator += bucket == 1 ? "" : "s";
             if (record_count > baseset_count)
             {
                 rec_num_indicator += $" - {baseset_count} loaded";
@@ -656,35 +655,43 @@
             PageSet = null;
             ClearFilters();
         }
-
     }
 
     private void RecalculateSearchFeedback()
     {
-        // Provide the text for the 'SQL area' - Development only
-
         if (searchType == 1)
-        {
-            search_url_fb = $"{search_url_stem}/BySearch/{search_scope}/{searchParamsValue}/bucket/has_1000/";
-        }
+        { 
+            search_scope = searchInTTs ? 1 : 0;
+            search_scope += searchInConds ? 2 : 0;
+            string pars = ProcessSearchParams(searchParamsValue);
 
+            sp = new(1, search_scope, pars, currentFP);
+        }
         if (searchType == 2)
         {
-            search_url_fb = $"{search_url_stem}/ByRegId/{idType}/{searchParamsValue}";
+            sp = new(2, (int)idType, searchParamsValue);
         }
-
         if (searchType == 3)
         {
-            search_url_fb = $"{search_url_stem}/ByPMID/{searchParamsValue}";
-        }
+            sp = new(3, 0, searchParamsValue);
+        } 
+        search_fb = sp.ObtainFBString();
+        StateHasChanged();
     }
 
 
-    private async Task HandleKeyDown(KeyboardEventArgs e)
+    private async Task HandleKeyUp(KeyboardEventArgs e)
     {
         if (e.Code == "Enter" || e.Code == "NumpadEnter")
         {
             await SearchClicked();
+        }
+        else
+        {
+            if (showSearches)
+            {
+                RecalculateSearchFeedback();
+            }
         }
     }
 
@@ -781,97 +788,6 @@
         return new_st.Trim();
     }
 
-    /*
-    private void RecalcFilterFeedback()
-    {
-    string fb_string = "";
-    fb_string += type_fback == "" ? "" : " AND " + type_fback;
-    fb_string += status_fback == "" ? "" : " AND " + status_fback;
-    fb_string += year_fback == "" ? "" : " AND " + year_fback;
-    fb_string += country_fback == "" ? "" : " AND " + country_fback;
-    fb_string += object_fback == "" ? "" : " AND HAS " + object_fback;
-        fb_string += phase_fback == "" ? "" : " AND " + phase_fback;
-    fb_string += alloc_fback == "" ? "" : " AND " + alloc_fback;
-    filter_fback = fb_string == "" ? "" : fb_string[5..];
-        if (filter_fback == "")
-        {
-    filter_fback = "None applied";
-    }
-    StateHasChanged();
-    }
-
-    private void updateTypeFBack(string fback)
-        {
-        type_fback = fback;  //RecalcFilterFeedback();
-    }
-
-    private void updateStatusFBack(string fback)
-        {
-        status_fback = fback; //RecalcFilterFeedback(); 
-    }
-
-    private void updateYearFBack(string fback)
-    {
-        year_fback = fback; //RecalcFilterFeedback();
-        }
-
-        private void updateCountryList(List<Country> countriesSelected)
-            {
-            string sqlparams = ""; string? country_sql = "";
-                if (countriesSelected?.Any() == true)
-                {
-            foreach (Country c in countriesSelected)
-            {
-            sqlparams += ", " + c.id.ToString();
-            }
-            country_sql = $"({sqlparams[2..]})";
-
-                if (!currentFP.pars_list.Contains('C'))
-        {
-            currentFP.pars_list += 'C';
-            }
-            }
-            else
-            {
-            currentFP.countries = null;
-        currentFP.pars_list.Replace("C", "");
-        }
-    //RecalcFilterFeedback();
-    RecalcFilterSQL();
-    }
-
-    private void updateObjectFBack(string fback)
-        {
-        object_fback = fback; //RecalcFilterFeedback();
-    }
-
-    private void updatePhaseFBack(string fback)
-        {
-        phase_fback = fback; //RecalcFilterFeedback();
-    }
-
-    private void updateAllocFBack(string fback)
-        {
-        alloc_fback = fback; //RecalcFilterFeedback();
-    }
-    */
-
-
-    private void RecalcFilterSQL()
-    {
-        string sql_string = "";
-        sql_string += currentFP.pars_list.Contains('T') ? "" : $", Type : {currentFP.study_type}";
-        sql_string += currentFP.pars_list.Contains('S') ? "" : $", Status : {currentFP.study_status}";
-        sql_string += currentFP.pars_list.Contains('Y') ? "" : $", Year : {currentFP.start_year}";
-        sql_string += currentFP.pars_list.Contains('C') ? "" : $", Location : {currentFP.countries}";
-        sql_string += currentFP.pars_list.Contains('B') ? "" : $", Objects : {currentFP.objects}";
-        sql_string += currentFP.pars_list.Contains('P') ? "" : $", Phase : {currentFP.phase}";
-        sql_string += currentFP.pars_list.Contains('A') ? "" : $", Alloc  : {currentFP.alloc}";
-
-        filter_sql = sql_string == "" ? "" : "WITH " + sql_string[2..];
-        StateHasChanged();
-    }
-
 
     private void updateTypeSQL(string sql)
     {
@@ -891,7 +807,7 @@
                 currentFP.pars_list += 'T';
             }
         }
-        RecalcFilterSQL();
+        RecalculateSearchFeedback();
     }
 
     private void updateStatusSQL(string sql)
@@ -909,7 +825,7 @@
                 currentFP.pars_list += 'S';
             }
         }
-        RecalcFilterSQL();
+        RecalculateSearchFeedback();
     }
 
     private void updateYearSQL(string sql)
@@ -927,7 +843,7 @@
                 currentFP.pars_list += 'Y';
             }
         }
-        RecalcFilterSQL();
+        RecalculateSearchFeedback();
 
     }
 
@@ -946,9 +862,8 @@
                 currentFP.pars_list += 'B';
             }
         }
-        RecalcFilterSQL();
+        RecalculateSearchFeedback();
     }
-
 
     private void updateCountryList(List<Country> countriesSelected)
     {
@@ -971,9 +886,8 @@
             currentFP.countries = null;
             currentFP.pars_list = currentFP.pars_list.Replace("C", "");
         }
-        RecalcFilterSQL();
+        RecalculateSearchFeedback();
     }
-
 
     private void updatePhaseSQL(string sql)
     {
@@ -990,7 +904,7 @@
                 currentFP.pars_list += 'P';
             }
         }
-        RecalcFilterSQL();
+        RecalculateSearchFeedback();
     }
 
     private void updateAllocSQL(string sql)
@@ -1008,9 +922,8 @@
                 currentFP.pars_list += 'A';
             }
         }
-        RecalcFilterSQL();
+        RecalculateSearchFeedback();
     }
-
 
     List<Option<string>> searchOptions = default!;
     List<Option<string>> idOptions = default!;
@@ -1068,6 +981,7 @@
 
         if (searchType == 1)
         {
+            processedPars = ProcessSearchParams(searchParamsValue);
             searchParamsValue = "brca";
         }
 
@@ -1107,7 +1021,6 @@
     bool open = false;
     bool open2 = false;
     private string status = "";
-    private string status2 = "";
 
     private void OnMenuChange(MenuChangeEventArgs args)
     {
@@ -1115,10 +1028,54 @@
             status = $"Item \"{args.Value}\" clicked";
     }
 
-    private void OnMenuChange2(MenuChangeEventArgs args)
+
+    private async Task OnMenuChange2(MenuChangeEventArgs args)
     {
         if (args is not null && args.Value is not null)
-            status2 = $"Item \"{args.Value}\" clicked";
+        {
+            string res = args.Value;
+
+            if (res == "Store this search")
+            {
+                processedPars = ProcessSearchParams(searchParamsValue);
+                RecalculateSearchFeedback();
+
+                DialogParameters<SearchParams> parameters = new()
+                {
+                    Content = sp,
+                    Title = $"Storing this search",
+                    PrimaryAction = "Save",
+                    SecondaryAction = "Cancel",
+                    Width = "32rem",
+                    Height = "30rem",
+                    TrapFocus = true,
+                    Modal = true,
+                    PreventScroll = true
+                };
+
+                IDialogReference dialog = await DialogService.ShowDialogAsync<SearchStorer>(sp, parameters);
+                DialogResult? result = await dialog.Result;
+            }
+
+            if (res == "Restore search")
+            {
+                string blob = "";
+                DialogParameters parameters = new()
+                {
+                    Title = $"Restoring search",
+                    PrimaryAction = "Restore",
+                    SecondaryAction = "Cancel",
+                    Width = "32rem",
+                    Height = "25rem",
+                    TrapFocus = true,
+                    Modal = true,
+                    PreventScroll = true
+                };
+
+                IDialogReference dialog = await DialogService.ShowDialogAsync<SearchRestorer>(blob, parameters);
+                DialogResult? result = await dialog.Result;
+            }
+        }
     }
 
 }
