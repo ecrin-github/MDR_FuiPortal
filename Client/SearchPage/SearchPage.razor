@@ -1,12 +1,14 @@
 ﻿@page "/Search"
 @inject HttpClient Http
 @inject IDialogService DialogService
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 
 @using MDR_FuiPortal.Client.SearchPage.InputComponents
 @using MDR_FuiPortal.Client.SearchPage.ResultComponents
 @using MDR_FuiPortal.Client.SearchPage.Modals
 @using System.Text.RegularExpressions;
 @using System.Text.Json;
+@using System.Web;
 
 <PageTitle>MDR Search</PageTitle>
 
@@ -124,12 +126,8 @@
 
                 @if (showSearches)
                 {
-                    <div id="feedback" visible="@showSearches">
-                        <div id="fb-container">
-                            <p class="small-text-italic">
-                                <span>Current search details: @search_fb</span>
-                            </p>
-                        </div>
+                    <div id="feedback">
+                        <p class="small-text-italic"><b>Current search details:&nbsp;</b>@search_fb</p>
                     </div>
                 }
 
@@ -237,13 +235,11 @@
 
     List<string>? BaseSet;
     List<string>? BucketSet;
-    List<string>? Page1Set;
     List<string>? ShowSet = null;
     List<string>? PageSet = null;
     PageControl? pagecon;
 
     int rec_num;
-    int num_pages;
     int num_recs_per_page = 10;
     string rec_num_indicator = "No search yet run";
     int current_page = 1;
@@ -298,26 +294,15 @@
     }
 
     bool aggregateSearches = false;
-
     int search_scope = 3;
     int percent_done = 0; 
 
     FilterParams currentFP = new FilterParams();
-    FilterParams? originalFP;
     SearchParams? sp;   
     string fpj = default!;
 
     string filter_fback = "";
     string filter_sql = "";
-
-    string type_fback = "";
-    string status_fback = "";
-    string year_fback = "";
-    string country_fback = "";
-    string object_fback = "";
-    string phase_fback = "";
-    string alloc_fback = "";
-    string scope_fback = "";
 
     bool filtersBarShowing = true;
     bool isLoading = false;
@@ -362,57 +347,39 @@
                 }
             }
 
+            if (search_scope == 0 && processedPars != "ALL STUDIES")
+            {
+                search_allowed = false;
+                searchFeedback = "Searching using text requires the search to be within titles and topics, ";
+                searchFeedback += "or conditions, or both\n\n";
+                searchFeedback += "Please see the User Guide for details";
+
+                rec_num_indicator = "Unable to search with these parameters";
+            }
+
             if (search_allowed)
             {
                 BaseSet = new List<string>();
                 searchFeedback = "";
                 int running_total = 0;
                 percent_done = 0;
-                HideProgress = false;  // now false as incremental method not in use
+                HideProgress = false;  
 
                 if (pagecon is not null)
                 {
                     pagecon.old_num_recs = 0;   // reset the page control's property
                 }
 
+                // bucket based repeat method
+
                 bool baseset_has_1000 = false;
-
-                /*
-                // get first page of results
-
-                SearchParamsPage sp = new SearchParamsPage(search_scope, processedPars, 0, page_size, currentFP);
-                string spj = JsonSerializer.Serialize(sp);
-                search_url = $"{search_url_stem}/ByPageSearch/{spj}/";
-                Page1Set = await Http.GetFromJsonAsync<List<string>>(search_url);
-
-                ShowSet = Page1Set; // for now - i.e. no in memory filters applied
-                //rec_num = ShowSet.Count;
-                PageSet = ShowSet; // Set for display
-
-                StateHasChanged();  
-                await Task.Delay(1000);
-
-                search_url = $"{search_url_stem}/SearchTotal/{spj}/";
-                int record_count = await Http.GetFromJsonAsync<int>(search_url);
-                rec_num_indicator = $"{record_count} Record";
-                rec_num_indicator += record_count == 1 ? "" : "s";
-                rec_num_indicator += $" found";
-                StateHasChanged();
-                */
-
-                /* bucket based repeat method */
-
                 int bucket = 1;
 
                 while (!baseset_has_1000 && bucket <= 20)
                 {
                     int results_needed_for_baseset = 1000 - running_total;
-                    //SearchParams sp = new SearchParams(search_scope, processedPars, bucket, false, currentFP);
-                    //string spj = JsonSerializer.Serialize(sp);
-                    //search_url = $"{search_url_stem}/BySearch/{spj}/";
-
                     fpj = JsonSerializer.Serialize(currentFP);
-                    search_url = $"{search_url_stem}/BySearch/{search_scope}/{processedPars}/{bucket}/f/{fpj}";
+                    search_url = $"{search_url_stem}/BySearch/{search_scope}/{HttpUtility.UrlEncode(processedPars)}/{bucket}/f/{fpj}";
                     BucketSet = await Http.GetFromJsonAsync<List<string>>(search_url);
 
                     if (BucketSet?.Any() == true)
@@ -466,7 +433,6 @@
                     HideProgress = true;
                 }
             }
-
         }
         else
         {
@@ -534,19 +500,15 @@
     {
         while (bucket <= 20)
         {
-            //SearchParams sp = new SearchParams(search_scope, processedPars, bucket, true, currentFP);
-            //string spj = JsonSerializer.Serialize(sp);
-            //search_url = $"{search_url_stem}/BySearch/{spj}/";
-
-
-            search_url = $"{search_url_stem}/BySearch/{search_scope}/{processedPars}/{bucket}/t/{fpj}";
+            search_url = $"{search_url_stem}/BySearch/{search_scope}/{HttpUtility.UrlEncode(processedPars)}/{bucket}/t/{fpj}";
             BucketSet = await Http.GetFromJsonAsync<List<string>>(search_url);
 
             if (BucketSet?.Any() == true)
             {
                 if (BucketSet.Count == 1 && BucketSet[0].StartsWith("count:"))
                 {
-                    // get the count of records for this bucket
+                    // Get the count of records for this bucket.
+
                     string count_string = BucketSet[0][6..].Trim();
                     if (int.TryParse(count_string, out int bucket_num))
                     {
@@ -645,6 +607,8 @@
     private void ClearSearch()
     {
         searchParamsValue = "";
+        processedPars = ProcessSearchParams(searchParamsValue);
+        RecalculateSearchFeedback();
 
         if (!aggregateSearches)
         {
@@ -663,17 +627,15 @@
         { 
             search_scope = searchInTTs ? 1 : 0;
             search_scope += searchInConds ? 2 : 0;
-            string pars = ProcessSearchParams(searchParamsValue);
-
-            sp = new(1, search_scope, pars, currentFP);
+            sp = new(1, search_scope, processedPars, currentFP);
         }
         if (searchType == 2)
         {
-            sp = new(2, (int)idType, searchParamsValue);
+            sp = new(2, (int)(idType ?? 0), searchParamsValue ?? "");
         }
         if (searchType == 3)
         {
-            sp = new(3, 0, searchParamsValue);
+            sp = new(3, 0, searchParamsValue ?? "");
         } 
         search_fb = sp.ObtainFBString();
         StateHasChanged();
@@ -690,6 +652,7 @@
         {
             if (showSearches)
             {
+                processedPars = ProcessSearchParams(searchParamsValue);
                 RecalculateSearchFeedback();
             }
         }
@@ -785,9 +748,40 @@
             new_st = new_st.Replace("phase iii/iv ", "phase34 ");
         }
 
-        return new_st.Trim();
-    }
+        string output = new_st.Trim().Replace(" or ", " | ");
+        output = output.Replace(" and ", " & ");
+        output = output.Replace(" not (", " !(").Replace(" not(", " !(");
 
+        // Replace remaining spaces with '&', unless part of an existing | or & space
+
+        if (output.Contains(' '))
+        {
+            int pars_length = output.Length;
+            string st = "";
+            for (int i = 0; i < pars_length; i++)
+            {
+                if (output[i] == ' ')
+                {
+                    if (output[i - 1] != '|' && output[i + 1] != '|'
+                    && output[i - 1] != '&' && output[i + 1] != '&')
+                    {
+                        st = st + " & ";
+                    }
+                    else
+                    {
+                        st = st + output[i];
+                    }
+                }
+                else
+                {
+                    st = st + output[i];
+                }
+            }
+            output = st;
+        }
+
+        return output;
+    }
 
     private void updateTypeSQL(string sql)
     {
@@ -868,13 +862,16 @@
     private void updateCountryList(List<Country> countriesSelected)
     {
         string sqlparams = "";
+        string country_names = "";
         if (countriesSelected?.Any() == true)
         {
             foreach (Country c in countriesSelected)
             {
                 sqlparams += ", " + c.id.ToString();
+                country_names += ", " + c.name;
             }
             currentFP.countries = $"({sqlparams[2..]})";
+            currentFP.country_names = country_names[2..];
 
             if (!currentFP.pars_list.Contains('C'))
             {
@@ -978,11 +975,10 @@
         };
 
         // for now - to make testing easier
-
         if (searchType == 1)
         {
-            processedPars = ProcessSearchParams(searchParamsValue);
             searchParamsValue = "brca";
+            processedPars = ProcessSearchParams(searchParamsValue);
         }
 
         if (searchType == 2)
@@ -1005,7 +1001,6 @@
     {
         idText = s?.Text ?? "None";
         idType = Int32.Parse(s?.Value ?? "0");
-        RecalculateSearchFeedback();
 
         // for now - to make testing easier
         if (idType == 11)
@@ -1015,7 +1010,10 @@
         if (idType == 14)
         {
             searchParamsValue = "19.05.CLI";
-        }
+        }       
+
+        RecalculateSearchFeedback();
+
     }
 
     bool open = false;
@@ -1053,8 +1051,17 @@
                     PreventScroll = true
                 };
 
+                await localStorage.SetItemAsync(sp., "John Smith");
+                // var name = await localStorage.GetItemAsync<string>("name");
+
                 IDialogReference dialog = await DialogService.ShowDialogAsync<SearchStorer>(sp, parameters);
                 DialogResult? result = await dialog.Result;
+
+                if (result.Data is not null)
+                {
+                    // Store item under name and string verasion of sp
+                    var c = result.Data;
+                }
             }
 
             if (res == "Restore search")
@@ -1077,5 +1084,4 @@
             }
         }
     }
-
 }

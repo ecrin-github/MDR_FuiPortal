@@ -63,11 +63,6 @@
         onListChanged.InvokeAsync(SelectedCountries);
     }
 
-    public void ClearFilters()
-    {
-        SelectedCountries = new();
-    }
-
     List<Country> SelectedCountries = default!;
     private Country? currentCountry;
     bool CountrySelectorVisible = false;
@@ -125,6 +120,33 @@
     }
 
     List<Option<string>> countryOptions = default!;
+
+    public void ClearFilters()
+    {
+        SelectedCountries = new();
+        onListChanged.InvokeAsync(SelectedCountries);
+    }
+
+    public void SetFilters(string AppliedCountryIds, string AppliedCountryNames)
+    {        
+        string CountryIds = AppliedCountryIds.Trim('(', ')', ' ');
+        string[] CountryIdsList = CountryIds.Split(',', StringSplitOptions.TrimEntries);
+        string[] CountryNamesList = AppliedCountryNames.Split(',', StringSplitOptions.TrimEntries);
+
+        SelectedCountries = new();
+        for (int i = 0; i < CountryIdsList.Length; i++)
+        {
+            // re-establish the country list
+            // Both lists assumed to be in the same order.
+
+            if (int.TryParse(CountryIdsList[i], out int countryId))
+            {
+                SelectedCountries.Add(new Country(countryId, CountryNamesList[i]));
+            }
+        }
+        onListChanged.InvokeAsync(SelectedCountries);
+        StateHasChanged();
+    }
 
     protected async override Task OnInitializedAsync()
     {

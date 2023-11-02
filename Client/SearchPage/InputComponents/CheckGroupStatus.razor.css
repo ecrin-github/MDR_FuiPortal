@@ -3,6 +3,7 @@
     color: var(--txt-emph-colour);
     text-align: left;
     font-style: italic;
+    margin-top: 0.3rem;
     margin-bottom: 0;
 }
 

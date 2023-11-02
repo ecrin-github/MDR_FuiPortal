@@ -59,11 +59,6 @@
     [Parameter]
     public Action<string>? OnSQLChange { get; set; }
 
-    public void ClearFilters()
-    {
-        SetAllCheckboxes(false);
-    }
-
     private bool b12
     {
         get => _b12;
@@ -238,26 +233,6 @@
         }
         else
         {
-            /*
-            string object_fback_string = _b12 ? ", Registry results summary" : "";
-            object_fback_string += _b21 ? ", Journal article" : "";
-            object_fback_string += _b22 ? ", Study protocol" : "";
-            object_fback_string += _b23 ? ", Study overview" : "";
-            object_fback_string += _b24 ? ", Patient consent/IS" : "";
-            object_fback_string += _b25 ? ", Data collection forms" : "";
-            object_fback_string += _b26 ? ", Manual of procedures" : "";
-            object_fback_string += _b31 ? ", SAP" : "";
-            object_fback_string += _b32 ? ", Clinical study report" : "";
-            object_fback_string += _b33 ? ", Data summary" : "";
-            object_fback_string += _b34 ? ", IPD / Data" : "";
-            object_fback_string += _b36 ? ", Other study resource" : "";
-            object_fback_string += _b41 ? ", Other info. resource" : "";
-            object_fback_string += _b51 ? ", Website" : "";
-            object_fback_string += _b52 ? ", Software" : "";
-            object_fback_string += _b53 ? ", Samples description" : "";
-            object_fback_string += _b99 ? ", Other" : "";
-            */
-
             string object_sql_string = "";
             object_sql_string += _b12 ? ", 12" : "";
             object_sql_string += _b21 ? ", 21" : "";
@@ -299,5 +274,60 @@
         b36 = check_state; b41 = check_state;
         b51 = check_state; b52 = check_state;
         b53 = check_state; b99 = check_state;
+    }
+
+    public void ClearFilters()
+    {
+        _b12 = false;
+        _b21 = false; _b22 = false;
+        _b23 = false; _b24 = false;
+        _b25 = false; _b26 = false;
+        _b31 = false; _b32 = false;
+        _b33 = false; _b34 = false;
+        _b36 = false; _b41 = false;
+        _b51 = false; _b52 = false;
+        _b53 = false; _b99 = false;
+        OnSQLChange!.Invoke("");
+    }
+
+    public void SetFilters(string AppliedFilters)
+    {
+        if (string.IsNullOrEmpty(AppliedFilters))
+        {
+            ClearFilters();
+        }
+        else
+        {
+            if (AppliedFilters.StartsWith(" ("))  // it should!
+            {
+                string Filters = AppliedFilters[2..].Trim(')', ' ');
+                string[] selected = Filters.Split(',', StringSplitOptions.TrimEntries);
+                for (int i = 0; i < selected.Length; i++)
+                {
+                    switch (selected[i])
+                    {
+                        case ("12"): _b12 = true; break;
+                        case ("21"): _b21 = true; break;
+                        case ("22"): _b22 = true; break;
+                        case ("23"): _b23 = true; break;
+                        case ("24"): _b24 = true; break;
+                        case ("25"): _b25 = true; break;
+                        case ("26"): _b26 = true; break;
+                        case ("31"): _b31 = true; break;
+                        case ("32"): _b32 = true; break;
+                        case ("33"): _b33 = true; break;
+                        case ("34"): _b34 = true; break;
+                        case ("36"): _b36 = true; break;
+                        case ("41"): _b41 = true; break;
+                        case ("51"): _b51 = true; break;
+                        case ("52"): _b52 = true; break;
+                        case ("53"): _b53 = true; break;
+                        case ("99"): _b99 = true; break;
+                    }
+                }
+            }
+            process_state();
+            StateHasChanged();
+        }
     }
 }

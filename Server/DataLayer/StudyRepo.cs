@@ -1,8 +1,7 @@
 ﻿using Dapper;
 using MDR_FuiPortal.Shared;
 using Npgsql;
-using System.Data.SqlTypes;
-using System.Net.Sockets;
+using System.Web;
 
 namespace MDR_FuiPortal.Server;
 
@@ -28,8 +27,8 @@ public class StudyRepo : IStudyRepo
             string s = e.Message;
             return default(T);
         }
-
     }
+
 
     private async Task<IEnumerable<T>?> GetIEnumerable<T>(string sql_string)
     {
@@ -45,7 +44,6 @@ public class StudyRepo : IStudyRepo
             string s = e.Message;
             return null;
         }
-
     }
 
 
@@ -68,12 +66,13 @@ public class StudyRepo : IStudyRepo
     public async Task<IEnumerable<string>?> FetchStudiesBySearch(int search_scope, string search_string,
         int bucket, FilterParams? fp)
     {
+        string search_pars = HttpUtility.UrlDecode(search_string);
         string sql_string = $"select study_json from search.lexemes lx ";
         if (fp is not null && fp.pars_list != "")
         { 
             sql_string += ObtainSQLJoinClauses(fp);
         }
-        sql_string += ObtainSQLWhereClauses(search_scope, search_string, fp);
+        sql_string += ObtainSQLWhereClauses(search_scope, search_pars, fp);
         return await GetIEnumerable<string>(sql_string);
     }
 
@@ -81,13 +80,14 @@ public class StudyRepo : IStudyRepo
     public async Task<IEnumerable<string>?> FetchStudiesBySearchByBucket(int search_scope, string search_string,
         int bucket, FilterParams? fp)
     {
+        string search_pars = HttpUtility.UrlDecode(search_string);
         string sql_string = $"select study_json from search.lexemes lx ";
         if (fp is not null && fp.pars_list != "")
         {
             sql_string += ObtainSQLJoinClauses(fp);
         }
         sql_string += $" where lx.bucket = {bucket} ";
-        sql_string += ObtainSQLWhereClauses(search_scope, search_string, fp, true);
+        sql_string += ObtainSQLWhereClauses(search_scope, search_pars, fp, true);
 
         return await GetIEnumerable<string>(sql_string);
     }
@@ -95,13 +95,14 @@ public class StudyRepo : IStudyRepo
 
     public async Task<int> FetchCountBySearchByBucket(int search_scope, string search_string, int bucket, FilterParams? fp)
     {
+        string search_pars = HttpUtility.UrlDecode(search_string);
         string sql_string = $"select count(*) from search.lexemes lx ";
         if (fp is not null && fp.pars_list != "")
         {
             sql_string += ObtainSQLJoinClauses(fp);
         }
         sql_string += $" where lx.bucket = {bucket} ";
-        sql_string += ObtainSQLWhereClauses(search_scope, search_string, fp, true);
+        sql_string += ObtainSQLWhereClauses(search_scope, search_pars, fp, true);
 
         using var conn = new NpgsqlConnection(_dbConnString);
         try
@@ -121,12 +122,13 @@ public class StudyRepo : IStudyRepo
     public async Task<IEnumerable<string>?> FetchPageStudiesBySearch(int search_scope, string search_string,
         int page_start, int page_size, FilterParams? fp)
     {
+        string search_pars = HttpUtility.UrlDecode(search_string);
         string sql_string = $"select study_json from search.lexemes lx ";
         if (fp is not null && fp.pars_list != "")
         {
             sql_string += ObtainSQLJoinClauses(fp);
         }
-        sql_string += ObtainSQLWhereClauses(search_scope, search_string, fp);
+        sql_string += ObtainSQLWhereClauses(search_scope, search_pars, fp);
         sql_string += $" order by study_id  offset {page_start} limit {page_size}";
         return await GetIEnumerable<string>(sql_string);
     }
@@ -135,6 +137,7 @@ public class StudyRepo : IStudyRepo
 
     public async Task<int> FetchStudyCountBySearch(int search_scope, string search_string, FilterParams? fp)
     {
+        string search_pars = HttpUtility.UrlDecode(search_string);
         int total_count = 0;
         for (int bucket = 1; bucket < 21; bucket++)
         {
@@ -145,7 +148,7 @@ public class StudyRepo : IStudyRepo
             }
             sql_string += $" where lx.bucket = {bucket} ";
 
-            sql_string += ObtainSQLWhereClauses(search_scope, search_string, fp, true);
+            sql_string += ObtainSQLWhereClauses(search_scope, search_pars, fp, true);
 
             using var conn = new NpgsqlConnection(_dbConnString);
             try
@@ -189,28 +192,28 @@ public class StudyRepo : IStudyRepo
     }
 
 
-    private string ObtainSQLWhereClauses(int search_scope, string search_string, FilterParams? fp, bool preceding_term = false )
+    private string ObtainSQLWhereClauses(int search_scope, string search_pars, FilterParams? fp, bool preceding_term = false )
     {
 
         string sql_where_clauses = preceding_term ? " and " : " where ";
         bool prior_clause_added = false;
 
-        if (search_string != "ALL STUDIES")
+        if (search_pars != "ALL STUDIES")
         {
-            string s_string = process_search_string(search_string);
+            //string s_string = process_search_string(search_string);
             string scope_string = "";
             if (search_scope == 1)
             { 
-                scope_string = $" (tt_lex @@ to_tsquery('core.mdr_english_config2', '{s_string}')) ";
+                scope_string = $" (tt_lex @@ to_tsquery('core.mdr_english_config2', '{search_pars}')) ";
             }
             else if (search_scope == 2)
             {
-                scope_string = $" (conditions_lex @@ to_tsquery('core.mdr_english_config2', '{s_string}')) ";
+                scope_string = $" (conditions_lex @@ to_tsquery('core.mdr_english_config2', '{search_pars}')) ";
             }
             else if (search_scope == 3)
             {
-                scope_string = $@"  (tt_lex @@ to_tsquery('core.mdr_english_config2', '{s_string}') 
-                                 or conditions_lex @@ to_tsquery('core.mdr_english_config2', '{s_string}')) ";
+                scope_string = $@"  (tt_lex @@ to_tsquery('core.mdr_english_config2', '{search_pars}') 
+                                 or conditions_lex @@ to_tsquery('core.mdr_english_config2', '{search_pars}')) ";
             }
             prior_clause_added = true;
             sql_where_clauses += scope_string;
@@ -290,38 +293,7 @@ public class StudyRepo : IStudyRepo
 
     }
 
-    private string process_search_string(string input)
-    {
-        string output = input.Replace(" or ", " | ");
-        output = output.Replace(" and ", " & ");
-        output = output.Replace(" not (", " !(").Replace(" not(", " !(");
-
-        // Replace remaining spaces with '&', unless part of an existing | or & space
-
-        int pars_length = output.Length;
-        string st = "";
-        for (int i = 0; i < pars_length; i++)
-        {
-            if (output[i] == ' ')
-            {
-                if (output[i - 1] != '|' && output[i + 1] != '|'
-                && output[i - 1] != '&' && output[i + 1] != '&')
-                {
-                    st = st + " & ";
-                }
-                else
-                {
-                    st = st + output[i];
-                }
-            }
-            else
-            {
-                st = st + output[i];
-            }
-        }
-        return st;
-    }
-    
+        
 
     public async Task<string?> FetchStudyById(int study_id)
     {

@@ -32,6 +32,7 @@
     font: var(--small-text);
     text-align: left;
     font-style: italic;
+    margin-bottom: 0;
 }
 
 .normal-blue-text {
@@ -243,17 +244,12 @@ input[type=text] {
 /* generally shown during development */
 
 #feedback {
-    padding: 0 1rem;
-    display: flex;
-}
-
-#fb-container {
-    flex: 1 1;
+    flex: 1 1 content;
     background-color: #ecede0;
-    margin-right: 1rem;
-    padding: 0.3rem 0;
+    margin-left: 1rem;
+    margin-right: 1.5rem;
+    padding: 0.4rem 0 0.4rem 0;
 }
-
 
 
 /* Results Summary and buttons at the top */

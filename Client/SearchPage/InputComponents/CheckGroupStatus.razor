@@ -44,11 +44,6 @@
     [Parameter]
     public Action<string>? OnSQLChange { get; set; }
 
-    public void ClearFilters()
-    {
-        SetAllCheckboxes(false);
-    }
-
     string status_sql = "";
 
     public bool s16
@@ -151,16 +146,6 @@
         }
         else
         {
-            //string status_fback_string = _s16 ? ", Not yet recruiting" : "";
-            //status_fback_string += _s14 ? ", Recruiting" : "";
-            //status_fback_string += _s15 ? ", Active, not recruiting" : "";
-            //status_fback_string += _s25 ? ", Ongoing" : "";
-            //status_fback_string += _s21 ? ", Completed" : "";
-            //status_fback_string += _s11 ? ", Withdrawn" : "";
-            //status_fback_string += _s18 ? ", Suspended" : "";
-            //status_fback_string += _s22 ? ", Terminated" : "";
-            //status_fback_string += _s30 ? ", Other" : "";
-
             string status_sql_string = "";
             status_sql_string += _s16 ? ", 16" : "";
             status_sql_string += _s14 ? ", 14" : "";
@@ -190,5 +175,47 @@
         s25 = check_state; s21 = check_state;
         s11 = check_state; s18 = check_state;
         s22 = check_state; s30 = check_state;
+    }
+
+    public void ClearFilters()
+    {
+        _s16 = false;
+        _s14 = false; _s15 = false;
+        _s25 = false; _s21 = false;
+        _s11 = false; _s18 = false;
+        _s22 = false; _s30 = false;
+        OnSQLChange!.Invoke("");
+    }
+
+    public void SetFilters(string AppliedFilters)
+    {
+        if (string.IsNullOrEmpty(AppliedFilters))
+        {
+            ClearFilters();
+        }
+        else
+        {
+            if (AppliedFilters.StartsWith("status_id in ("))  // it should!
+            {
+                string Filters = AppliedFilters[14..].Trim(')', ' ');
+                string[] selected = Filters.Split(',', StringSplitOptions.TrimEntries);
+                for (int i = 0; i < selected.Length; i++)
+                {
+                    switch (selected[i])
+                    {
+                        case ("16"): _s16 = true; break;
+                        case ("14"): _s14 = true; break;
+                        case ("15"): _s15 = true; break;
+                        case ("25"): _s25 = true; break;
+                        case ("21"): _s21 = true; break;
+                        case ("11"): _s11 = true; break;
+                        case ("18"): _s18 = true; break;
+                        case ("22"): _s22 = true; break;
+                        case ("30"): _s30 = true; break;
+                    }
+                }
+            }
+            process_state();
+        }
     }
 }

@@ -35,11 +35,6 @@
     [Parameter]
     public Action<string>? OnSQLChange { get; set; }
 
-    public void ClearFilters()
-    {
-        SetAllCheckboxes(false);
-    }
-
     public bool t11
     {
         get { return _t11; }
@@ -108,13 +103,6 @@
         }
         else
         {
-            //string type_fback_string = _t11 ? ", Interventional" : "";
-            //type_fback_string += _t12 ? ", Observational" : "";
-            //type_fback_string += _t13 ? ", Patient registry" : "";
-            //type_fback_string += _t14 ? ", Expanded access" : "";
-            //type_fback_string += _t15 ? ", Funded programme" : "";
-            //type_fback_string += _t16 ? ", Other" : "";
-
             string type_sql_string = "";
             type_sql_string += _t11 ? ", 11" : "";
             type_sql_string += _t12 ? ", 12" : "";
@@ -140,5 +128,43 @@
         t13 = check_state; t14 = check_state; 
         t15 = check_state; t16 = check_state; 
     }
+
+    public void ClearFilters()
+    {
+        _t11 = false; _t12 = false;
+        _t13 = false; _t14 = false;
+        _t15 = false; _t16 = false;
+        OnSQLChange!.Invoke("");
+    }
+
+    public void SetFilters(string AppliedFilters)
+    {
+        if (string.IsNullOrEmpty(AppliedFilters))
+        {
+            ClearFilters();
+        }
+        else
+        {
+            if (AppliedFilters.StartsWith("type_id in ("))  // it should!
+            {
+                string Filters = AppliedFilters[12..].Trim(')', ' ');
+                string[] selected = Filters.Split(',', StringSplitOptions.TrimEntries);
+                for (int i = 0; i < selected.Length; i++)
+                {
+                    switch (selected[i])
+                    {
+                        case ("11"): _t11 = true; break;
+                        case ("12"): _t12 = true; break;
+                        case ("13"): _t13 = true; break;
+                        case ("14"): _t14 = true; break;
+                        case ("15"): _t15 = true; break;
+                        case ("16"): _t16 = true; break;
+                    }
+                }
+            }
+            process_state();
+        }
+    }
+
 }
 

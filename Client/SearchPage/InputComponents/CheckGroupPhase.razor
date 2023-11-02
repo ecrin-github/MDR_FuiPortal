@@ -37,14 +37,7 @@
 
     [Parameter]
     public Action<string>? OnSQLChange { get; set; }
-
-    public void ClearFilters()
-    {
-        SetAllCheckboxes(false);
-    }
-
-    string phase_sql = "";
-
+        
     public bool p105
     {
         get { return _p105; }
@@ -145,16 +138,6 @@
         }
         else
         {
-            //string phase_fback_string = _p105 ? ", Early phase 1" : "";
-            //phase_fback_string += _p110 ? ", Phase 1" : "";
-            //phase_fback_string += _p115 ? ", Phase 1/2" : "";
-            //phase_fback_string += _p120 ? ", Phase 2" : "";
-            //phase_fback_string += _p125 ? ", Phase 2/3" : "";
-            //phase_fback_string += _p130 ? ", Phase 3" : "";
-            //phase_fback_string += _p135 ? ", Phase 4" : "";
-            //phase_fback_string += _p100 ? ", Not applicable" : "";
-            //phase_fback_string += _p140 ? ", Not applicable" : "";
-
             string phase_sql_string = "";
             phase_sql_string += _p105 ? ", 105" : "";
             phase_sql_string += _p110 ? ", 110" : "";
@@ -184,5 +167,47 @@
         p125 = check_state; p130 = check_state;
         p135 = check_state; p100 = check_state;
         p140 = check_state;
+    }
+
+    public void ClearFilters()
+    {
+        _p105 = false; _p110 = false;
+        _p115 = false; _p120 = false;
+        _p125 = false; _p130 = false;
+        _p135 = false; _p100 = false;
+        _p140 = false;
+        OnSQLChange!.Invoke("");
+    }
+
+    public void SetFilters(string AppliedFilters)
+    {
+        if (string.IsNullOrEmpty(AppliedFilters))
+        {
+            ClearFilters();
+        }
+        else
+        {
+            if (AppliedFilters.StartsWith("phase_id in ("))  // it should!
+            {
+                string Filters = AppliedFilters[13..].Trim(')', ' ');
+                string[] selected = Filters.Split(',', StringSplitOptions.TrimEntries);
+                for (int i = 0; i < selected.Length; i++)
+                {
+                    switch (selected[i])
+                    {
+                        case ("105"): _p105 = true; break;
+                        case ("110"): _p110 = true; break;
+                        case ("115"): _p115 = true; break;
+                        case ("120"): _p120 = true; break;
+                        case ("125"): _p125 = true; break;
+                        case ("130"): _p130 = true; break;
+                        case ("135"): _p135 = true; break;
+                        case ("100"): _p100 = true; break;
+                        case ("140"): _p140 = true; break;
+                    }
+                }
+            }
+            process_state();
+        }
     }
 }

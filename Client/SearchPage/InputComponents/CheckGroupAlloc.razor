@@ -26,20 +26,12 @@
 
 @code {
 
-    string? sqlBase = "alloc_id in (";
-
     [Parameter]
     public Action<string>? OnFeedbackChange { get; set; }
 
     [Parameter]
     public Action<string>? OnSQLChange { get; set; }
-
-    public void ClearFilters()
-    {
-        SetAllCheckboxes(false);
-    }
-
-
+    
     bool _v205, _v210, _v200, _v215;
 
     public bool v205
@@ -92,11 +84,6 @@
         }
         else
         {
-            //string alloc_fback_string = _v205 ? ", Randomised" : "";
-            //alloc_fback_string += _v210 ? ", Nonrandomised" : "";
-            //alloc_fback_string += _v200 ? ", Not applicable" : "";
-            //alloc_fback_string += _v215 ? ", Not provided" : "";
-
             string alloc_sql_string = "";
             alloc_sql_string += _v205 ? ", 205" : "";
             alloc_sql_string += _v210 ? ", 210" : "";
@@ -121,4 +108,42 @@
         v200 = check_state;
         v215 = check_state;
     }
+
+    public void ClearFilters()
+    {
+        _v205 = false;
+        _v210 = false;
+        _v200 = false;
+        _v215 = false;
+        OnSQLChange!.Invoke("");
+    }
+
+    public void SetFilters(string AppliedFilters)
+    {
+        if (string.IsNullOrEmpty(AppliedFilters))
+        {
+            ClearFilters();
+        }
+        else
+        {
+            if (AppliedFilters.StartsWith("alloc_id in ("))  // it should!
+            {
+                string Filters = AppliedFilters[13..].Trim(')', ' ');
+                string[] selected = Filters.Split(',', StringSplitOptions.TrimEntries);
+                for (int i = 0; i < selected.Length; i++)
+                {
+                    switch (selected[i])
+                    {
+                        case ("205"): _v205 = true; break;
+                        case ("210"): _v210 = true; break;
+                        case ("200"): _v200 = true; break;
+                        case ("215"): _v215 = true; break;
+                    }
+                }
+            }
+            process_state();
+            StateHasChanged();
+        }
+    }
+
 }

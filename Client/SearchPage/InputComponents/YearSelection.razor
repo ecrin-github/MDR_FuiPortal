@@ -49,16 +49,10 @@
     [Parameter]
     public Action<string>? OnSQLChange { get; set; }
 
-    public void ClearFilters()
-    {
-        compOption = "none";
-    }
-
     string _compOption = "none";
     string? _year1value;
     string? _year2value;
     string year_sql = "";
-    string year_fback = "";
 
     public string compOption
     {
@@ -112,7 +106,6 @@
             {
                 if (isvalidyear(year1value))
                 {
-                    year_fback = $"study start year {_compOption} {year1value}";
                     year_sql = $"{_compOption}, {year1value}";
                     OnSQLChange!.Invoke(year_sql);
                 }
@@ -121,7 +114,6 @@
             {
                 if (isvalidyear(year1value) && isvalidyear(year2value))
                 {
-                    year_fback = $"study start year between {year1value} and {year2value} (inc.)";
                     year_sql = $"{_compOption}, {year1value}, {year2value}";
                     OnSQLChange!.Invoke(year_sql);
                 }
@@ -146,6 +138,36 @@
             return true;
         }
         return false;
+    }
+
+    public void ClearFilters()
+    {
+        compOption = "none";
+    }
+
+    public void SetFilters(string AppliedFilters)
+    {
+        if (string.IsNullOrEmpty(AppliedFilters))
+        {
+            ClearFilters();
+        }
+        else
+        {
+            string[] selected = AppliedFilters.Split(',', StringSplitOptions.TrimEntries);
+            if (selected.Length == 2)
+            {
+                _compOption = selected[0];
+                year1value = selected[1];
+            }
+            if (selected.Length == 3)
+            {
+                _compOption = selected[0];
+                year1value = selected[1];
+                year2value = selected[2];
+
+            }
+            process_state();
+        }
     }
 
 }
