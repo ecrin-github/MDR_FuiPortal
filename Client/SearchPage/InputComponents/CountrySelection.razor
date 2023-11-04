@@ -7,17 +7,30 @@
             Select Country(ies)...
         </button>
     </div>
+
     @if (@CountrySelectorVisible)
     {
         <div id="new-country-cb" class="country-cb">
-            <MDRComboBox idOptions="countryOptions"
-             HandleSelectedOptionChanged="currentCountryChanged"></MDRComboBox>
+            <div id="search-type-combo">
+                <FluentSelect id="search-type-select"
+                                Items="@countryOptions"
+                                OptionText="@(i => i.Text)"
+                                OptionValue="@(i => i.Value)"
+                                OptionSelected="@(i => i.Selected)"
+                                Multiple=false
+                                Position="SelectPosition.Below"
+                                @bind-Selected="@currentCountry"
+                                SelectedOptionChanged="(Option<string> s) => currentCountryChanged(s)">
+                </FluentSelect>
+            </div>
         </div>
+
         <div id="country-buttons">
             <button id="add-selected" class="filter-btn small-button-text taller-button"
                 @onclick="() => AddCurrentCountry()">
                 Add Selected
             </button>
+
             <button id="cancel-add" class="filter-btn small-button-text taller-button"
                 @onclick="() => SetCountrySelectorVisibility(false)">
                 Cancel
@@ -38,6 +51,7 @@
                 <div class="selected-location-name">
                     <p class="small-text">@c.name</p>
                 </div>
+
                 <div class="selected-location-remove">
                     <Tooltip Text="Remove" Position="top">
                         <button class="filter-btn" @onclick="() => RemoveCountry(c)">
@@ -49,7 +63,6 @@
                 </div>
             </div>
         }
-
     }
 </div>
 
@@ -64,6 +77,7 @@
     }
 
     List<Country> SelectedCountries = default!;
+
     private Country? currentCountry;
     bool CountrySelectorVisible = false;
 
@@ -125,10 +139,17 @@
     {
         SelectedCountries = new();
         onListChanged.InvokeAsync(SelectedCountries);
+        StateHasChanged();
     }
 
-    public void SetFilters(string AppliedCountryIds, string AppliedCountryNames)
-    {        
+    public void SetFilters(string? AppliedCountryIds, string? AppliedCountryNames)
+    {    
+        if (string.IsNullOrEmpty(AppliedCountryIds) || string.IsNullOrEmpty(AppliedCountryNames))
+        {
+            ClearFilters();
+            return;
+        }
+
         string CountryIds = AppliedCountryIds.Trim('(', ')', ' ');
         string[] CountryIdsList = CountryIds.Split(',', StringSplitOptions.TrimEntries);
         string[] CountryNamesList = AppliedCountryNames.Split(',', StringSplitOptions.TrimEntries);

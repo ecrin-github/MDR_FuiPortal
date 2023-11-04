@@ -151,19 +151,24 @@
 
 /* Search bar - Id Type */
 
-#search-subtype {
+.hidden {
+    /*min-width: 0rem;    
+    flex: 0 0 0;*/
+    display: none;
+}
+
+.shown {
     flex: 0 0;
     min-width: 21rem;
     padding-top: 1rem;
-
     display: flex;
     flex-direction: row
 }
 
+
 #id-type-combo {
     flex: 0 0;
 }
-
 
 /* Search bar - Search Parameters*/
 
@@ -375,8 +380,6 @@ input[type=text] {
         background-color: var(--link-hover-colour);
         outline: 0.2rem solid var(--graphic-emph-colour);
     }
-
-    
 
 /*
 #ShowWhere {

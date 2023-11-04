@@ -67,27 +67,46 @@
             <div id="fixed-top">   <!-- Fixed area at top-->
                 <div id="search-bar">
                     <div id="search-type">
+
                         <div class="search-label-container">
                             <p class="search-label normal-blue-text">Search Type</p>
                         </div>
-                        <div id="search-type-combo" >
-                            <MDRComboBox idOptions="searchOptions" 
-                             HandleSelectedOptionChanged="SearchOptionChanged"></MDRComboBox>
+                        <div id="search-type-combo">
+                            <FluentSelect id="search-type-select"
+                                      Items="@searchOptions"
+                                      TOption="Option<string>"
+                                      OptionText="@(i => i.Text)"
+                                      OptionValue="@(i => i.Value)"
+
+                                      OptionSelected="@(i => i.Selected)"
+                                      Multiple=false
+                                      Position="SelectPosition.Below"
+                                      @bind-Value="@searchType"
+                                      SelectedOptionChanged="(Option<string> s) => SearchOptionChanged(s)">
+                                      </FluentSelect>
                         </div>
                     </div>
 
-                    @if (searchType == 2)
-                    {
-                        <div id="search-subtype">
+                        <div class="@hidden_attribute">
                             <div class="search-label-container">
                                 <p class="search-label normal-blue-text">ID Type</p>
                             </div>
                             <div id="id-type-combo">
-                                <MDRComboBox idOptions="idOptions"
-                                  HandleSelectedOptionChanged="idOptionChanged"></MDRComboBox>
+
+                                <FluentSelect id="id-type-select"
+                                Items="@idOptions"
+                                TOption="Option<string>"
+                                OptionText="@(i => i.Text)"
+                                OptionValue="@(i => i.Value)"
+
+                                OptionSelected="@(i => i.Selected)"
+                                Multiple=false
+                                Position="SelectPosition.Below"
+                                @bind-Value="@idType"
+                                SelectedOptionChanged="(Option<string> s) => idOptionChanged(s)"></FluentSelect>
                             </div>
                         </div>
-                    }
+
 
                     <div id="search-params">
                          <div class="search-label-container">
@@ -208,18 +227,17 @@
 
             <p>@status</p>
 
-            <div class="export-button-container">
-                <button class="big-button big-button-text" id="StoreButton" 
-                @onclick="@(()=> open2 = !open2)">
+                <div class="export-button-container">
+                    <button class="big-button big-button-text" id="StoreButton" 
+                       @onclick="@(()=> open2 = !open2)">
                     Search Store
-                </button>
-            </div>
+                    </button>
+                </div>
 
-            <FluentMenu Anchor="StoreButton" @bind-Open="open2" @onmenuchange=OnMenuChange2>
-                <FluentMenuItem>Store this search</FluentMenuItem>
-                <FluentMenuItem>Restore search</FluentMenuItem>
-            </FluentMenu>
-
+                 <FluentMenu Anchor="StoreButton" @bind-Open="open2" @onmenuchange=OnMenuChange2>
+                    <FluentMenuItem>Store this search</FluentMenuItem>
+                    <FluentMenuItem>Restore search</FluentMenuItem>
+                 </FluentMenu>
         </div>
     </div>
 </div>
@@ -239,6 +257,8 @@
     List<string>? PageSet = null;
     PageControl? pagecon;
 
+    bool doing_restore = false;
+
     int rec_num;
     int num_recs_per_page = 10;
     string rec_num_indicator = "No search yet run";
@@ -249,9 +269,10 @@
     string search_fb = "";
 
     string? searchText;
-    int searchType = 1;
+    string searchType = "1";
     string? idText;
-    int? idType = 1;
+    string? idType = "1";
+    string hidden_attribute = "hidden";
     string? searchParamsValue;
     string paramsLabelText = "Parameters";
     bool SearchPossible = false;
@@ -269,7 +290,7 @@
         set
         {
             _searchInTTs = value;
-            RecalculateSearchFeedback();
+            if (!doing_restore) RecalculateSearchFeedback();
         }
     }
 
@@ -279,7 +300,7 @@
         set
         {
             _searchInConds = value;
-            RecalculateSearchFeedback();
+            if (!doing_restore) RecalculateSearchFeedback();
         }
     }
 
@@ -289,7 +310,11 @@
         set
         {
             _showSearches = value;
-            RecalculateSearchFeedback();
+            if (!doing_restore)
+            {
+                processedPars = ProcessSearchParams(searchParamsValue);
+                RecalculateSearchFeedback();
+            }
         }
     }
 
@@ -323,7 +348,7 @@
         noResults = true;
         rec_num_indicator = "Searching... ";
 
-        if (searchType == 1)
+        if (searchType == "1")
         {
             search_scope = searchInTTs ? 1 : 0;
             search_scope += searchInConds ? 2 : 0;
@@ -436,7 +461,7 @@
         }
         else
         {
-            if (searchType == 2)
+            if (searchType == "2")
             {
                 string? sid = searchParamsValue?.Trim();
                 if (string.IsNullOrEmpty(sid) || sid.Length < 4)
@@ -453,7 +478,7 @@
                 }
             }
 
-            if (searchType == 3)
+            if (searchType == "3")
             {
                 string? pmid = searchParamsValue;
                 if (pmid is null || !int.TryParse(pmid, out int _))
@@ -607,7 +632,7 @@
     private void ClearSearch()
     {
         searchParamsValue = "";
-        processedPars = ProcessSearchParams(searchParamsValue);
+        processedPars = "ALL STUDIES";
         RecalculateSearchFeedback();
 
         if (!aggregateSearches)
@@ -623,19 +648,19 @@
 
     private void RecalculateSearchFeedback()
     {
-        if (searchType == 1)
+        if (searchType == "1")
         { 
             search_scope = searchInTTs ? 1 : 0;
             search_scope += searchInConds ? 2 : 0;
-            sp = new(1, search_scope, processedPars, currentFP);
+            sp = new("1", search_scope.ToString(), processedPars, currentFP);
         }
-        if (searchType == 2)
+        if (searchType == "2")
         {
-            sp = new(2, (int)(idType ?? 0), searchParamsValue ?? "");
+            sp = new("2", idType ?? "", searchParamsValue ?? "");
         }
-        if (searchType == 3)
+        if (searchType == "3")
         {
-            sp = new(3, 0, searchParamsValue ?? "");
+            sp = new("3", "", searchParamsValue ?? "");
         } 
         search_fb = sp.ObtainFBString();
         StateHasChanged();
@@ -801,7 +826,7 @@
                 currentFP.pars_list += 'T';
             }
         }
-        RecalculateSearchFeedback();
+        if (!doing_restore) RecalculateSearchFeedback();
     }
 
     private void updateStatusSQL(string sql)
@@ -819,7 +844,7 @@
                 currentFP.pars_list += 'S';
             }
         }
-        RecalculateSearchFeedback();
+        if (!doing_restore) RecalculateSearchFeedback();
     }
 
     private void updateYearSQL(string sql)
@@ -837,7 +862,7 @@
                 currentFP.pars_list += 'Y';
             }
         }
-        RecalculateSearchFeedback();
+        if (!doing_restore) RecalculateSearchFeedback();
 
     }
 
@@ -856,7 +881,7 @@
                 currentFP.pars_list += 'B';
             }
         }
-        RecalculateSearchFeedback();
+        if (!doing_restore) RecalculateSearchFeedback();
     }
 
     private void updateCountryList(List<Country> countriesSelected)
@@ -883,7 +908,7 @@
             currentFP.countries = null;
             currentFP.pars_list = currentFP.pars_list.Replace("C", "");
         }
-        RecalculateSearchFeedback();
+        if (!doing_restore) RecalculateSearchFeedback();
     }
 
     private void updatePhaseSQL(string sql)
@@ -901,7 +926,7 @@
                 currentFP.pars_list += 'P';
             }
         }
-        RecalculateSearchFeedback();
+        if (!doing_restore) RecalculateSearchFeedback();
     }
 
     private void updateAllocSQL(string sql)
@@ -919,7 +944,7 @@
                 currentFP.pars_list += 'A';
             }
         }
-        RecalculateSearchFeedback();
+        if (!doing_restore) RecalculateSearchFeedback();
     }
 
     List<Option<string>> searchOptions = default!;
@@ -948,7 +973,6 @@
             { new Option<string> { Value = "45", Text = "CDR Number" } }
         };
 
-
         roman_suffixes = new()
         {
             {" i ", "1 "}, {" ii ", "2 "},{" iii ", "3 "},{" iv ", "4 "},{" v ", "5 "},
@@ -965,56 +989,60 @@
     private void SearchOptionChanged(Option<string> s)
     {
         searchText = s?.Text ?? "None";
-        searchType = Int32.Parse(s?.Value ?? "0");
+        searchType = s?.Value ?? "";
         paramsLabelText = searchType switch 
         {
-            1 => "Words",
-            2 => "Identifier",
-            3 => "PubMed ID",
+            "1" => "Words",
+            "2" => "Identifier",
+            "3" => "PubMed ID",
             _ => "Parameters"
         };
+        hidden_attribute = searchType == "2" ? "shown": "hidden";
 
-        // for now - to make testing easier
+
+        if (!doing_restore) RecalculateSearchFeedback();
+
+
+        /* for now - to make testing easier
         if (searchType == 1)
         {
-            searchParamsValue = "brca";
-            processedPars = ProcessSearchParams(searchParamsValue);
+        searchParamsValue = "brca";
+        processedPars = ProcessSearchParams(searchParamsValue);
         }
 
         if (searchType == 2)
         {
-            idType = 11;
-            searchParamsValue = "NCT01746290";
-        }
+        idType = 11;
+        searchParamsValue = "NCT01746290";
+            }
 
-        if (searchType == 3)
+            if (searchType == 3)
         {
 
-            searchParamsValue = "1017769"; // "1017769"; "462143";
-        }
-
-        RecalculateSearchFeedback();
+        searchParamsValue = "1017769"; // "1017769"; "462143";
+    }        */
 
     }
 
     private void idOptionChanged(Option<string> s)
     {
         idText = s?.Text ?? "None";
-        idType = Int32.Parse(s?.Value ?? "0");
+        idType = s?.Value ?? "";
+        if (!doing_restore) RecalculateSearchFeedback();
 
-        // for now - to make testing easier
+        /* for now - to make testing easier
         if (idType == 11)
         {
-            searchParamsValue = "NCT01746290";
+           searchParamsValue = "NCT01746290";
         }
         if (idType == 14)
         {
             searchParamsValue = "19.05.CLI";
-        }       
-
-        RecalculateSearchFeedback();
+        }
+        */
 
     }
+
 
     bool open = false;
     bool open2 = false;
@@ -1035,53 +1063,151 @@
 
             if (res == "Store this search")
             {
-                processedPars = ProcessSearchParams(searchParamsValue);
-                RecalculateSearchFeedback();
-
-                DialogParameters<SearchParams> parameters = new()
+                bool search_save_allowed = true;
+                if (searchType == "1")
                 {
-                    Content = sp,
-                    Title = $"Storing this search",
-                    PrimaryAction = "Save",
-                    SecondaryAction = "Cancel",
-                    Width = "32rem",
-                    Height = "30rem",
-                    TrapFocus = true,
-                    Modal = true,
-                    PreventScroll = true
-                };
+                    processedPars = ProcessSearchParams(searchParamsValue);
+                    search_scope = searchInTTs ? 1 : 0;
+                    search_scope += searchInConds ? 2 : 0;
+                    if (search_scope == 0 && processedPars != "ALL STUDIES")
+                    {
+                        search_save_allowed = false;
+                    }
+                    else if (processedPars == "ALL STUDIES")
+                    {
+                        search_save_allowed = AllowNoTermsSearch();
+                    }
 
-                await localStorage.SetItemAsync(sp., "John Smith");
-                // var name = await localStorage.GetItemAsync<string>("name");
+                    if (!search_save_allowed)
+                    {
+                        // Post explanatory message.
 
-                IDialogReference dialog = await DialogService.ShowDialogAsync<SearchStorer>(sp, parameters);
-                DialogResult? result = await dialog.Result;
+                        searchFeedback = "Saving this Search not possible:\n";
+                        searchFeedback += "The current search parameters do not correspond to a valid search.\n\n";
+                        searchFeedback += "Please see the User Guide for details";
+                    }
+                }
 
-                if (result.Data is not null)
+                if (search_save_allowed)
                 {
-                    // Store item under name and string verasion of sp
-                    var c = result.Data;
+                    searchFeedback = "";
+                    RecalculateSearchFeedback();
+                    if (sp is not null)
+                    {
+                        // Set up and show the dialog - if scope > 0 and search allowed
+                        // Await result - store if data returned 
+
+                        string date_string = DateTime.Now.ToString("yyyyMMdd");
+                        sp.storage_name = sp.pars + "_" + date_string;
+                        DialogParameters<SearchParams> parameters = new()
+                        {
+                            Content = sp,
+                            Title = $"Storing this search", 
+                            PrimaryAction = "Save",
+                            SecondaryAction = "Cancel",
+                            Width = "32rem",
+                            Height = "28.5rem",
+                            TrapFocus = true,
+                            Modal = true,
+                            PreventScroll = true
+                        };
+                        IDialogReference dialog = await DialogService.ShowDialogAsync<SearchStorer>(sp, parameters);
+
+                        DialogResult? result = await dialog.Result;
+                        if (result.Data is not null && !result.Cancelled)
+                        {
+                            SearchParams? returned_sp = result.Data as SearchParams;
+                            if (returned_sp is not null)
+                            {
+                                if (!returned_sp.storage_name.StartsWith("MDR_"))
+                                {
+                                    returned_sp.storage_name = "MDR_" + returned_sp.storage_name;
+                                }
+                                await localStorage.SetItemAsync<SearchParams>(returned_sp.storage_name, returned_sp);
+                            }
+                        }
+                    }
                 }
             }
 
             if (res == "Restore search")
             {
-                string blob = "";
-                DialogParameters parameters = new()
-                {
-                    Title = $"Restoring search",
-                    PrimaryAction = "Restore",
-                    SecondaryAction = "Cancel",
-                    Width = "32rem",
-                    Height = "25rem",
-                    TrapFocus = true,
-                    Modal = true,
-                    PreventScroll = true
-                };
+                SearchParams? sp = new();
+                DialogParameters<SearchParams> parameters = new()
+                    {
+                        Content = sp,
+                        Title = $"Restoring search",
+                        PrimaryAction = "Restore Selected",
+                        SecondaryAction = "Cancel",
+                        Width = "32rem",
+                        Height = "40rem",
+                        TrapFocus = true,
+                        Modal = true,
+                        PreventScroll = true
+                    };
 
-                IDialogReference dialog = await DialogService.ShowDialogAsync<SearchRestorer>(blob, parameters);
+                IDialogReference dialog = await DialogService.ShowDialogAsync<SearchRestorer>(sp, parameters);
+
                 DialogResult? result = await dialog.Result;
-            }
+
+                doing_restore = true;
+                if (result.Data is not null && !result.Cancelled)
+                {
+                    SearchParams? returned_sp = result.Data as SearchParams;
+                    if (returned_sp is not null)
+                    {
+                        searchType = returned_sp.type;
+                        paramsLabelText = searchType switch
+                        {
+                            "1" => "Words",
+                            "2" => "Identifier",
+                            "3" => "PubMed ID",
+                            _ => "Parameters"
+                        };
+                        hidden_attribute = searchType == "2" ? "shown" : "hidden";
+
+                        if (searchType == "1")
+                        {
+                            search_scope = int.Parse(returned_sp.scope);
+                            searchInConds = search_scope > 1 ? true : false;
+                            searchInTTs = search_scope is 1 or 3 ? true : false;
+
+                            if (returned_sp.fp is not null)
+                            {
+                                currentFP = returned_sp.fp;
+                                StudyTypeFilter?.SetFilters(currentFP.study_type);
+                                StudyStatusFilter?.SetFilters(currentFP.study_status);
+                                StudyYearFilter?.SetFilters(currentFP.start_year);
+                                StudyCountryFilter?.SetFilters(currentFP.countries, currentFP.country_names);
+                                StudyObjectFilter?.SetFilters(currentFP.objects);
+                                StudyPhaseFilter?.SetFilters(currentFP.phase);
+                            }
+                        }
+
+                        if (searchType is "2" or "3")
+                        {
+                            if (searchType == "2")
+                            {
+                                idType = returned_sp.scope;
+                            }
+                            ClearFilters();
+                        }
+                        
+                        searchParamsValue = returned_sp.pars;
+                        processedPars = ProcessSearchParams(searchParamsValue);
+
+                        BaseSet = new List<string>();
+                        ShowSet = BaseSet;
+                        rec_num = ShowSet.Count;
+                        rec_num_indicator = "Search parameters restored";
+                        PageSet = null;
+
+                        RecalculateSearchFeedback();
+                        StateHasChanged();
+                    }
+                }
+                doing_restore = false;
+            }  
         }
     }
 }

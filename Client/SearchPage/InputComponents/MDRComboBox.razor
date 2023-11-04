@@ -1,11 +1,13 @@
 ﻿ 
-
-<FluentCombobox Items=@idOptions 
+ 
+<FluentCombobox 
+           Items=@idOptions
            OptionText="@(i => i?.Text)"
            OptionValue="@(i => i?.Value)"
-           OptionSelected="@(i => i == null ? false : i.Selected)"
-           SelectedOptionChanged="HandleSelectedOptionChanged"
-           Position="SelectPosition.Below"></FluentCombobox>
+           SelectedOption="@startValue"
+           Position="SelectPosition.Below"
+           Multiple = "false"
+           @bind-Value="@stringValue"></FluentCombobox>
 
 @code {
     [Parameter]
@@ -14,6 +16,41 @@
     [Parameter]
     public EventCallback<Option<string>> HandleSelectedOptionChanged { get; set; }
 
+    [Parameter]
+    public string? stringValue { get; set; }
+
+    [Parameter]
+    public Option<string>? startValue { get; set; }
+
+
+    private Option<string> _selected = default!;   
+
+    private Option<string> Selected
+    { 
+        get => _selected;
+        set
+        {
+            _selected = value;
+            HandleSelectedOptionChanged.InvokeAsync(_selected);
+        } 
+    } 
+
+    public void SetValue(string new_value)
+    {
+        if (idOptions?.Any() == true)
+        {
+            stringValue = new_value;
+            foreach (Option<string> p in idOptions)
+            {
+                if (p.Value == new_value)
+                {
+                    startValue = p;
+                    break;
+                }
+            }
+            StateHasChanged();
+        }
+    }
 }
 
 

@@ -6,23 +6,24 @@ namespace MDR_FuiPortal.Shared
 
     public class SearchParams
     {
-        public int type { get; set; }
-        public int scope { get; set; }
+        public string type { get; set; }
+        public string scope { get; set; }
         public string? pars { get; set; }
         public FilterParams? fp { get; set; }
         public string? fb_string { get; set; }
+        public string storage_name { get; set; } = "";
 
         public SearchParams()
         { }
 
-        public SearchParams(int _type, int _scope, string _pars)
+        public SearchParams(string _type, string _scope, string _pars)
         {
             type = _type;
             scope = _scope;
             pars = _pars;
         }
 
-        public SearchParams(int _type, int _scope, string _pars, FilterParams _fp)
+        public SearchParams(string _type, string _scope, string _pars, FilterParams _fp)
         {
             type = _type;
             scope = _scope;
@@ -33,14 +34,14 @@ namespace MDR_FuiPortal.Shared
         public string ObtainFBString()
         {
             string fb = "";
-            if (type == 1)
+            if (type == "1")
             {
                 fb = "Using Text";
                 string scope_string =  scope switch
                 {
-                    1 => "titles and topics",
-                    2 => "conditions",
-                    3 => "titles, topics and conditions",
+                    "1" => "titles and topics",
+                    "2" => "conditions",
+                    "3" => "titles, topics and conditions",
                     _ => ""
                 };
 
@@ -217,14 +218,14 @@ namespace MDR_FuiPortal.Shared
                 }
             }
 
-            if (type == 2)
+            if (type == "2")
             {
                 fb = "Using Study identifier, ";
                 fb += "type " + scope + ", ";
                 fb += pars;
             }
 
-            if (type == 3)
+            if (type == "3")
             {
                 fb = "Using PubMed Id, ";
                 fb += pars;

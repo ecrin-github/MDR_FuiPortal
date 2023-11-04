@@ -1,22 +1,81 @@
-﻿@implements IDialogContentComponent<string>
+﻿@implements IDialogContentComponent<SearchParams>
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 
 <p>Please select a search from the list of saved searches below.</p>
 
- <FluentListbox Id="people-listbox"
-    Height="150px"
-    TOption="string"
-/>
+ <FluentListbox Id="searches-listbox"
+    Height="8rem;"
+    Size = "5"
+    Items="@stored_keys"
+    TOption="search"
+    OptionValue="@(p => p.key)"
+    OptionText="@(p => p.name)"
+    @bind-SelectedOption="@SelectedItem" />
+
+
+<FluentTextArea Rows="3" Cols="60" Value="@Content?.fb_string"
+                Appearance="FluentInputAppearance.Filled"
+    style="color:darkblue; padding-bottom:0; margin-bottom: 1rem;" 
+    Readonly="true">Selected search:</FluentTextArea>
 
 @code {
-
     [Parameter]
-    public string? Content { get; set; }
+    public SearchParams Content { get; set; } = default!;
+    SearchParams? NewContent;
 
-    [Parameter]
-    public string? SearchName { get; set; }
-
-    protected override void OnInitialized()
+    class search
     {
+        public string key { get; set; }
+        public string name { get; set; }
 
+        public search(string _key, string _name)
+        {
+            key = _key;
+            name = _name;
+        }
     }
+
+    List<search>? stored_keys;
+
+    search? _selectedItem;
+    search? SelectedItem
+    {
+        get => _selectedItem;
+        set
+        {
+            _selectedItem = value;
+            Task T = FetchSearchDetails(_selectedItem);
+        }
+    }
+
+    private async Task FetchSearchDetails(search? _selectedItem)
+    {
+        NewContent = await localStorage.GetItemAsync<SearchParams>(_selectedItem?.key);
+        Content.type = NewContent.type; 
+        Content.scope = NewContent.scope;        
+        Content.pars = NewContent.pars;
+        Content.fp = NewContent.fp;
+        Content.fb_string = NewContent.fb_string;
+        Content.storage_name = NewContent.storage_name;
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        IEnumerable<string>? returned_keys = await localStorage.KeysAsync();
+        stored_keys = new List<search>();
+        if (returned_keys.Any())
+        {
+            foreach (string s in returned_keys)
+            {
+                if (s.StartsWith("MDR_"))
+                {
+                    stored_keys.Add(new search(s, s[4..]));
+                }
+            }
+
+            SelectedItem = stored_keys[0];
+        }
+    }
+
 }
