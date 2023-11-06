@@ -12,6 +12,7 @@
     OptionText="@(p => p.name)"
     @bind-SelectedOption="@SelectedItem" />
 
+<p></p>
 
 <FluentTextArea Rows="3" Cols="60" Value="@Content?.fb_string"
                 Appearance="FluentInputAppearance.Filled"
@@ -74,7 +75,10 @@
                 }
             }
 
-            SelectedItem = stored_keys[0];
+            if (stored_keys.Any())
+            {
+                SelectedItem = stored_keys[0];
+            }
         }
     }
 

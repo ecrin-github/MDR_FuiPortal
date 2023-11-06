@@ -66,7 +66,7 @@ public class StudyRepo : IStudyRepo
     public async Task<IEnumerable<string>?> FetchStudiesBySearch(int search_scope, string search_string,
         int bucket, FilterParams? fp)
     {
-        string search_pars = HttpUtility.UrlDecode(search_string);
+        string search_pars = process_pars(search_string);
         string sql_string = $"select study_json from search.lexemes lx ";
         if (fp is not null && fp.pars_list != "")
         { 
@@ -80,7 +80,7 @@ public class StudyRepo : IStudyRepo
     public async Task<IEnumerable<string>?> FetchStudiesBySearchByBucket(int search_scope, string search_string,
         int bucket, FilterParams? fp)
     {
-        string search_pars = HttpUtility.UrlDecode(search_string);
+        string search_pars = process_pars(search_string);
         string sql_string = $"select study_json from search.lexemes lx ";
         if (fp is not null && fp.pars_list != "")
         {
@@ -95,7 +95,7 @@ public class StudyRepo : IStudyRepo
 
     public async Task<int> FetchCountBySearchByBucket(int search_scope, string search_string, int bucket, FilterParams? fp)
     {
-        string search_pars = HttpUtility.UrlDecode(search_string);
+        string search_pars = process_pars(search_string);
         string sql_string = $"select count(*) from search.lexemes lx ";
         if (fp is not null && fp.pars_list != "")
         {
@@ -122,7 +122,7 @@ public class StudyRepo : IStudyRepo
     public async Task<IEnumerable<string>?> FetchPageStudiesBySearch(int search_scope, string search_string,
         int page_start, int page_size, FilterParams? fp)
     {
-        string search_pars = HttpUtility.UrlDecode(search_string);
+        string search_pars = process_pars(search_string);
         string sql_string = $"select study_json from search.lexemes lx ";
         if (fp is not null && fp.pars_list != "")
         {
@@ -137,7 +137,7 @@ public class StudyRepo : IStudyRepo
 
     public async Task<int> FetchStudyCountBySearch(int search_scope, string search_string, FilterParams? fp)
     {
-        string search_pars = HttpUtility.UrlDecode(search_string);
+        string search_pars = process_pars(search_string);
         int total_count = 0;
         for (int bucket = 1; bucket < 21; bucket++)
         {
@@ -291,6 +291,14 @@ public class StudyRepo : IStudyRepo
 
         return sql_where_clauses;
 
+    }
+
+    private string process_pars(string input_pars)
+    {
+        string output_pars = input_pars.Replace(" and ", " & ");
+        output_pars = output_pars.Replace(" or ", " | ");
+        output_pars = output_pars.Replace(" not(", " !(");
+        return output_pars;
     }
 
         

@@ -7,11 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="AboutPage\AboutInfoPanel.razor" />
+    <Content Remove="GuidePage\GuideInfoPanel.razor" />
     <Content Remove="SearchPage\InputComponents\CheckScope.razor" />
     <Content Remove="SearchPage\InputComponents\MDRComboBox.razor" />
+    <Content Remove="Shared\InfoPanel.razor.razor" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="AboutPage\AboutInfoPanel.razor.css" />
+    <None Remove="GuidePage\GuideInfoPanel.razor.css" />
     <None Remove="SearchPage\InputComponents\CheckScope.razor.css" />
     <None Remove="SearchPage\InputComponents\MDRComboBox.razor.css" />
     <None Remove="SearchPage\Modals\SearchStorer.razor.css" />
@@ -41,9 +46,8 @@
     <ProjectReference Include="..\Shared\MDR_FuiPortal.Shared.csproj" />
   </ItemGroup>
 
-
   <ItemGroup>
-     <None Update="AboutPage/AboutInfoPanel.razor.css; GuidePage/GuideInfoPanel.razor.css" CssScope="b-aboutpanel" />
-  </ItemGroup>
+		<None Update="Shared/InfoPanel.razor.css;" CssScope="b-aboutpanel" />
+ </ItemGroup>
 
 </Project>

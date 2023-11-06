@@ -32,7 +32,7 @@
                             <FluentAccordionItem Heading="By Start Year" Style="font-size: 1rem; color: var(--txt-emph-colour)">
                                 <YearSelection OnSQLChange="updateYearSQL" @ref="StudyYearFilter" />
                             </FluentAccordionItem>
-                            <FluentAccordionItem Heading="By Location" Style="font-size: 1rem; color: var(--txt-emph-colour)">
+                            <FluentAccordionItem Heading="By Country" Style="font-size: 1rem; color: var(--txt-emph-colour)">
                                 <CountrySelection onListChanged="updateCountryList" @ref="StudyCountryFilter" />
                             </FluentAccordionItem>
                             <FluentAccordionItem Heading="By Linked Object" Style="font-size: 1rem; color: var(--txt-emph-colour)">
@@ -129,9 +129,13 @@
                         <FluentSwitch @bind-Value=showSearches style="margin-inline-end: 12px;">Show Search Details</FluentSwitch>
                     </div>
                     <div id="small-switch-spacer"></div>
-                    <div id="agg-switch" class="small-text no-wrap-text">
-                        <FluentSwitch @bind-Value=aggregateSearches style="margin-inline-end: 12px;">Aggregate Results</FluentSwitch>
-                    </div>
+
+                    @if (@searchType == "2" || @searchType == "3")
+                    {
+                        <div id="agg-switch" class="small-text no-wrap-text">
+                            <FluentSwitch @bind-Value=aggregateSearches style="margin-inline-end: 12px;">Aggregate Results</FluentSwitch>
+                        </div>
+                    }
 
                     <div id="switch-spacer"></div>
 
@@ -159,6 +163,10 @@
                         <div class="progress-outer">
                             <div class="progress-inner" style="width:@percent_done%">@percent_done%</div>
                         </div>
+
+                        <button class="cancel-button" @onclick="() => CancelClicked()">
+                            Cancel
+                        </button>
                     </div>
 
                     <div id="results-spacer"> </div>
@@ -227,17 +235,18 @@
 
             <p>@status</p>
 
-                <div class="export-button-container">
-                    <button class="big-button big-button-text" id="StoreButton" 
-                       @onclick="@(()=> open2 = !open2)">
-                    Search Store
-                    </button>
-                </div>
+            <div class="export-button-container">
+                <button class="big-button big-button-text" id="StoreButton" 
+                    @onclick="@(()=> open2 = !open2)">
+                Search Store
+                </button>
+            </div>
 
-                 <FluentMenu Anchor="StoreButton" @bind-Open="open2" @onmenuchange=OnMenuChange2>
-                    <FluentMenuItem>Store this search</FluentMenuItem>
-                    <FluentMenuItem>Restore search</FluentMenuItem>
-                 </FluentMenu>
+            <FluentMenu Anchor="StoreButton" @bind-Open="open2" @onmenuchange=OnMenuChange2>
+            <FluentMenuItem>Store this search</FluentMenuItem>
+            <FluentMenuItem>Restore search</FluentMenuItem>
+            </FluentMenu>
+
         </div>
     </div>
 </div>
@@ -253,8 +262,8 @@
 
     List<string>? BaseSet;
     List<string>? BucketSet;
-    List<string>? ShowSet = null;
-    List<string>? PageSet = null;
+    List<string>? ShowSet = null!;
+    List<string>? PageSet = null!;
     PageControl? pagecon;
 
     bool doing_restore = false;
@@ -278,7 +287,7 @@
     bool SearchPossible = false;
     string processedPars = "";
     string searchFeedback = "";
-    bool HideProgress = true;
+    bool HideProgress = true;   
 
     private bool _searchInTTs = true;
     private bool _searchInConds = true;
@@ -333,6 +342,7 @@
     bool isLoading = false;
     bool isEmpty = false;
     bool noResults = true;
+    int SearchCancelled = 0;
 
     private Dictionary<string, string> roman_suffixes = default!;
 
@@ -341,18 +351,20 @@
         filtersBarShowing = visibility;
     }
 
-    private async Task SearchClicked()
+    private async Task SearchClicked(bool CancelSearch = false)
     {
         isLoading = true;
         isEmpty = false;
         noResults = true;
         rec_num_indicator = "Searching... ";
+        int page_size = pagecon?.recs_per_page ?? 10;
 
         if (searchType == "1")
         {
             search_scope = searchInTTs ? 1 : 0;
             search_scope += searchInConds ? 2 : 0;
-            int page_size = pagecon?.recs_per_page ?? 10;
+
+            aggregateSearches = false;
             processedPars = ProcessSearchParams(searchParamsValue);
             RecalculateSearchFeedback();
             bool search_allowed = true;
@@ -388,7 +400,7 @@
                 searchFeedback = "";
                 int running_total = 0;
                 percent_done = 0;
-                HideProgress = false;  
+                HideProgress = false;
 
                 if (pagecon is not null)
                 {
@@ -400,36 +412,52 @@
                 bool baseset_has_1000 = false;
                 int bucket = 1;
 
+                if (CancelSearch)
+                {
+                    // Skip all but the last bucket on a 'none found' search 
+
+                    processedPars = "zqzqzq";
+                    bucket = 20;
+                    SearchCancelled = 2;
+                }
+                else
+                {
+                    SearchCancelled = 0;  // Insurance!
+                }
+
                 while (!baseset_has_1000 && bucket <= 20)
                 {
                     int results_needed_for_baseset = 1000 - running_total;
                     fpj = JsonSerializer.Serialize(currentFP);
-                    search_url = $"{search_url_stem}/BySearch/{search_scope}/{HttpUtility.UrlEncode(processedPars)}/{bucket}/f/{fpj}";
+                    search_url = $"{search_url_stem}/BySearch/{search_scope}/{processedPars}/{bucket}/f/{fpj}";
                     BucketSet = await Http.GetFromJsonAsync<List<string>>(search_url);
 
-                    if (BucketSet?.Any() == true)
+                    if (SearchCancelled == 0)   // ignore returned results if search cancelled (in the meantime)
                     {
-                        if (BucketSet.Count == 1 && BucketSet[0] == "null result")
+                        if (BucketSet?.Any() == true)
                         {
-                            // do nothing - null indicator returned
-                        }
-                        else
-                        {
-                            if (BucketSet.Count > results_needed_for_baseset)
+                            if (BucketSet.Count == 1 && BucketSet[0] == "null result")
                             {
-                                BaseSet.AddRange(BucketSet.Take(results_needed_for_baseset));
+                                // do nothing - null indicator returned
                             }
                             else
                             {
-                                BaseSet.AddRange(BucketSet);
-                            }
-                            int baseset_num = BaseSet.Count;
+                                if (BucketSet.Count > results_needed_for_baseset)
+                                {
+                                    BaseSet.AddRange(BucketSet.Take(results_needed_for_baseset));
+                                }
+                                else
+                                {
+                                    BaseSet.AddRange(BucketSet);
+                                }
+                                int baseset_num = BaseSet.Count;
 
-                            baseset_has_1000 = baseset_num == 1000;
-                            running_total += BucketSet.Count;  // may be over 1000
+                                baseset_has_1000 = baseset_num == 1000;
+                                running_total += BucketSet.Count;  // may be over 1000
+                            }
                         }
+                        UpdateIndicator(running_total, bucket, BaseSet.Count);
                     }
-                    UpdateIndicator(running_total, bucket, BaseSet.Count);
                     bucket++;
                 }
 
@@ -442,19 +470,25 @@
                         ShowSet = BaseSet; // for now - i.e. no in memory filters applied
                         rec_num = baseset_has_1000 ? 1000 : ShowSet.Count;
                         noResults = false;
-                        StateHasChanged();
-                        await DoRemainingBuckets(bucket, running_total, fpj);
+                        if (bucket <= 20)
+                        {
+                            await DoRemainingBuckets(bucket, running_total, fpj);
+                        }
+                        else
+                        {
+                            UpdateIndicator(running_total, 21, BaseSet.Count);
+                        }
                     }
                     else
                     {
                         // No records found, even after all buckets done
 
                         rec_num = 0;
-                        rec_num_indicator = "No records found";
+                        UpdateIndicator(0, 21, 0);
                         isEmpty = true;
                         noResults = true;
-                        StateHasChanged();
                     }
+                    StateHasChanged();
                     HideProgress = true;
                 }
             }
@@ -474,7 +508,38 @@
                 {
                     searchFeedback = "";
                     search_url = $"{search_url_stem}/ByRegId/{idType}/{searchParamsValue}";
-                    BaseSet = await Http.GetFromJsonAsync<List<string>>(search_url);
+                    if (!aggregateSearches)
+                    {
+                        BaseSet = await Http.GetFromJsonAsync<List<string>>(search_url);
+                    }
+                    else
+                    {
+                        List<string>? OldSet = BaseSet;
+                        List<string>? NewSet = await Http.GetFromJsonAsync<List<string>>(search_url);
+                        if (NewSet is not null)
+                        {
+                            if (NewSet.Count == 1 && NewSet[0] == "null result")
+                            {
+                                // no data indicator - leave the Baseset unchanged
+
+                                BaseSet = OldSet;
+                            }
+                            else if (OldSet?.Any() == true)
+                            {
+                                NewSet.AddRange(OldSet);
+                                BaseSet = NewSet;    // Add the new to the old se
+                            }
+                            else
+                            {
+                                BaseSet = NewSet;  // no OldSet, otherwise make the new set BaseSet
+                            }
+                        }
+                        else
+                        {
+                            BaseSet = OldSet;   // Shouldn't happen but you never know....
+                        }
+
+                    }
                 }
             }
 
@@ -491,7 +556,37 @@
                 {
                     searchFeedback = "";
                     search_url = $"{search_url_stem}/ByPMID/{searchParamsValue}";
-                    BaseSet = await Http.GetFromJsonAsync<List<string>>(search_url);
+                    if (!aggregateSearches)
+                    {
+                        BaseSet = await Http.GetFromJsonAsync<List<string>>(search_url);
+                    }
+                    else
+                    {
+                        List<string>? OldSet = BaseSet;
+                        List<string>? NewSet = await Http.GetFromJsonAsync<List<string>>(search_url);
+                        if (NewSet is not null)
+                        {
+                            if (NewSet.Count == 1 && NewSet[0] == "null result")
+                            {
+                                // no data indicator - leave the Baseset unchanged
+
+                                BaseSet = OldSet;
+                            }
+                            else if (OldSet?.Any() == true)
+                            {
+                                NewSet.AddRange(OldSet);
+                                BaseSet = NewSet;    // Add the new to the old se
+                            }
+                            else
+                            {
+                                BaseSet = NewSet;  // no OldSet, otherwise make the new set BaseSet
+                            }
+                        }
+                        else
+                        {
+                            BaseSet = OldSet;   // Shouldn't happen but you never know....
+                        }
+                    }
                 }
             }
 
@@ -525,25 +620,44 @@
     {
         while (bucket <= 20)
         {
-            search_url = $"{search_url_stem}/BySearch/{search_scope}/{HttpUtility.UrlEncode(processedPars)}/{bucket}/t/{fpj}";
+            search_url = $"{search_url_stem}/BySearch/{search_scope}/{processedPars}/{bucket}/t/{fpj}";
             BucketSet = await Http.GetFromJsonAsync<List<string>>(search_url);
 
-            if (BucketSet?.Any() == true)
+            if (SearchCancelled == 0)  // ignore returned results if search cancelled (in the meantime)
             {
-                if (BucketSet.Count == 1 && BucketSet[0].StartsWith("count:"))
+                if (BucketSet?.Any() == true)
                 {
-                    // Get the count of records for this bucket.
-
-                    string count_string = BucketSet[0][6..].Trim();
-                    if (int.TryParse(count_string, out int bucket_num))
+                    if (BucketSet.Count == 1 && BucketSet[0].StartsWith("count:"))
                     {
-                        running_total += bucket_num;
+                        // Get the count of records for this bucket.
+
+                        string count_string = BucketSet[0][6..].Trim();
+                        if (int.TryParse(count_string, out int bucket_num))
+                        {
+                            running_total += bucket_num;
+                        }
                     }
                 }
+                UpdateIndicator(running_total, bucket, BaseSet!.Count);
+                bucket++;
             }
-            UpdateIndicator(running_total, bucket, BaseSet!.Count);
-            bucket++;
+            else
+            {
+                bucket = 21;    // Drop out of this loop
+                UpdateIndicator(0, 21, 0);
+            }
         }
+    }
+
+    private async Task CancelClicked()
+    {
+        // Cancel the current search by searching with a very quick 
+        // search that gives no results
+
+        await SearchClicked(true);
+
+        // still gives the problem of the results being returned
+        // on thew separate async thread
     }
 
 
@@ -595,20 +709,36 @@
     }
 
 
-    private void UpdateIndicator (int record_count, int bucket = 0, int baseset_count = 0)
+    private void UpdateIndicator(int record_count, int bucket = 0, int baseset_count = 0)
     {
-        rec_num_indicator = $"{record_count} Record";
-        rec_num_indicator += record_count == 1 ? "" : "s";
-        rec_num_indicator += $" found"; 
-
-        if (bucket > 0)
+        if (SearchCancelled > 0)
         {
-            if (record_count > baseset_count)
-            {
-                rec_num_indicator += $" - {baseset_count} loaded";
-            }
-            percent_done = bucket * 5;
+            rec_num_indicator = $"Last search cancelled";
         }
+        else
+        {
+            rec_num_indicator = $"{record_count} Record";
+            rec_num_indicator += record_count == 1 ? "" : "s";
+            rec_num_indicator += $" found";
+
+            if (bucket > 0 && bucket < 21)
+            {
+                if (record_count > baseset_count)
+                {
+                    rec_num_indicator += $" - {baseset_count} loaded";
+                }
+                percent_done = bucket * 5;
+            }
+        }
+
+        if (SearchCancelled > 0)
+        {
+            // return to normal, but it takes two passes (one for the cancelling search,
+            // the second for the original search that normally retuns afterwards)
+
+            SearchCancelled--;
+        }
+
         StateHasChanged();
     }
 
@@ -635,15 +765,15 @@
         processedPars = "ALL STUDIES";
         RecalculateSearchFeedback();
 
-        if (!aggregateSearches)
-        {
-            BaseSet = new List<string>();
-            ShowSet = BaseSet;
-            rec_num = ShowSet.Count;
-            rec_num_indicator = "Search results cleared";
-            PageSet = null;
-            ClearFilters();
-        }
+        aggregateSearches = false;
+
+        BaseSet = new List<string>();
+        ShowSet = BaseSet;
+        rec_num = ShowSet.Count;
+        rec_num_indicator = "Search results cleared";
+        PageSet = null;
+        ClearFilters();
+
     }
 
     private void RecalculateSearchFeedback()
@@ -773,35 +903,47 @@
             new_st = new_st.Replace("phase iii/iv ", "phase34 ");
         }
 
-        string output = new_st.Trim().Replace(" or ", " | ");
-        output = output.Replace(" and ", " & ");
-        output = output.Replace(" not (", " !(").Replace(" not(", " !(");
-
-        // Replace remaining spaces with '&', unless part of an existing | or & space
+        string output = new_st;
 
         if (output.Contains(' '))
         {
-            int pars_length = output.Length;
+            // Replace spaces with ' and ', 
+            // unless part of an existing | or & space
+            // Easier to do this using single characters
+
+            string nt = output.Trim().Replace(" or ", " | ");
+            nt = nt.Replace(" and ", " & ");
+            nt = nt.Replace(" not (", " !(").Replace(" not(", " !(").Replace(" ! (", " !(");
+
+            int pars_length = nt.Length;
             string st = "";
             for (int i = 0; i < pars_length; i++)
             {
-                if (output[i] == ' ')
+                if (nt[i] == ' ')
                 {
-                    if (output[i - 1] != '|' && output[i + 1] != '|'
-                    && output[i - 1] != '&' && output[i + 1] != '&')
+                    if (nt[i - 1] != '|' && nt[i + 1] != '|' 
+                    && nt[i - 1] != '&' && nt[i + 1] != '&')
                     {
                         st = st + " & ";
                     }
                     else
                     {
-                        st = st + output[i];
+                        st = st + nt[i];
                     }
                 }
                 else
                 {
-                    st = st + output[i];
+                    st = st + nt[i];
                 }
             }
+
+            // Go back to full words to avoid the url encoding, 
+            // which appears to be blocked by IIS (!!!!)
+
+            st = st.Replace(" | ", " or ");
+            st = st.Replace(" & ", " and ");
+            st = st.Replace(" !(", " not(");
+            st = st.Replace("!", "");  // remove if not with brackets
             output = st;
         }
 
@@ -998,10 +1140,19 @@
             _ => "Parameters"
         };
         hidden_attribute = searchType == "2" ? "shown": "hidden";
-
-
         if (!doing_restore) RecalculateSearchFeedback();
-
+        if (searchType == "1")
+        {
+            aggregateSearches = false;
+        }
+        if (!aggregateSearches)
+        {
+            BaseSet = new List<string>();
+            ShowSet = BaseSet;
+            rec_num = ShowSet.Count;
+            rec_num_indicator = "Search type changed";
+        }
+        StateHasChanged();
 
         /* for now - to make testing easier
         if (searchType == 1)
@@ -1028,19 +1179,26 @@
     {
         idText = s?.Text ?? "None";
         idType = s?.Value ?? "";
+        if (!aggregateSearches)
+        {
+            BaseSet = new List<string>();
+            ShowSet = BaseSet;
+            rec_num = ShowSet.Count;
+            rec_num_indicator = "Identifier type changed";
+        }
         if (!doing_restore) RecalculateSearchFeedback();
+        StateHasChanged();
 
         /* for now - to make testing easier
-        if (idType == 11)
-        {
+           if (idType == 11)
+           {
            searchParamsValue = "NCT01746290";
         }
         if (idType == 14)
-        {
+            {
             searchParamsValue = "19.05.CLI";
         }
-        */
-
+    */
     }
 
 
@@ -1134,17 +1292,17 @@
             {
                 SearchParams? sp = new();
                 DialogParameters<SearchParams> parameters = new()
-                    {
-                        Content = sp,
-                        Title = $"Restoring search",
-                        PrimaryAction = "Restore Selected",
-                        SecondaryAction = "Cancel",
-                        Width = "32rem",
-                        Height = "40rem",
-                        TrapFocus = true,
-                        Modal = true,
-                        PreventScroll = true
-                    };
+                {
+                    Content = sp,
+                    Title = $"Restoring search",
+                    PrimaryAction = "Restore Selected",
+                    SecondaryAction = "Cancel",
+                    Width = "32rem",
+                    Height = "33rem",
+                    TrapFocus = true,
+                    Modal = true,
+                    PreventScroll = true
+                };
 
                 IDialogReference dialog = await DialogService.ShowDialogAsync<SearchRestorer>(sp, parameters);
 
@@ -1156,6 +1314,7 @@
                     SearchParams? returned_sp = result.Data as SearchParams;
                     if (returned_sp is not null)
                     {
+                        string oldSearchType = searchType;
                         searchType = returned_sp.type;
                         paramsLabelText = searchType switch
                         {
@@ -1168,6 +1327,7 @@
 
                         if (searchType == "1")
                         {
+                            aggregateSearches = false;
                             search_scope = int.Parse(returned_sp.scope);
                             searchInConds = search_scope > 1 ? true : false;
                             searchInTTs = search_scope is 1 or 3 ? true : false;
@@ -1196,12 +1356,15 @@
                         searchParamsValue = returned_sp.pars;
                         processedPars = ProcessSearchParams(searchParamsValue);
 
-                        BaseSet = new List<string>();
-                        ShowSet = BaseSet;
-                        rec_num = ShowSet.Count;
-                        rec_num_indicator = "Search parameters restored";
-                        PageSet = null;
+                        if (!aggregateSearches)
+                        {   
+                            BaseSet = new List<string>();
+                            ShowSet = BaseSet;
+                            rec_num = ShowSet.Count;
+                            PageSet = null;
+                        }
 
+                        rec_num_indicator = "Search parameters restored";
                         RecalculateSearchFeedback();
                         StateHasChanged();
                     }

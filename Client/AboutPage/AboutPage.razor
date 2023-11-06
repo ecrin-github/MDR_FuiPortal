@@ -12,7 +12,7 @@
             </div>
         </div>
         <div id="info-panel">
-            <AboutInfoPanel ItemRequested=@SetRequestedId ItemIdToDisplay=@clickedId />
+            <InfoPanel ItemRequested=@SetRequestedId ItemIdToDisplay=@clickedId />
         </div>
     </div>
 </div>
@@ -25,13 +25,11 @@
     public string? requestedId { get; set; }
     
     Treeview? AboutTree;
-    //private Action<string>? callRequestId;
         
     protected override void OnAfterRender(bool firstRender)
     {
         if (firstRender)
         {
-            //callRequestId = CallRequestId;
             CallRequestId("a0");
         }
     }

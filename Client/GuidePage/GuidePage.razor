@@ -12,7 +12,7 @@
             </div>
         </div>
         <div id="info-panel">
-            <GuideInfoPanel ItemRequested=@SetRequestedId ItemIdToDisplay=@clickedId />
+            <InfoPanel ItemRequested=@SetRequestedId ItemIdToDisplay=@clickedId />
         </div>
     </div>
 </div>
@@ -51,8 +51,9 @@
 
     private void ProcessItemClick(string Id)
     {
-        // for now just set parameters in text. Normally would use
-        // the id to issue a call for the information.
+        /// Changes the clickedId parameter.
+        // That transmits the request as the ItemIdToDisplay
+        // parameter of the info panel.
 
         clickedId = Id;
     }

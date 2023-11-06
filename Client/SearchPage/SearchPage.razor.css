@@ -277,17 +277,20 @@ input[type=text] {
 }
 
 #buckets-progress-bar {
-    flex: 0 0 16rem;
+    flex: 0 0 24rem;
     height: 1rem;
-
+    margin-top: -0.2rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 
 .progress-outer {
+    flex: 0 0 16rem;
     background-color: cornsilk;
-    width: 100%;
     border-width: 2px;
     border-color: powderblue;
-    margin-top: -0.5rem;
+    margin-right: 1.5rem;
 }
 
 .progress-inner {
@@ -296,6 +299,17 @@ input[type=text] {
     font-weight: bold;
 }
 
+
+.cancel-button {
+    flex: 0 0 5rem;
+    height: 1rem;
+    background-color: darkred;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 0.75rem;
+    line-height: 1;
+    color: white;
+}
 
 
 #results-spacer {
