@@ -1,18 +1,20 @@
 ﻿using Dapper;
 using MDR_FuiPortal.Shared;
 using Npgsql;
-using System.Web;
 
 namespace MDR_FuiPortal.Server;
 
 public class StudyRepo : IStudyRepo
 {
     private readonly string _dbConnString;
+    private readonly string _aggsConnString;
 
-    public StudyRepo(ICreds creds)
+    public StudyRepo(ICredentials creds)
     {
         _dbConnString = creds.GetConnectionString("mdr");
+        _aggsConnString = creds.GetConnectionString("aggs");
     }
+
 
     private async Task<T?> GetSingleRecord<T>(string sql_string)
     {
@@ -300,14 +302,10 @@ public class StudyRepo : IStudyRepo
         output_pars = output_pars.Replace(" not(", " !(");
         return output_pars;
     }
-
-        
+            
 
     public async Task<string?> FetchStudyById(int study_id)
     {
-        // for now...
-        // ...in the real system a full json equivalent of the study need to be returned
-
         string sql_string = $@"select s.study_json
                              from search.lexemes s
                              where s.study_id = {study_id}";
@@ -316,10 +314,75 @@ public class StudyRepo : IStudyRepo
     }
 
 
+    public async Task<List<string>?> FetchStudyAllDetailsById(int study_id)
+    {
+        // for testing 2044457 = TNT trial
+
+        string sql_study = @$"select full_study
+                           from search.studies_json s
+                           where s.id = {study_id}";
+
+        string sql_objects = @$"select full_object
+                           from search.objects_json b
+                           inner join core.study_object_links k
+                           on k.object_id = b.id
+                           where k.study_id = {study_id}";
+
+        List<string> res = new();
+        string? study_data = await GetSingleRecord<string>(sql_study);
+        if (study_data is not null)
+        {
+            res.Add(study_data);
+            IEnumerable<string>? object_data = await GetIEnumerable<string>(sql_objects);
+            if (object_data?.Any() == true)
+            {
+                res.AddRange(object_data);
+            }
+            return res;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+
+    public async Task<string?> FetchStudyDetailsById(int study_id)
+    {
+        // for testing 2044457 = TNT trial
+
+        string sql_study = @$"select full_study
+                           from search.studies_json s
+                           where s.id = {study_id}";
+
+        return await GetSingleRecord<string>(sql_study);
+    }
+
+
+    public async Task<int?> FetchStudyId(int source_id, string sd_sid)
+    {
+        // source_id = 100126 and sd_sid = 'ISRCTN04968978'
+
+        string sql_string = @$"select study_id from nk.study_ids
+                           where source_id = {source_id} and sd_sid = '{sd_sid}'";
+        
+        using var conn = new NpgsqlConnection(_aggsConnString);
+        try
+        {
+            return await conn.QueryFirstOrDefaultAsync<int>(sql_string);
+        }
+        catch
+        {
+            return null;
+        }
+
+    }
+
+
+
     public async Task<IEnumerable<IECLine>?> FetchStudyIEC(int study_id)
     {
         string sql_string = " ";
         return await GetIEnumerable<IECLine>(sql_string);
-
     }
 }

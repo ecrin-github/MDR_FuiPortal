@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.WebUtilities;
 
 namespace MDR_FuiPortal.Server;
+
+/*
 public class UriService : IUriService
 {
     private readonly string _baseUri;
@@ -16,3 +18,4 @@ public class UriService : IUriService
         return new Uri(modifiedUri);
     }
 }
+*/

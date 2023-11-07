@@ -3,7 +3,7 @@
 @using System.Text.Json;
 
 
-<PageTitle>MDR Study Details</PageTitle>
+<PageTitle>@page_title</PageTitle>
 
 <TopBar BarTitle="" ShowSearchLink=true />
 
@@ -45,6 +45,8 @@
                     <span class="card-label">Max Age:&nbsp;</span><span class="card-text">@max_age</span>
                 </div>
             </div>
+
+            <!--
             <div class="card-line">
                 <span class="card-label">Target Conditions:&nbsp;</span><span class="card-text">@condition_list</span>
             </div>
@@ -57,6 +59,7 @@
                     <span class="card-label">Country or Countries:&nbsp;</span><span class="card-text">@country_list</span>
                 </div>
             </div>
+            -->
 
             <Tooltip Text="@provenance" Position="left" Size="large">
                 <div id="prov-icon" class="card-text">
@@ -84,9 +87,10 @@
     public int? studyId { get; set; }
 
     string? JsonString { get; set; }
-
+    string search_url_stem = "api/Study";
     int study_id;
     string study_name = default!;
+    string page_title = default!;
     string description = default!;
     string dss = default!;
     string start_date = default!;
@@ -95,10 +99,21 @@
     string gender_elig = default!;
     string min_age = default!;
     string max_age = default!;
-    string feature_list = default!;
-    string country_list = default!;
-    string condition_list = default!;
+    string enrolment = default!;
     string provenance = default!;
+
+    List<study_identifier>? study_identifiers;
+    List<study_title>? study_titles;
+    List<study_person>? study_people;
+    List<study_organisation>? study_organisations;
+    List<study_topic>? study_topics;
+    List<study_feature>? study_features;
+    List<study_condition>? study_conditions;
+    List<study_icd>? study_icds;
+    List<study_country>? study_countries;
+    List<study_location>? study_locations;
+    List<study_relationship>? study_relationships;
+
     List<ObjectSummary>? obs;
 
     private string get_month(int? start_month)
@@ -125,47 +140,73 @@
     {
         if (studyId.HasValue)
         {
-            string url = $"api/study/{studyId}";
-            var BaseSet = await Http.GetFromJsonAsync<List<string>?>(url);
+            page_title = studyId.ToString() ?? "??";
+            string url = $"{search_url_stem}/StudyDetails/{studyId}";
+            var StudySet = await Http.GetStringAsync(url);
 
-            if (BaseSet?.Any() == true)
+            if (StudySet is not null)
             {
-                StudySummary? s = JsonSerializer.Deserialize<StudySummary?>(BaseSet[0]);
+                JSONFullStudy? s = JsonSerializer.Deserialize<JSONFullStudy?>(StudySet);
 
                 if (s is not null)
                 {
-                    study_id = s.study_id;
-                    study_name = s.study_name ?? "No study name provided - ????";
-                    description = s.description ?? "No study description provided";
-                    dss = s.dss ?? "No statement provided";
-                    if (s.start_year is not null)
+                    study_id = s.id;
+                    study_name = s.display_title ?? "No study name provided - ????";
+                    page_title = study_name.Length < 23 ? study_name : study_name[..20] + "...";
+
+                    description = s.brief_description ?? "No study description provided";
+                    dss = s.data_sharing_statement ?? "No statement provided";
+                    if (s.study_start_year is not null)
                     {
-                        if (s.start_month is not null)
+                        if (s.study_start_month is not null)
                         {
-                            start_date = get_month(s.start_month) + " " + s.start_year?.ToString();
+                            start_date = get_month(s.study_start_month) + " " + s.study_start_year?.ToString();
                         }
                         else
                         {
-                            start_date = s.start_year + "";
+                            start_date = s.study_start_year + "";
                         }
                     }
                     else
                     {
                         start_date = "not given";
                     }
-                    type_name = s.type_name ?? "not given";
-                    status_name = s.status_name ?? "not given";
-                    gender_elig = s.gender_elig ?? "not given";
-                    min_age = s.min_age ?? "not given";
-                    max_age = s.max_age ?? "not given";
-                    feature_list = s.feature_list ?? "none given";
-                    country_list = s.country_list ?? "none given";
-                    condition_list = s.condition_list ?? "none given";
-                    provenance = s.provenance!;
-                    obs = s.objects?.OrderBy(b => b.year_pub).ToList();
+                    type_name = s.study_type?.name ?? "not given";
+                    status_name = s.study_status?.name ?? "not given";
+                    gender_elig = s.study_gender_elig?.name ?? "not given";
+                    if (s.min_age is not null)
+                    {
+                        if (s.min_age.value.HasValue)
+                        {
+                            min_age = ((int)s.min_age.value).ToString();
+                            min_age += s.min_age.unit_name ?? "";
+                        }
+                    }
+                    if (s.max_age is not null)
+                    {
+                        if (s.max_age.value.HasValue)
+                        {
+                            max_age = ((int)s.max_age.value).ToString();
+                            max_age += s.max_age.unit_name ?? "";
+                        }
+                    }
+                    enrolment = s.study_enrolment ?? "not given";
+
+                    study_identifiers = s.study_identifiers;
+                    study_titles = s.study_titles;
+                    study_people = s.study_people;
+                    study_organisations = s.study_organisations;
+                    study_topics = s.study_topics;
+                    study_features = s.study_features;
+                    study_conditions = s.study_conditions;
+                    study_icds = s.study_icds;
+                    study_countries = s.study_countries;
+                    study_locations = s.study_locations;
+                    study_relationships = s.study_relationships;
+
+                    provenance = s.provenance_string ?? "";   
                 }
             }
         }
-     }
-
+    }
 }

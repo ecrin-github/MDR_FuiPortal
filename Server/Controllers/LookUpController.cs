@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MDR_FuiPortal.Server;
 
 [Route("api/[controller]")]
-public class LookUpController : BaseApiController
+public class LookUpController : ControllerBase
 {
     private readonly ILookUpRepo _lookUpRepo;
 

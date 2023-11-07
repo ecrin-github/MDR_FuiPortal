@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 [Route("api")]
 public class BaseApiController : ControllerBase
 {
+    /*
     protected ApiResponse<T> ListSuccessResponse<T>(int count, List<T> data)
     {
         return new ApiResponse<T>
@@ -184,4 +185,5 @@ public class BaseApiController : ControllerBase
             Messages = new List<string>() { message }
         };
     }
+    */
 }

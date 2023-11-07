@@ -9,7 +9,7 @@ public class LookUpRepo : ILookUpRepo
 {
     private readonly string _dbConnString;
 
-    public LookUpRepo(ICreds creds)
+    public LookUpRepo(ICredentials creds)
     {
         _dbConnString = creds.GetConnectionString("context");
     }

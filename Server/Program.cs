@@ -15,27 +15,9 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddFluentUIComponents();
 
-/****************************************************************************************************
- * This service added to allow the host scheme (http or https) and host URL to be identified at
- * any point. It is used within a static helper method that creates URLs for paged request responses,
- * that identifies the URL for the first, last, previous and next page and returns them to the front
- * end as [art of the API response object.
-
-****************************************************************************************************/
-
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddSingleton<IUriService>(o =>
-{
-    var accessor = o.GetRequiredService<IHttpContextAccessor>();
-    var request = accessor.HttpContext?.Request;
-    var uri = string.Concat(request?.Scheme, "://", request?.Host.ToUriComponent());
-    return new UriService(uri);
-});
-
-builder.Services.AddSingleton<ICreds, Creds>();
+builder.Services.AddSingleton<ICredentials, Credentials>();
 builder.Services.AddSingleton<ILookUpRepo, LookUpRepo>();
 builder.Services.AddSingleton<ITreeRepo, TreeRepo>();
-
 builder.Services.AddScoped<IObjectRepo, ObjectRepo>();
 builder.Services.AddScoped<IStudyRepo, StudyRepo>();
 

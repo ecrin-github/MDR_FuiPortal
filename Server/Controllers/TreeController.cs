@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MDR_FuiPortal.Server;
 
 [Route("api/[controller]")]
-public class TreeController : BaseApiController
+public class TreeController : ControllerBase
 {
     private readonly ITreeRepo _treeRepo;
 

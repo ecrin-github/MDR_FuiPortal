@@ -2,7 +2,7 @@
 
 namespace MDR_FuiPortal.Server.Controllers
 {
-    public class ObjectController : Controller
+    public class ObjectController : ControllerBase
     {
         /*
         public IActionResult Index()

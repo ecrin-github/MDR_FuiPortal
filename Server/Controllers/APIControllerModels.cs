@@ -1,6 +1,6 @@
 ﻿namespace MDR_FuiPortal.Server;
 
-
+/*
 public class ApiResponse<T>
 {
     public int Total { get; set; }
@@ -78,4 +78,5 @@ public class Statistic
         StatValue = statValue;
     }
 }
+*/
 

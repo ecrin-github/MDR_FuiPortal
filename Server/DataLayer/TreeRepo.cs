@@ -8,7 +8,7 @@ public class TreeRepo : ITreeRepo
 {
     private readonly string _dbConnString;
 
-    public TreeRepo(ICreds creds)
+    public TreeRepo(ICredentials creds)
     {
         _dbConnString = creds.GetConnectionString("mdr");
     }

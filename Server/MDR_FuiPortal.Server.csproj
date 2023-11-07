@@ -7,6 +7,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="NewFolder\**" />
+    <Compile Remove="Services\**" />
+    <Content Remove="NewFolder\**" />
+    <Content Remove="Services\**" />
+    <EmbeddedResource Remove="NewFolder\**" />
+    <EmbeddedResource Remove="Services\**" />
+    <None Remove="NewFolder\**" />
+    <None Remove="Services\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Controllers\APIControllerHelper.cs" />
+    <Compile Remove="Controllers\APIControllerModels.cs" />
+    <Compile Remove="Controllers\BaseAPIController.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BlazorPro.Spinkit" Version="1.2.0" />
     <PackageReference Include="Dapper" Version="2.1.15" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.78" />
@@ -18,10 +35,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Client\MDR_FuiPortal.Client.csproj" />
     <ProjectReference Include="..\Shared\MDR_FuiPortal.Shared.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="NewFolder\" />
   </ItemGroup>
 
 

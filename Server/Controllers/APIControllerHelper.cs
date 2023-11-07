@@ -1,5 +1,6 @@
 ﻿namespace MDR_FuiPortal.Server.Controllers;
 
+/*
 public class PagedResponseBuilder
 {
     public static PagedApiResponse<T> CreatePagedResponse<T>(List<T> pagedData,
@@ -33,4 +34,4 @@ public class PagedResponseBuilder
     }
 
 }
-
+*/

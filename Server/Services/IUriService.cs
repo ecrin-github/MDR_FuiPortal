@@ -2,7 +2,7 @@
 
 public interface IUriService
 {
-    public Uri? GetPageUri(PaginationRequest filter, string route);
+    //public Uri? GetPageUri(PaginationRequest filter, string route);
 }
 
 

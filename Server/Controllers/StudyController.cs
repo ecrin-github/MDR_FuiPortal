@@ -1,12 +1,12 @@
-﻿using MDR_FuiPortal.Shared;
+﻿using MDR_FuiPortal.Server.Controllers;
+using MDR_FuiPortal.Shared;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
-namespace MDR_FuiPortal.Server.Controllers;
+namespace MDR_FuiPortal.Server;
 
 [Route("api/[controller]")]
-
-public class StudyController :  BaseApiController
+public class StudyController : ControllerBase
 {
     private readonly IStudyRepo _studyRepo;
 
@@ -50,50 +50,6 @@ public class StudyController :  BaseApiController
         }
     }
 
-    /*
-    [HttpGet("ByPageSearch/{spj}")]
-    public async Task<List<string>> GetPageFromJsonAsync(string spj)
-    {
-        SearchParamsPage? sp = JsonSerializer.Deserialize<SearchParamsPage>(spj);
-        if (sp is not null)
-        {
-            var res = await _studyRepo.FetchPageStudiesBySearch(sp.scope, sp.pars!, sp.page_start, sp.page_size, sp.fp);
-            if (res?.Any() != true)
-            {
-                string res_content = "null result";
-                return new List<string>() { res_content };
-            }
-            else
-            {
-                return res.ToList();
-            }
- 
-        }
-        else
-        {
-            string res_content = "null result";
-            return new List<string>() { res_content };
-        }
-    }
-    */
-
-
-    /*
-    [HttpGet("SearchTotal/{spj}")]
-    public async Task<int> GetTotalNumBySearch(string spj)
-    {
-        SearchParams? sp = JsonSerializer.Deserialize<SearchParams>(spj);
-        if (sp is not null)
-        {
-            return await (_studyRepo.FetchStudyCountBySearch(sp.scope, sp.pars!, sp.fp));
-        }
-        else
-        {
-            return 0;
-        }
-    }
-    */
-
 
     [HttpGet("ByRegId/{type_id:int}/{reg_id}")]
     public async Task<List<string>> GetStudyByTypeAndId(int type_id, string reg_id)
@@ -127,23 +83,33 @@ public class StudyController :  BaseApiController
     }
 
 
-    /*
-    [HttpGet("{study_id:int}")]
-    public async Task<List<StudyDetails>?> GetStudyDetails(int study_id)
-    {
-        var res = await _studyRepo.FetchStudyDetails(study_id);
-        var listres = res is not null ? new List<StudyDetails>() { res } : null;
-        return listres;
-    }
-    */
-
-    // temp for early testing of the principle
-
     [HttpGet("{study_id:int}")]
     public async Task<List<string>?> GetStudyJsonById(int study_id)
     {
         var res = await _studyRepo.FetchStudyById(study_id);
         return res is not null ? new List<string>() { res } : null;
+    }
+
+
+    [HttpGet("AllDetails/{study_id:int}")]
+    public async Task<List<string>?> GetStudyAllDetailsById(int study_id)
+    {
+        return await _studyRepo.FetchStudyAllDetailsById(study_id);
+    }
+
+    [HttpGet("StudyDetails/{study_id:int}")]
+    public async Task<string?> GetStudyDetailsById(int study_id)
+    {
+        string? res =  await _studyRepo.FetchStudyDetailsById(study_id);
+        return res;
+    }
+
+
+    [HttpGet("MDRId/{source_id:int}/{sd_sid}")]
+    public async Task<int?> GetStudyId(int source_id, string sd_sid)
+    {
+        var res =  await _studyRepo.FetchStudyId(source_id, sd_sid);
+        return res;
     }
 
 

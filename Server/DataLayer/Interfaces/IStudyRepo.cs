@@ -1,4 +1,5 @@
 ﻿using MDR_FuiPortal.Shared;
+
 namespace MDR_FuiPortal.Server;
 
 
@@ -12,10 +13,18 @@ public interface IStudyRepo
 
     public Task<int> FetchCountBySearchByBucket(int search_scope, string search_string, int bucket, FilterParams? fp);
 
+        
+    public Task<List<string>?> FetchStudyAllDetailsById(int study_id);
+
+    public Task<string?> FetchStudyDetailsById(int study_id);
+
+    public Task<int?> FetchStudyId(int source_id, string sd_sid);
+
     public Task<IEnumerable<string>?> FetchPageStudiesBySearch(int search_scope, string search_string,
         int page_start, int page_size, FilterParams? fp);
 
     public Task<int> FetchStudyCountBySearch(int search_scope, string search_string, FilterParams? fp);
+    
     public Task<string?> FetchStudyById(int study_id);
 
     public Task<IEnumerable<IECLine>?> FetchStudyIEC(int study_id);
