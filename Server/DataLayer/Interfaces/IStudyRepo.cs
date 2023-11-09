@@ -14,7 +14,7 @@ public interface IStudyRepo
     public Task<int> FetchCountBySearchByBucket(int search_scope, string search_string, int bucket, FilterParams? fp);
 
         
-    public Task<List<string>?> FetchStudyAllDetailsById(int study_id);
+    public Task<string>? FetchStudyAllDetailsById(int study_id);
 
     public Task<string?> FetchStudyDetailsById(int study_id);
 

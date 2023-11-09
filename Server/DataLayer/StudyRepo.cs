@@ -1,6 +1,8 @@
 ﻿using Dapper;
 using MDR_FuiPortal.Shared;
+using Microsoft.Fast.Components.FluentUI.DesignTokens;
 using Npgsql;
+using System.Text;
 
 namespace MDR_FuiPortal.Server;
 
@@ -314,7 +316,7 @@ public class StudyRepo : IStudyRepo
     }
 
 
-    public async Task<List<string>?> FetchStudyAllDetailsById(int study_id)
+    public async Task<string>? FetchStudyAllDetailsById(int study_id)
     {
         // for testing 2044457 = TNT trial
 
@@ -328,17 +330,36 @@ public class StudyRepo : IStudyRepo
                            on k.object_id = b.id
                            where k.study_id = {study_id}";
 
-        List<string> res = new();
+        // k.study_id = 2044457
+
         string? study_data = await GetSingleRecord<string>(sql_study);
         if (study_data is not null)
         {
-            res.Add(study_data);
+            string res = "{\"full_study\": " + study_data;
+
             IEnumerable<string>? object_data = await GetIEnumerable<string>(sql_objects);
             if (object_data?.Any() == true)
             {
-                res.AddRange(object_data);
+                int num_to_get = object_data.Count();
+                StringBuilder sb = new StringBuilder(", " + "\"full_objects\": [");
+                int n = 1;
+                foreach (string s in object_data)
+                {
+                    sb.Append(s);
+                    if (n != num_to_get)
+                    {
+                        sb.Append(", ");
+                    }
+                    n++;
+                }
+                sb.Append("]");
+                string final_res = res + sb.ToString() + "}";
+                return final_res;
             }
-            return res;
+            else
+            {
+                return null;
+            }
         }
         else
         {
@@ -357,6 +378,7 @@ public class StudyRepo : IStudyRepo
 
         return await GetSingleRecord<string>(sql_study);
     }
+
 
 
     public async Task<int?> FetchStudyId(int source_id, string sd_sid)

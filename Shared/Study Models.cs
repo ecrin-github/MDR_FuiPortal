@@ -31,22 +31,8 @@ public class StudySummary
     public List<ObjectSummary>? objects { get; set; }
 }
 
- 
-public class ObjectSummary
-{
-    public int oid { get; set; }
-    public string? ob_name { get; set; }
-    public int? typeid { get; set; }
-    public string? typename { get; set; }
-    public string? url { get; set; }
-    public int? res_type_id { get; set; }
-    public string? res_icon { get; set; }
-    public string? year_pub { get; set; }
-    public string? acc_icon { get; set; }
-    public string? prov { get; set; }
-}
 
-
+/*
 public class DisplayStudy
 {
     public int study_id { get; set; }
@@ -68,7 +54,7 @@ public class DisplayStudy
     public List<ObjectSummary>? objects { get; set; }
 
 }
-
+*/
 /*
 public class StudyDetails
 {
@@ -99,32 +85,20 @@ public class StudyDetails
     // Inclusion / exclusion criteria - available as button
 }
 
-
-public class ObjectDetails
-{
-    int Id { get; set; }
-    int Type { get; set; }
-    string? Name { get; set; }
-    string? Url { get; set; }
-    string? AccessDetails { get; set; }
-    string? ManagingOrganisation { get; set; }
-    string? ResourceSystem { get; set; }
-    string? ResourceDetails { get; set; }
-    int? PublishedType { get; set; }
-    string? Provenance { get; set; }
-    int access_type { get; set; }
-
-    List<string>? Dates { get; set; }
-    List<string>? ObjectIdentifiers { get; set; }
-    List<string>? ObjectPeople { get; set; }
-    List<string>? ObjectOrganisations { get; set; }
-}
 */
 
 public class IECLine
 {
 
 }
+
+public class JSONFullStudyData
+{
+    public JSONFullStudy? full_study { get; set; }
+    public JSONFullObject[]? full_objects { get; set; }
+}
+
+
 
 public class JSONFullStudy
 {

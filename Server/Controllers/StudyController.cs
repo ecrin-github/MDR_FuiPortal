@@ -92,7 +92,7 @@ public class StudyController : ControllerBase
 
 
     [HttpGet("AllDetails/{study_id:int}")]
-    public async Task<List<string>?> GetStudyAllDetailsById(int study_id)
+    public async Task<string>? GetStudyAllDetailsById(int study_id)
     {
         return await _studyRepo.FetchStudyAllDetailsById(study_id);
     }

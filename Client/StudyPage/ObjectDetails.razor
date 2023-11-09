@@ -1,0 +1,292 @@
+﻿<h4>@type_name</h4>
+
+<div class="card-line">
+    <span class="card-label">Display title:&nbsp;</span><span class="card-text">@display_title</span>
+</div>
+<div class="card-line">
+    <span class="card-label">url:&nbsp;</span><span class="card-text"><a href=@url target="_blank">@url</a></span>
+</div>
+<div class="card-line">
+    <span class="card-label">Managing organisation:&nbsp;</span><span class="card-text">@managing_org</span>
+</div>
+
+<p class="sub-heading">Contributors</p>
+@foreach (person_line pl in @person_strings)
+{
+    <div class="card-line card-spaced">
+        <div class="fixed-long-label">
+            <span class="card-label">@pl.contrib_type:&nbsp;</span><span class="card-text">@pl.person_name</span>
+        </div>
+
+        @if (@pl.affiliation != "")
+        {
+            <div class="card-text">
+                <span class="card-label">Affiliation:&nbsp;</span><span class="card-text">@pl.affiliation</span>
+            </div>
+        }
+    </div>
+}
+@foreach (detail_line dl in @org_strings)
+{
+    <div class="card-line">
+        <span class="card-label">@dl.line_header:&nbsp;</span><span class="card-text">@dl.line_details</span>
+    </div>
+}
+
+@if (topic_number > 0)
+{
+    <div class="card-line">
+        <span class="card-label">Listed topic(s):</span>
+    </div>
+
+    foreach (string s in @topic_strings)
+    {
+        <div class="indented-line"><span class="card-text">@s</span></div>
+    }
+}
+
+
+
+@code {
+    [Parameter]
+    public JSONFullObject? ob { get; set; }
+
+    string type_name = "";    
+    string display_title = "";
+    string version = "";
+    string url = "";
+    string doi = "";
+    string managing_org = "";
+    string year_pub = "";
+    string provenance = "";
+    string access_type = "";
+    string access_description = "";
+
+    Deidentification? deidentification;
+    Consent? consent;
+    record_keys? rec_keys;
+
+    List<object_instance>? object_instances = new();
+    List<detail_line> instance_strings = new();
+
+    List<object_date>? object_dates = new();
+    List<detail_line> date_strings = new();
+
+    List<object_title>? object_titles = new();
+    List<detail_line> title_strings = new();
+
+    List<object_person>? object_people = new();
+    List<person_line> person_strings = new();
+
+    List<object_organisation>? object_organisations = new();
+    List<detail_line> org_strings = new();
+
+    List<object_topic>? object_topics = new();
+    List<string> topic_strings = new();
+    int topic_number = 0;
+
+    List<object_identifier>? object_identifiers = new();
+    List<ident_line> identifier_strings = new();
+
+    private class detail_line
+    {
+        public string? line_header { get; set; }
+        public string? line_details { get; set; }
+
+        public detail_line(string? _line_header, string? _line_details)
+        {
+            line_header = _line_header;
+            line_details = _line_details;
+        }
+    }
+
+    private class ident_line
+    {
+        public string? type_header { get; set; }
+        public string? type_value { get; set; }
+        public string? source_value { get; set; }
+        public string? date_value { get; set; }
+
+        public ident_line(string? _type_header, string? _type_value,
+                          string? _source_value, string? _date_value)
+        {
+            type_header = _type_header;
+            type_value = _type_value;
+            source_value = _source_value;
+            date_value = _date_value;
+        }
+    }
+
+    private class person_line
+    {
+        public string? contrib_type { get; set; }
+        public string? person_name { get; set; }
+        public string? affiliation { get; set; }
+
+
+        public person_line(string? _contrib_type, string? _person_name,
+                          string? _affiliation)
+        {
+            contrib_type = _contrib_type;
+            person_name = _person_name;
+            affiliation = _affiliation;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (ob is not null)
+        {
+            type_name = ob.object_type?.name ?? "No type name !!";
+            display_title = ob.display_title ?? "No display title???";
+            doi = ob.doi ?? "";
+            year_pub = ob.publication_year.HasValue ? ((int)ob.publication_year).ToString() : "Not provided";
+            managing_org = ob.managing_organisation?.name ?? "";
+            if (!string.IsNullOrEmpty(ob.managing_organisation?.ror_id))
+            {
+                managing_org += "  [ROR id: " + ob.managing_organisation.ror_id + "]";
+            }
+            access_type = ob.access_type?.name ?? "No access type provided!";
+            url = ob.access_details?.url ?? "";
+            access_description = ob.access_details?.description ?? "";
+            version = ob.version ?? "";
+
+            deidentification = ob.dataset_deident_level;
+            consent = ob.dataset_consent;
+            rec_keys = ob.dataset_record_keys;
+
+            provenance = ob.provenance_string ?? "No provenance string";
+
+            object_instances = ob.object_instances;
+            if (object_instances?.Any() == true)
+            {
+                instance_strings = new();
+                foreach (object_instance bi in object_instances)
+                {
+                }
+            }
+
+
+            object_dates = ob.object_dates;
+            if (object_dates?.Any() == true)
+            {
+                date_strings = new();
+                foreach (object_date bd in object_dates)
+                {
+                }
+            }
+
+
+            object_titles = ob.object_titles;
+            if (object_titles?.Any() == true)
+            {
+                title_strings = new();
+                foreach (object_title sp in object_titles)
+                {
+                }
+            }
+
+
+            object_people = ob.object_people;
+            if (object_people?.Any() == true)
+            {
+                person_strings = new();
+                foreach (object_person sp in object_people)
+                {
+                    string affiliation = "";
+                    if (!string.IsNullOrEmpty(sp.person_affiliation))
+                    {
+                        affiliation = sp.person_affiliation;
+                        if (sp.affiliation_org is not null)
+                        {
+                            bool org_details_started = false;
+                            if (!string.IsNullOrEmpty(sp.affiliation_org.name)
+                                && sp.affiliation_org.name != affiliation)
+                            {
+                                affiliation += "     [";
+                                affiliation += "Org: " + sp.affiliation_org.name;
+                                org_details_started = true;
+                            }
+
+                            if (!string.IsNullOrEmpty(sp.affiliation_org.ror_id))
+                            {
+                                affiliation += org_details_started ? ", " : "     [";
+                                affiliation += "ROR Id: " + sp.affiliation_org.ror_id;
+                                org_details_started = true;
+                            }
+                            affiliation += org_details_started ? "]" : "";
+                        }
+                    }
+
+                    string pname = sp.person_full_name ?? "no name given";
+                    if (!string.IsNullOrEmpty(sp.orcid_id))
+                    {
+                        pname += " [ORCID: " + sp.orcid_id + "]";
+                    }
+
+                    string contribtype = sp.contrib_type?.name ?? "not given"; 
+                    if (contribtype == "sp.contrib_type?.name")
+                    {
+                        contribtype = "Author";
+                    }
+
+                    person_strings.Add(new person_line(contribtype, pname, affiliation));
+                }
+            }
+
+            object_organisations = ob.object_organisations;
+            if (object_organisations?.Any() == true)
+            {
+                org_strings = new();
+                foreach (object_organisation so in object_organisations)
+                {
+                    org_strings.Add(new detail_line(
+                                        so.contrib_type?.name ?? "",
+                                        so.org_details?.name ?? "" +
+                                        (string.IsNullOrEmpty(so.org_details?.ror_id) ? "" : " [ROR Id: " + so.org_details.ror_id + "]"))
+                    );
+                }
+            }
+
+            object_topics = ob.object_topics;
+            if (object_topics?.Any() == true)
+            {
+                topic_strings = new();
+                foreach (object_topic st in object_topics)
+                {
+                    string topic_string = st.original_value ?? "No topic name?";
+                    if (st.mesh_data is not null)
+                    {
+                        string mesh_string = ", MeSH: " + st.mesh_data.mesh_code ?? "" + ": " + st.mesh_data.mesh_value ?? "";
+                        topic_string += mesh_string;
+                    }
+                    if (st.ct_data is not null)
+                    {
+                        if (st.ct_data.ct_type_id != 14)
+                        {
+                            string ct_string = " (" + st.ct_data.ct_code ?? "" + " in " + st.ct_data.ct_type ?? "" + ")";
+                            topic_string += ct_string;
+                        }
+                    }
+                    topic_strings.Add(topic_string);
+                    topic_number = topic_strings.Count;
+                }
+            }
+
+            object_identifiers = ob.object_identifiers;
+            if (object_identifiers?.Any() == true)
+            {
+                identifier_strings = new();
+                foreach (object_identifier si in object_identifiers)
+                {
+                    identifier_strings.Add(new ident_line(si.identifier_type?.name ?? "",
+                                           si.identifier_value,
+                                           (si.source?.name ?? "") 
+                                           + (string.IsNullOrEmpty(si.source?.ror_id) ? "" : " [ROR Id: " + si.source?.ror_id + "]"),
+                                           (string.IsNullOrEmpty(si.identifier_date) ? "" : si.identifier_date)
+                                           ));
+                }
+            }
+        }
+    }
+}

@@ -11,18 +11,45 @@
 <div id="body-outer">
     <div id="body-main">
        <div class="s-dets">
-           <h2>For now, just basic details as on card to illustrate principle...</h2>
-            <div class="card-line">
-                <span class="card-label">Full Title:&nbsp;</span><span class="card-text">@study_name</span>
-            </div>
-            <div class="card-line">
-                <span class="card-label">Description:&nbsp;&nbsp;</span>
-                <span class="card-text">@description</span>
-            </div>
-    
-            <div class="card-line">
-                <span class="card-label">Data Sharing:&nbsp;</span><span class="card-text">@dss</span>
-            </div>
+            <h3>@display_title</h3>
+
+            <p class="sub-heading">Other titles</p>
+            @foreach (detail_line dl in @title_strings)
+            {
+                <div class="card-line">
+                    <span class="card-label">@dl.line_header:&nbsp;</span><span class="card-text">@dl.line_details</span>
+                </div>
+            }
+
+            <p class="sub-heading">Identifiers</p>
+
+            @foreach (ident_line idl in @identifier_strings)
+            {
+                <div class="card-line card-spaced">
+                    <div class="fixed-label">
+                        <span class="card-label">@idl.type_header:&nbsp;</span><span class="card-text">@idl.type_value</span>
+                    </div>
+                    <div class="card-text">
+                        <span class="card-label">Source:&nbsp;</span><span class="card-text">@idl.source_value</span>
+                    </div>
+
+                    @if (@idl.date_value != "")
+                    {
+                        <div class="card-text">
+                            <span class="card-label">Date:&nbsp;</span><span class="card-text">@idl.date_value</span>
+                        </div>
+                    }
+                    @if (@idl.link_value != "")
+                    {
+                        <div class="card-text">
+                            <span class="card-label">Link:&nbsp;</span><span class="card-text">@idl.link_value</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <p class ="sub-heading">Basic Parameters</p>
+
             <div class="card-line card-spaced">
                 <div class="fixed-label">
                     <span class="card-label">Start Date:&nbsp;</span><span class="card-text">@start_date</span>
@@ -45,36 +72,129 @@
                     <span class="card-label">Max Age:&nbsp;</span><span class="card-text">@max_age</span>
                 </div>
             </div>
-
-            <!--
-            <div class="card-line">
-                <span class="card-label">Target Conditions:&nbsp;</span><span class="card-text">@condition_list</span>
+            <div class="card-line card-spaced">
+                <div class="fixed-label">
+                    <span class="card-label">Enrolment:&nbsp;</span><span class="card-text">@enrolment</span>
+                </div>
             </div>
-            <div  class="card-line">
+
+            <p class="sub-heading">Description, Design and Data Sharing</p>
+
+            <div class="card-line">
+                <span class="card-label">Description:&nbsp;&nbsp;</span>
+                <span class="card-text">@description</span>
+            </div>
+
+            <div class="card-line">
                 <span class="card-label">Design Features:&nbsp;</span><span class="card-text">@feature_list</span>
             </div>
 
             <div class="card-line">
-                <div id="countries" class="card-text">
-                    <span class="card-label">Country or Countries:&nbsp;</span><span class="card-text">@country_list</span>
-                </div>
+                <span class="card-label">Data Sharing:&nbsp;</span><span class="card-text">@dss</span>
             </div>
-            -->
 
-            <Tooltip Text="@provenance" Position="left" Size="large">
-                <div id="prov-icon" class="card-text">
-                    <img height="16" width="16" src="/icons/provenance.svg" alt="resource icon" />
-                </div>
-            </Tooltip>
 
-            @if (obs is not null)
+            <p class="sub-heading">Contributors</p>
+            @foreach (person_line pl in @person_strings)
             {
-                @foreach (ObjectSummary @ob in obs)
+                <div class="card-line card-spaced">
+                    <div class="fixed-long-label">
+                        <span class="card-label">@pl.contrib_type:&nbsp;</span><span class="card-text">@pl.person_name</span>
+                    </div>
+
+                    @if (@pl.affiliation != "")
+                    {
+                        <div class="card-text">
+                            <span class="card-label">Affiliation:&nbsp;</span><span class="card-text">@pl.affiliation</span>
+                        </div>
+                    }
+                </div>
+            }
+            @foreach (detail_line dl in @org_strings)
+            {
+                <div class="card-line">
+                    <span class="card-label">@dl.line_header:&nbsp;</span><span class="card-text">@dl.line_details</span>
+                </div>
+            }
+
+            <p class="sub-heading">Conditions and Topics</p>
+
+            <div class="card-line">
+                <span class="card-label">Conditions in ICD11:&nbsp;</span><span class="card-text">@icd_list</span>
+            </div>
+
+            @if (condition_number == 0)
+            {
+                <div class="card-line">
+                    <span class="card-text">No condition data provided</span>
+                </div>
+            }
+            else
+            {
+                <div class="card-line">
+                    <span class="card-label">Listed condition(s):</span>
+                </div>
+
+                foreach (string s in @condition_strings)
                 {
-                    <p></p>
+                    <div class="indented-line"><span class="card-text">@s</span></div>
+                }
+            }
+
+            @if (topic_number == 0)
+            {
+                <div class="card-line">
+                    <span class="card-text">No topic data provided</span>
+                </div>
+            }
+            else
+            {
+                <div class="card-line">
+                    <span class="card-label">Listed topic(s):</span>
+                </div>
+
+                foreach (string s in @topic_strings)
+                {
+                    <div class="indented-line"><span class="card-text">@s</span></div>
+                }
+            }
+
+            <p class="sub-heading">Locations</p>
+
+            <div class="card-line">
+                <span class="card-label">Countries:&nbsp;</span><span class="card-text">@country_list</span>
+            </div>
+
+
+            @if (@site_number > 0)
+            {
+                <div class="card-line">
+                    <span class="card-label">Listed site(s):</span>
+                </div>
+
+                foreach (detail_line dl in @site_lines)
+                {
+                    <div class="indented-line">
+                        <span class="fixed-long-label">@dl.line_header</span>  
+                        <span class="card-text">@dl.line_details</span>  
+                    </div>
+                }
+            }
+
+            <p class="sub-heading">Study Data Provenance</p>
+            <div class="card-line">
+                <span class="card-text">@provenance</span>
+            </div>
+
+            @if (@obs is not null)
+            {
+                <p class="sub-heading"><b>DATA OBJECTS</b></p>
+
+                @foreach (JSONFullObject @ob in obs)
+                {
                     <FluentDivider />
                     <p></p>            
-                    //<ObjectDets ob=@ob />
+                    <ObjectDetails ob =@ob />
                 }
             }
         </div>
@@ -89,6 +209,7 @@
     string? JsonString { get; set; }
     string search_url_stem = "api/Study";
     int study_id;
+    string display_title = default!;
     string study_name = default!;
     string page_title = default!;
     string description = default!;
@@ -102,19 +223,43 @@
     string enrolment = default!;
     string provenance = default!;
 
-    List<study_identifier>? study_identifiers;
+
     List<study_title>? study_titles;
-    List<study_person>? study_people;
-    List<study_organisation>? study_organisations;
-    List<study_topic>? study_topics;
+    List<detail_line> title_strings = new();
+
+    List<study_identifier>? study_identifiers;
+    List<ident_line> identifier_strings = new();
+
     List<study_feature>? study_features;
-    List<study_condition>? study_conditions;
+    string feature_list = "";
+
+    List<study_person>? study_people;
+    List<person_line> person_strings = new();
+
+    List<study_organisation>? study_organisations;
+    List<detail_line> org_strings = new();
+
     List<study_icd>? study_icds;
+    string icd_list = "";
+
+    List<study_condition>? study_conditions;
+    List<string> condition_strings = new();
+    int condition_number = 0;
+
+    List<study_topic>? study_topics;
+    List<string> topic_strings = new();
+    int topic_number = 0;
+
     List<study_country>? study_countries;
+    string country_list = "";
+
     List<study_location>? study_locations;
+    List<detail_line> site_lines = new();
+    int site_number = 0;
+
     List<study_relationship>? study_relationships;
 
-    List<ObjectSummary>? obs;
+    JSONFullObject[]? obs;
 
     private string get_month(int? start_month)
     {
@@ -136,75 +281,374 @@
         };
     }
 
+    private class detail_line
+    {
+        public string? line_header { get; set; }
+        public string? line_details { get; set; }
+
+        public detail_line(string? _line_header, string? _line_details)
+        {
+            line_header = _line_header;
+            line_details = _line_details;
+        }
+    }
+
+    private class ident_line
+    {
+        public string? type_header { get; set; }
+        public string? type_value { get; set; }
+        public string? source_value { get; set; }
+        public string? date_value { get; set; }
+        public string? link_value { get; set; }
+
+        public ident_line(string? _type_header, string? _type_value, 
+                          string? _source_value, string? _date_value, string? _link_value)
+        {
+            type_header = _type_header;
+            type_value = _type_value;
+            source_value = _source_value;
+            date_value = _date_value;
+            link_value = _link_value;
+        }
+    }
+
+    private class person_line
+    {
+        public string? contrib_type { get; set; }
+        public string? person_name { get; set; }
+        public string? affiliation { get; set; }
+
+
+        public person_line(string? _contrib_type, string? _person_name,
+                          string? _affiliation)
+        {
+            contrib_type = _contrib_type;
+            person_name = _person_name;
+            affiliation = _affiliation;
+        }
+    }
+
     protected async override  Task OnInitializedAsync()
     {
         if (studyId.HasValue)
         {
             page_title = studyId.ToString() ?? "??";
-            string url = $"{search_url_stem}/StudyDetails/{studyId}";
+            //string url = $"{search_url_stem}/StudyDetails/{studyId}";
+            //var StudySet = await Http.GetStringAsync(url);
+
+            string url = $"{search_url_stem}/AllDetails/{studyId}";
             var StudySet = await Http.GetStringAsync(url);
 
+            //if (StudySet is not null)
+            //{
             if (StudySet is not null)
             {
-                JSONFullStudy? s = JsonSerializer.Deserialize<JSONFullStudy?>(StudySet);
+                JSONFullStudyData? fs = JsonSerializer.Deserialize<JSONFullStudyData?>(StudySet);
 
-                if (s is not null)
+                if (fs is not null)
                 {
-                    study_id = s.id;
-                    study_name = s.display_title ?? "No study name provided - ????";
-                    page_title = study_name.Length < 23 ? study_name : study_name[..20] + "...";
+                    JSONFullStudy? s = fs.full_study;
+                    obs = fs.full_objects;
 
-                    description = s.brief_description ?? "No study description provided";
-                    dss = s.data_sharing_statement ?? "No statement provided";
-                    if (s.study_start_year is not null)
+                    if (s is not null)
                     {
-                        if (s.study_start_month is not null)
+                        study_id = s.id;
+                        study_name = s.display_title ?? "No study name provided - ????";
+                        display_title = (study_name.Length > 200) ? study_name[..200] + "..." : study_name;
+                        page_title = study_name.Length < 23 ? study_name : study_name[..20] + "...";
+
+                        study_titles = s.study_titles;
+                        if (study_titles?.Any() == true)
                         {
-                            start_date = get_month(s.study_start_month) + " " + s.study_start_year?.ToString();
+                            title_strings = new();
+                            foreach (study_title st in study_titles)
+                            {
+                                if (st.title_text != study_name)
+                                {
+                                    title_strings.Add(new detail_line(
+                                                          (st.title_type?.name ?? "") +
+                                                          (st.lang_code == "en" ? "" : " (" + st.lang_code + ") "),
+                                                           st.title_text));
+                                }
+                            }
+                            if (study_titles?.Any() != true)
+                            {
+                                title_strings.Add(new detail_line("", "None provided"));
+                            }
+                        }
+
+                        study_identifiers = s.study_identifiers;
+                        if (study_identifiers?.Any() == true)
+                        {
+                            identifier_strings = new();
+                            foreach (study_identifier si in study_identifiers)
+                            {
+                                identifier_strings.Add(new ident_line(si.identifier_type?.name ?? "",
+                                                       si.identifier_value,
+                                                       (si.source?.name ?? "") + (string.IsNullOrEmpty(si.source?.ror_id) ? "" : " [ROR Id: " + si.source?.ror_id + "]"),
+                                                       (string.IsNullOrEmpty(si.identifier_date) ? "" : si.identifier_date),
+                                                       (string.IsNullOrEmpty(si.identifier_link) ? "" : si.identifier_link)
+                                                       ));
+                            }
+                        }
+
+                        description = s.brief_description ?? "No study description provided";
+
+                        study_features = s.study_features;
+                        if (study_features?.Any() == true)
+                        {
+                            feature_list = "";
+                            foreach (study_feature sf in study_features)
+                            {
+                                string this_feature = sf.feature_type?.name ?? "";
+                                if (!string.IsNullOrEmpty(sf.feature_value?.name))
+                                {
+                                    this_feature += ": " + sf.feature_value.name;
+                                }
+                                feature_list += "; " + this_feature;
+                            }
+
+                            if (feature_list == "")
+                            {
+                                feature_list = "No data provided";
+                            }
+                            else
+                            {
+                                feature_list = feature_list[2..];
+                            }
+
+                        }
+
+                        dss = s.data_sharing_statement ?? "No statement provided";
+                        if (s.study_start_year is not null)
+                        {
+                            if (s.study_start_month is not null)
+                            {
+                                start_date = get_month(s.study_start_month) + " " + s.study_start_year?.ToString();
+                            }
+                            else
+                            {
+                                start_date = s.study_start_year + "";
+                            }
                         }
                         else
                         {
-                            start_date = s.study_start_year + "";
+                            start_date = "not provided";
                         }
-                    }
-                    else
-                    {
-                        start_date = "not given";
-                    }
-                    type_name = s.study_type?.name ?? "not given";
-                    status_name = s.study_status?.name ?? "not given";
-                    gender_elig = s.study_gender_elig?.name ?? "not given";
-                    if (s.min_age is not null)
-                    {
-                        if (s.min_age.value.HasValue)
+                        type_name = s.study_type?.name ?? "not provided";
+                        status_name = s.study_status?.name ?? "not provided";
+                        gender_elig = s.study_gender_elig?.name ?? "not provided";
+                        if (s.min_age is not null)
                         {
-                            min_age = ((int)s.min_age.value).ToString();
-                            min_age += s.min_age.unit_name ?? "";
+                            if (s.min_age.value.HasValue)
+                            {
+                                min_age = ((int)s.min_age.value).ToString();
+                                min_age += (string.IsNullOrEmpty(s.min_age.unit_name) ? "" : " " + s.min_age.unit_name);
+                            }
                         }
-                    }
-                    if (s.max_age is not null)
-                    {
-                        if (s.max_age.value.HasValue)
+                        if (s.max_age is not null)
                         {
-                            max_age = ((int)s.max_age.value).ToString();
-                            max_age += s.max_age.unit_name ?? "";
+                            if (s.max_age.value.HasValue)
+                            {
+                                max_age = ((int)s.max_age.value).ToString();
+                                max_age += (string.IsNullOrEmpty(s.max_age.unit_name) ? "" : " " + s.max_age.unit_name);
+                            }
                         }
+                        enrolment = s.study_enrolment ?? "not provided";
+
+                        study_people = s.study_people;
+                        if (study_people?.Any() == true)
+                        {
+                            person_strings = new();
+                            foreach (study_person sp in study_people)
+                            {
+                                string affiliation = "";
+                                if (!string.IsNullOrEmpty(sp.person_affiliation))
+                                {
+                                    affiliation = sp.person_affiliation;
+                                    if (sp.affiliation_org is not null)
+                                    {
+                                        bool org_details_started = false;
+                                        if (!string.IsNullOrEmpty(sp.affiliation_org.name)
+                                            && sp.affiliation_org.name != affiliation)
+                                        {
+                                            affiliation += "     [";
+                                            affiliation += "Org: " + sp.affiliation_org.name;
+                                            org_details_started = true;
+                                        }
+
+                                        if (!string.IsNullOrEmpty(sp.affiliation_org.ror_id))
+                                        {
+                                            affiliation += org_details_started ? ", " : "     [";
+                                            affiliation += "ROR Id: " + sp.affiliation_org.ror_id;
+                                            org_details_started = true;
+                                        }
+                                        affiliation += org_details_started ? "]" : "";
+                                    }
+                                }
+
+                                string pname = sp.person_full_name ?? "no name given";
+                                if (!string.IsNullOrEmpty(sp.orcid_id))
+                                {
+                                    pname += "[ORCID: " + sp.orcid_id + "]";
+                                }
+
+                                person_strings.Add(new person_line(sp.contrib_type?.name ?? "not given", pname, affiliation));
+                            }
+                        }
+
+                        study_organisations = s.study_organisations;
+                        if (study_organisations?.Any() == true)
+                        {
+                            org_strings = new();
+                            foreach (study_organisation so in study_organisations)
+                            {
+                                org_strings.Add(new detail_line(
+                                                    so.contrib_type?.name ?? "",
+                                                    so.org_details?.name ?? "" +
+                                                    (string.IsNullOrEmpty(so.org_details?.ror_id) ? "" : " [ROR Id: " + so.org_details.ror_id + "]"))
+                                );
+                            }
+                        }
+
+                        study_icds = s.study_icds;
+                        if (study_icds?.Any() == true)
+                        {
+                            icd_list = "";
+                            foreach (study_icd sc in study_icds)
+                            {
+                                if (sc.icd_data is not null)
+                                {
+                                    if (sc.icd_data.icd_code is not null)
+                                    {
+                                        icd_list += ", " + sc.icd_data.icd_code;
+                                    }
+                                    if (sc.icd_data.icd_name is not null)
+                                    {
+                                        icd_list += ": " + sc.icd_data.icd_name;
+                                    }
+                                }
+                            }
+                            if (icd_list == "")
+                            {
+                                icd_list = "None derived";
+                            }
+                            else
+                            {
+                                icd_list = icd_list[2..];
+                            }
+                        }
+
+
+                        study_conditions = s.study_conditions;
+                        if (study_conditions?.Any() == true)
+                        {
+                            condition_strings = new();
+                            foreach (study_condition sc in study_conditions)
+                            {
+                                string con_string = sc.original_value ?? "No condition name?";
+                                if (sc.ct_data is not null)
+                                {
+                                    string ct_string = " (" + (sc.ct_data.ct_code ?? "") + " in " + (sc.ct_data.ct_type ?? "") + ")";
+                                    con_string += ct_string;
+                                }
+                                condition_strings.Add(con_string);
+                            }
+                            condition_number = condition_strings.Count;
+                        }
+
+                        study_topics = s.study_topics;
+                        if (study_topics?.Any() == true)
+                        {
+                            topic_strings = new();
+                            foreach (study_topic st in study_topics)
+                            {
+                                string topic_string = st.original_value ?? "No topic name?";
+                                if (st.mesh_data is not null)
+                                {
+                                    string mesh_string = ", MeSH: " + (st.mesh_data.mesh_code ?? "") + ": " + (st.mesh_data.mesh_value ?? "");
+                                    topic_string += mesh_string;
+                                }
+                                if (st.ct_data is not null)
+                                {
+                                    if (st.ct_data.ct_type_id != 14)
+                                    {
+                                        string ct_string = " (" + (st.ct_data.ct_code ?? "") + " in " + (st.ct_data.ct_type ?? "") + ")";
+                                        topic_string += ct_string;
+                                    }
+                                }
+                                topic_strings.Add(topic_string);
+                                topic_number = topic_strings.Count;
+                            }
+                        }
+
+                        study_countries = s.study_countries;
+                        if (study_countries?.Any() == true)
+                        {
+                            country_list = "";
+                            foreach (study_country sc in study_countries)
+                            {
+                                string this_country = sc.country_name ?? "";
+                                if (!string.IsNullOrEmpty(sc.status?.name))
+                                {
+                                    this_country += " (" + sc.status.name + ")";
+                                }
+                                country_list += ", " + this_country;
+                            }
+                            if (country_list == "")
+                            {
+                                country_list = "No data provided";
+                            }
+                            else
+                            {
+                                country_list = country_list[2..];
+                            }
+                        }
+
+                        study_locations = s.study_locations;
+                        if (study_locations?.Any() == true)
+                        {
+                            site_lines = new();
+                            foreach (study_location sc in study_locations)
+                            {
+                                string? site_name = sc.facility?.name;
+                                if (site_name is not null)
+                                {
+                                    string site_location = sc.city_name ?? "";
+                                    if (!string.IsNullOrEmpty(sc.facility?.ror_id))
+                                    {
+                                        site_name += "  [" + sc.facility?.ror_id + "]";
+                                    }
+
+                                    if (!string.IsNullOrEmpty(sc.status?.name))
+                                    {
+                                        site_name += "  (" + sc.status.name + ")";
+                                    }
+                                    if (!string.IsNullOrEmpty(sc.country_name))
+                                    {
+                                        site_location += ", " + sc.country_name;
+                                    }
+
+                                    site_lines.Add(new detail_line(site_name, site_location));
+
+                                }
+                                //sc.status
+                            }
+                            site_number = site_lines.Count;
+                        }
+
+                        study_relationships = s.study_relationships;
+                        if (study_relationships?.Any() == true)
+                        {
+                            foreach (study_relationship sr in study_relationships)
+                            {
+                                //sr.relationship_type;
+                                //sr.target_study_id;
+                            }
+                        }
+
+                        provenance = s.provenance_string ?? "";
                     }
-                    enrolment = s.study_enrolment ?? "not given";
-
-                    study_identifiers = s.study_identifiers;
-                    study_titles = s.study_titles;
-                    study_people = s.study_people;
-                    study_organisations = s.study_organisations;
-                    study_topics = s.study_topics;
-                    study_features = s.study_features;
-                    study_conditions = s.study_conditions;
-                    study_icds = s.study_icds;
-                    study_countries = s.study_countries;
-                    study_locations = s.study_locations;
-                    study_relationships = s.study_relationships;
-
-                    provenance = s.provenance_string ?? "";   
                 }
             }
         }

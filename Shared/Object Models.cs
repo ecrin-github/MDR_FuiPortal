@@ -8,6 +8,19 @@ using System.Threading.Tasks;
 
 namespace MDR_FuiPortal.Shared
 {
+    public class ObjectSummary
+    {
+        public int oid { get; set; }
+        public string? ob_name { get; set; }
+        public int? typeid { get; set; }
+        public string? typename { get; set; }
+        public string? url { get; set; }
+        public int? res_type_id { get; set; }
+        public string? res_icon { get; set; }
+        public string? year_pub { get; set; }
+        public string? acc_icon { get; set; }
+        public string? prov { get; set; }
+    }
 
     public class JSONFullObject
     {

@@ -1,33 +1,19 @@
-﻿#body-outer {
-    position: absolute;
-    top: 8.5rem;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow-y: hidden;
-
-}
-
-#body-main {
-    background-color: var(--bg-colour);
-    overflow-y: scroll;
-    max-height: 100%;
-}
-
-
-.s-dets {
-    padding: 1.5rem 3rem 3rem 3rem;
-}
-
-h3 {
-    color: var(--txt-emph-colour);
-}
-
-.sub-heading {
+﻿h4 {
     font: var(--normal-text);
     color: var(--txt-emph-colour);
     margin-top: 1rem;
     margin-bottom: 0.25rem;
+    text-align: left;
+}
+
+
+.sub-heading {
+    font: var(--normal-text);
+    color: var(--txt-emph-colour);
+    font-style:italic;
+    margin-top: 1rem;
+    margin-bottom: 0.25rem;
+    margin-left: 1rem;
     text-align: left;
 }
 
@@ -62,7 +48,6 @@ h3 {
 .card-line {
     width: 100%;
     padding: 0.1rem 1rem;
-
     display: flex;
     flex-wrap: wrap;
 }
@@ -80,24 +65,4 @@ h3 {
     margin: 0;
 }
 
-
-/*
-.inline {
-    display: inline-block;
-}
-
-
-#countries {
-    flex: 0 0 55rem;
-    text-align: left;
-    margin-top: 0;
-    padding-top: 0;
-}
-
-
-
-.card-spacer {
-    flex: 1 1;
-}
-    */
 
