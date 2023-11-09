@@ -4,47 +4,170 @@
     <span class="card-label">Display title:&nbsp;</span><span class="card-text">@display_title</span>
 </div>
 <div class="card-line">
-    <span class="card-label">url:&nbsp;</span><span class="card-text"><a href=@url target="_blank">@url</a></span>
-</div>
-<div class="card-line">
     <span class="card-label">Managing organisation:&nbsp;</span><span class="card-text">@managing_org</span>
 </div>
 
-<p class="sub-heading">Contributors</p>
-@foreach (person_line pl in @person_strings)
-{
-    <div class="card-line card-spaced">
-        <div class="fixed-long-label">
-            <span class="card-label">@pl.contrib_type:&nbsp;</span><span class="card-text">@pl.person_name</span>
-        </div>
-
-        @if (@pl.affiliation != "")
-        {
-            <div class="card-text">
-                <span class="card-label">Affiliation:&nbsp;</span><span class="card-text">@pl.affiliation</span>
-            </div>
-        }
+<div class="card-line card-spaced">
+    <div class="fixed-label">
+        <span class="card-label">Year Published:&nbsp;</span><span class="card-text">@year_pub</span>
     </div>
+
+    @if (@version != "")
+    {
+        <div class="fixed-label">
+             <span class="card-label">Version:&nbsp;</span><span class="card-text">@version</span>
+        </div>
+    }
+
+    @if (@doi != "")
+    {
+        <div class="card-text">
+            <span class="card-label">doi:&nbsp;</span><span class="card-text">@doi</span>
+        </div>
+    }
+</div>
+<p></p>
+<div class="card-line">
+    <span class="card-label">Access Type:&nbsp;</span><span class="card-text">@access_type</span>
+</div>
+
+@if(@instance_number> 0)
+{
+    @foreach (instance_line il in instance_strings)
+    {
+        <div class="card-line card-spaced">
+            <div class="fixed-label">
+                <span class="card-label">Resource:&nbsp;</span><span class="card-text">@il.resource</span>
+            </div>
+            <div class="fixed-label">
+                <span class="card-label">Found at:&nbsp;</span><span class="card-text">@il.source_system</span>
+            </div>
+            <div class="card-text">
+                <span class="card-label">URL:&nbsp;</span><span class="card-text"><a href=@il.res_url target="_blank">@il.res_url</a></span>
+            </div>
+            @if (@il.res_details != "")
+            {
+                <div class="card-text">
+                    <span class="card-label">Details:&nbsp;</span><span class="card-text">@il.res_details</span>
+                </div>
+            }
+        </div>
+    }
 }
-@foreach (detail_line dl in @org_strings)
+else
 {
     <div class="card-line">
-        <span class="card-label">@dl.line_header:&nbsp;</span><span class="card-text">@dl.line_details</span>
+        <span class="card-label">Access details:&nbsp;</span><span class="card-text">@access_description</span>
     </div>
+    <div class="card-line">
+        <span class="card-label">Further information at:&nbsp;</span><span class="card-text"><a href=@url target="_blank">@url</a></span>
+    </div>
+}
+
+
+@if (@author_number > 0)
+{
+    <p class="sub-heading">Author(s)</p>
+    @foreach (detail_line dl in @author_strings)
+    {
+    <div class="indented-line card-line">
+            <div class="fixed-long-label">
+                @dl.line_header
+            </div>
+            <div class="card-text">
+                @dl.line_details
+            </div>
+        </div>
+    }
+}
+
+@if (@contrib_number > 0)
+{
+    <p class="sub-heading">Contributors</p>
+    @foreach (person_line pl in @person_strings)
+    {
+         <div class="indented-line card-spaced">
+            <div class="fixed-long-label">
+                <span class="card-label">@pl.contrib_type:&nbsp;</span><span class="card-text">@pl.person_name</span>
+            </div>
+
+            @if (@pl.affiliation != "")
+            {
+                <div class="card-text">
+                    <span class="card-label">Affiliation:&nbsp;</span><span class="card-text">@pl.affiliation</span>
+                </div>
+            }
+        </div>
+    }
+
+    @foreach (detail_line dl in @org_strings)
+    {
+        <div class="indented-line">
+            <span class="card-label">@dl.line_header:&nbsp;</span><span class="card-text">@dl.line_details</span>
+        </div>
+    }
+}
+
+@if (@date_number > 0)
+{
+    <p class="sub-heading">Date(s)</p>
+    @foreach (detail_line dl in @date_strings)
+    {
+        <div class="indented-line">
+            <span class="card-label">@dl.line_header:&nbsp;</span><span class="card-text">@dl.line_details</span>
+        </div>
+    }
+}
+
+@if (@title_number > 0)
+{
+    <p class="sub-heading">Title(s)</p>
+    @foreach (detail_line dl in @title_strings)
+    {
+        <div class="indented-line">
+            <span class="card-label">@dl.line_header:&nbsp;</span><span class="card-text">@dl.line_details</span>
+        </div>
+    }
 }
 
 @if (topic_number > 0)
 {
-    <div class="card-line">
-        <span class="card-label">Listed topic(s):</span>
-    </div>
-
+    <p class="sub-heading">Listed topics</p>
     foreach (string s in @topic_strings)
     {
         <div class="indented-line"><span class="card-text">@s</span></div>
     }
 }
 
+@if (@identifier_number > 0)
+{
+    <p class="sub-heading">Identifiers</p>
+    @foreach (ident_line idl in @identifier_strings)
+    {
+        <div class="indented-line card-spaced">
+            <div class="fixed-label">
+                <span class="card-label">@idl.type_header:&nbsp;</span><span class="card-text">@idl.type_value</span>
+            </div>
+            <div class="card-text">
+                <span class="card-label">Source:&nbsp;</span><span class="card-text">@idl.source_value</span>
+            </div>
+
+            @if (@idl.date_value != "")
+            {
+                <div class="card-text">
+                    <span class="card-label">Date:&nbsp;</span><span class="card-text">@idl.date_value</span>
+                </div>
+            }
+        </div>
+    }
+}
+
+<p class="sub-heading">Object Data Provenance</p>
+<div class="card-line">
+    <span class="card-text">@provenance</span>
+</div>
+
+<p></p>
 
 
 @code {
@@ -67,19 +190,25 @@
     record_keys? rec_keys;
 
     List<object_instance>? object_instances = new();
-    List<detail_line> instance_strings = new();
+    List<instance_line> instance_strings = new();
+    int instance_number = 0;
 
     List<object_date>? object_dates = new();
     List<detail_line> date_strings = new();
+    int date_number = 0;
 
     List<object_title>? object_titles = new();
     List<detail_line> title_strings = new();
+    int title_number = 0;
 
     List<object_person>? object_people = new();
     List<person_line> person_strings = new();
+    List<detail_line> author_strings = new();
+    int author_number = 0;
 
     List<object_organisation>? object_organisations = new();
     List<detail_line> org_strings = new();
+    int contrib_number = 0;
 
     List<object_topic>? object_topics = new();
     List<string> topic_strings = new();
@@ -87,6 +216,7 @@
 
     List<object_identifier>? object_identifiers = new();
     List<ident_line> identifier_strings = new();
+    int identifier_number = 0;
 
     private class detail_line
     {
@@ -97,6 +227,23 @@
         {
             line_header = _line_header;
             line_details = _line_details;
+        }
+    }
+
+    private class instance_line
+    {
+        public string? resource{ get; set; }
+        public string? source_system { get; set; }
+        public string? res_url { get; set; }
+        public string? res_details { get; set; }
+
+        public instance_line(string? _resource, string? _source_system,
+                          string? _res_url, string? _res_details)
+        {
+            resource = _resource;
+            source_system = _source_system;
+            res_url = _res_url;
+            res_details = _res_details;
         }
     }
 
@@ -138,6 +285,10 @@
         if (ob is not null)
         {
             type_name = ob.object_type?.name ?? "No type name !!";
+            if (type_name.ToLower() == "journal article - unspecified")
+            {
+                type_name = "Journal Article";
+            }
             display_title = ob.display_title ?? "No display title???";
             doi = ob.doi ?? "";
             year_pub = ob.publication_year.HasValue ? ((int)ob.publication_year).ToString() : "Not provided";
@@ -163,6 +314,23 @@
                 instance_strings = new();
                 foreach (object_instance bi in object_instances)
                 {
+                    instance_number++;
+                    string resource = bi.resource_details?.type_name ?? "";
+                    string source_system = bi.system?.name ?? "";
+                    string res_url = bi.access_details?.url ?? "";
+
+                    string res_details = "";
+                    if (bi.resource_details?.size is not null)
+                    {
+                        res_details +=  bi.resource_details?.size.ToString();
+                        res_details += string.IsNullOrEmpty(bi.resource_details?.size_unit)
+                                        ? "" : " " + bi.resource_details.size_unit ;
+                        res_details += string.IsNullOrEmpty(bi.resource_details?.comments)
+                                        ? "" : "; " + bi.resource_details.comments;
+                        res_details = "(" + res_details + ")";
+                    }
+
+                    instance_strings.Add(new instance_line(resource, source_system, res_url, res_details));
                 }
             }
 
@@ -173,6 +341,10 @@
                 date_strings = new();
                 foreach (object_date bd in object_dates)
                 {
+                    date_number++;
+                    string date_type = bd.date_type?.name ?? "";
+                    string date_as_string = bd.date_as_string ?? "";
+                    date_strings.Add(new detail_line(date_type, date_as_string));
                 }
             }
 
@@ -180,9 +352,14 @@
             object_titles = ob.object_titles;
             if (object_titles?.Any() == true)
             {
+
                 title_strings = new();
                 foreach (object_title sp in object_titles)
-                {
+                {   
+                    title_number++;
+                    string title_text = sp.title_text ?? "";
+                    string title_type = sp.title_type?.name ?? "";
+                    title_strings.Add(new detail_line(title_type, title_text));
                 }
             }
 
@@ -193,44 +370,56 @@
                 person_strings = new();
                 foreach (object_person sp in object_people)
                 {
-                    string affiliation = "";
-                    if (!string.IsNullOrEmpty(sp.person_affiliation))
-                    {
-                        affiliation = sp.person_affiliation;
-                        if (sp.affiliation_org is not null)
-                        {
-                            bool org_details_started = false;
-                            if (!string.IsNullOrEmpty(sp.affiliation_org.name)
-                                && sp.affiliation_org.name != affiliation)
-                            {
-                                affiliation += "     [";
-                                affiliation += "Org: " + sp.affiliation_org.name;
-                                org_details_started = true;
-                            }
-
-                            if (!string.IsNullOrEmpty(sp.affiliation_org.ror_id))
-                            {
-                                affiliation += org_details_started ? ", " : "     [";
-                                affiliation += "ROR Id: " + sp.affiliation_org.ror_id;
-                                org_details_started = true;
-                            }
-                            affiliation += org_details_started ? "]" : "";
-                        }
-                    }
-
                     string pname = sp.person_full_name ?? "no name given";
                     if (!string.IsNullOrEmpty(sp.orcid_id))
                     {
                         pname += " [ORCID: " + sp.orcid_id + "]";
                     }
-
-                    string contribtype = sp.contrib_type?.name ?? "not given"; 
-                    if (contribtype == "sp.contrib_type?.name")
+                    string affiliation = "";
+                    if (!string.IsNullOrEmpty(sp.person_affiliation))
                     {
-                        contribtype = "Author";
+                        affiliation = sp.person_affiliation;
                     }
 
-                    person_strings.Add(new person_line(contribtype, pname, affiliation));
+                    string contribtype = sp.contrib_type?.name ?? "not given"; 
+                    if (contribtype == "Creator / Author")
+                    {
+                        author_number++;
+                        author_strings.Add(new detail_line(pname, affiliation));
+                    }
+                    else
+                    {
+                        contrib_number++;
+                        person_strings.Add(new person_line(contribtype, pname, affiliation));
+                    }
+
+                        /*
+                        * / Below provides too much information to easily display
+                        string affiliation = "";
+                            if (!string.IsNullOrEmpty(sp.person_affiliation))
+                            {
+                            affiliation = sp.person_affiliation;
+                                if (sp.affiliation_org is not null)
+                            {
+                            bool org_details_started = false;
+                                if (!string.IsNullOrEmpty(sp.affiliation_org.name)
+                                && sp.affiliation_org.name != affiliation)
+                                {
+                            affiliation += "     [";
+                            affiliation += "Org: " + sp.affiliation_org.name;
+                            org_details_started = true;
+                            }
+
+                            if (!string.IsNullOrEmpty(sp.affiliation_org.ror_id))
+                                {
+                                affiliation += org_details_started ? ", " : "     [";
+                                affiliation += "ROR Id: " + sp.affiliation_org.ror_id;
+                                org_details_started = true;
+                            }
+                            affiliation += org_details_started ? "]" : "";
+                }
+                }
+                */
                 }
             }
 
@@ -240,6 +429,7 @@
                 org_strings = new();
                 foreach (object_organisation so in object_organisations)
                 {
+                    contrib_number++;
                     org_strings.Add(new detail_line(
                                         so.contrib_type?.name ?? "",
                                         so.org_details?.name ?? "" +
@@ -251,25 +441,43 @@
             object_topics = ob.object_topics;
             if (object_topics?.Any() == true)
             {
+
                 topic_strings = new();
                 foreach (object_topic st in object_topics)
                 {
-                    string topic_string = st.original_value ?? "No topic name?";
-                    if (st.mesh_data is not null)
-                    {
-                        string mesh_string = ", MeSH: " + st.mesh_data.mesh_code ?? "" + ": " + st.mesh_data.mesh_value ?? "";
-                        topic_string += mesh_string;
-                    }
+                    topic_number++;
+                    string topic_string = "", mesh_string = "", ct_string = "";
+                    string orig_value = st.original_value ?? "No topic name?";
                     if (st.ct_data is not null)
                     {
                         if (st.ct_data.ct_type_id != 14)
                         {
-                            string ct_string = " (" + st.ct_data.ct_code ?? "" + " in " + st.ct_data.ct_type ?? "" + ")";
-                            topic_string += ct_string;
+                            ct_string = (st.ct_data.ct_type ?? "") + ": " + (st.ct_data.ct_code ?? "");
                         }
                     }
+
+                    if (st.mesh_data is not null)
+                    {
+                        string mesh_value = st.mesh_data.mesh_value ?? "";
+                        mesh_string = "MeSH: " + (st.mesh_data.mesh_code ?? "");
+                        mesh_string += mesh_value == orig_value ? "" : " - " + mesh_value;
+                    }
+
+                    topic_string = orig_value;
+                    if (ct_string != "" || mesh_string != "")
+                    {
+                        topic_string += ", (";
+                        if (ct_string != "")
+                        {
+                            topic_string += ct_string;
+                        }
+                        if (mesh_string != "")
+                        {
+                            topic_string += ct_string == "" ? mesh_string : ", " + mesh_string;
+                        }
+                        topic_string += ")";
+                    }
                     topic_strings.Add(topic_string);
-                    topic_number = topic_strings.Count;
                 }
             }
 
@@ -279,12 +487,13 @@
                 identifier_strings = new();
                 foreach (object_identifier si in object_identifiers)
                 {
+                    identifier_number++;
                     identifier_strings.Add(new ident_line(si.identifier_type?.name ?? "",
-                                           si.identifier_value,
-                                           (si.source?.name ?? "") 
-                                           + (string.IsNullOrEmpty(si.source?.ror_id) ? "" : " [ROR Id: " + si.source?.ror_id + "]"),
-                                           (string.IsNullOrEmpty(si.identifier_date) ? "" : si.identifier_date)
-                                           ));
+                          si.identifier_value,
+                          (si.source?.name ?? "") 
+                           + (string.IsNullOrEmpty(si.source?.ror_id) ? "" : " [ROR Id: " + si.source?.ror_id + "]"),
+                          (string.IsNullOrEmpty(si.identifier_date) ? "" : si.identifier_date)
+                          ));
                 }
             }
         }

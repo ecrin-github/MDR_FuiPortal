@@ -335,11 +335,10 @@ public class StudyRepo : IStudyRepo
         string? study_data = await GetSingleRecord<string>(sql_study);
         if (study_data is not null)
         {
-            string res = "{\"full_study\": " + study_data;
-
             IEnumerable<string>? object_data = await GetIEnumerable<string>(sql_objects);
             if (object_data?.Any() == true)
             {
+                string final_res = "{\"full_study\": " + study_data;
                 int num_to_get = object_data.Count();
                 StringBuilder sb = new StringBuilder(", " + "\"full_objects\": [");
                 int n = 1;
@@ -352,8 +351,9 @@ public class StudyRepo : IStudyRepo
                     }
                     n++;
                 }
-                sb.Append("]");
-                string final_res = res + sb.ToString() + "}";
+                sb.Append("]}");
+                final_res += sb.ToString();
+
                 return final_res;
             }
             else

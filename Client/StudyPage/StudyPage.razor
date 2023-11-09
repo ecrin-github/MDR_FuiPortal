@@ -546,12 +546,13 @@
                             condition_strings = new();
                             foreach (study_condition sc in study_conditions)
                             {
-                                string con_string = sc.original_value ?? "No condition name?";
+                                string ct_string = "";
+                                string orig_value = sc.original_value ?? "No condition name?";
                                 if (sc.ct_data is not null)
                                 {
-                                    string ct_string = " (" + (sc.ct_data.ct_code ?? "") + " in " + (sc.ct_data.ct_type ?? "") + ")";
-                                    con_string += ct_string;
+                                    ct_string = " (" +  (sc.ct_data.ct_type ?? "") + ": " + (sc.ct_data.ct_code ?? "") + ")";
                                 }
+                                string con_string = orig_value + ct_string;
                                 condition_strings.Add(con_string);
                             }
                             condition_number = condition_strings.Count;
@@ -563,19 +564,36 @@
                             topic_strings = new();
                             foreach (study_topic st in study_topics)
                             {
-                                string topic_string = st.original_value ?? "No topic name?";
-                                if (st.mesh_data is not null)
-                                {
-                                    string mesh_string = ", MeSH: " + (st.mesh_data.mesh_code ?? "") + ": " + (st.mesh_data.mesh_value ?? "");
-                                    topic_string += mesh_string;
-                                }
+                                string topic_string = "", mesh_string = "", ct_string = "";
+                                string orig_value = st.original_value ?? "No topic name?";
                                 if (st.ct_data is not null)
                                 {
                                     if (st.ct_data.ct_type_id != 14)
                                     {
-                                        string ct_string = " (" + (st.ct_data.ct_code ?? "") + " in " + (st.ct_data.ct_type ?? "") + ")";
+                                        ct_string =  (st.ct_data.ct_type ?? "") + ": " + (st.ct_data.ct_code ?? "");
+                                    }
+                                }
+
+                                if (st.mesh_data is not null)
+                                {
+                                    string mesh_value = st.mesh_data.mesh_value ?? "";
+                                    mesh_string = "MeSH: " + (st.mesh_data.mesh_code ?? "");
+                                    mesh_string += mesh_value == orig_value ? "" : " - " + mesh_value;
+                                }
+
+                                topic_string = orig_value;
+                                if (ct_string != "" || mesh_string != "")
+                                {
+                                    topic_string += ", (";
+                                    if (ct_string != "")
+                                    {
                                         topic_string += ct_string;
                                     }
+                                    if (mesh_string != "")
+                                    {
+                                        topic_string += ct_string == "" ? mesh_string : ", " + mesh_string;
+                                    }
+                                    topic_string += ")";
                                 }
                                 topic_strings.Add(topic_string);
                                 topic_number = topic_strings.Count;

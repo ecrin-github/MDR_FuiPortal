@@ -8,9 +8,9 @@
 
 
 .sub-heading {
-    font: var(--normal-text);
+    font: var(--small-text);
     color: var(--txt-emph-colour);
-    font-style:italic;
+    font-style: italic;
     margin-top: 1rem;
     margin-bottom: 0.25rem;
     margin-left: 1rem;
@@ -18,7 +18,7 @@
 }
 
 .card-text, .card-label, .fixed-label, .fixed-long-label {
-    font: var(--normal-text);
+    font: var(--small-text);
     color: var(--txt-colour);
     margin-bottom: 0;
     text-align: left;
@@ -34,7 +34,7 @@
 }
 
 .fixed-long-label {
-    flex: 0 0 48rem;
+    flex: 0 0 30rem;
     text-align: left;
 }
 
@@ -54,7 +54,7 @@
 
 .indented-line {
     width: 100%;
-    padding: 0.1rem 1rem 0.1rem 6rem;
+    padding: 0.1rem 1rem 0.1rem 2rem;
     display: flex;
     flex-wrap: wrap;
 }
