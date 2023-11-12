@@ -30,7 +30,7 @@
                         <span class="card-label">@idl.type_header:&nbsp;</span><span class="card-text">@idl.type_value</span>
                     </div>
                     <div class="card-text">
-                        <span class="card-label">Source:&nbsp;</span><span class="card-text">@idl.source_value</span>
+                        <span class="card-label">Source:&nbsp;</span><span class="card-text">@((MarkupString)@idl.source_value)</span>
                     </div>
 
                     @if (@idl.date_value != "")
@@ -105,7 +105,7 @@
                     @if (@pl.affiliation != "")
                     {
                         <div class="card-text">
-                            <span class="card-label">Affiliation:&nbsp;</span><span class="card-text">@pl.affiliation</span>
+                            <span class="card-label">Affiliation:&nbsp;</span><span class="card-text">@((MarkupString)@pl.affiliation)</span>
                         </div>
                     }
                 </div>
@@ -113,7 +113,7 @@
             @foreach (detail_line dl in @org_strings)
             {
                 <div class="card-line">
-                    <span class="card-label">@dl.line_header:&nbsp;</span><span class="card-text">@dl.line_details</span>
+                    <span class="card-label">@dl.line_header:&nbsp;</span><span class="card-text">@((MarkupString)@dl.line_details)</span>
                 </div>
             }
 
@@ -175,7 +175,7 @@
                 foreach (detail_line dl in @site_lines)
                 {
                     <div class="indented-line">
-                        <span class="fixed-long-label">@dl.line_header</span>  
+                        <span class="fixed-label">@((MarkupString)@dl.line_header)</span>  
                         <span class="card-text">@dl.line_details</span>  
                     </div>
                 }
@@ -283,10 +283,10 @@
 
     private class detail_line
     {
-        public string? line_header { get; set; }
-        public string? line_details { get; set; }
+        public string line_header { get; set; } = "";
+        public string line_details { get; set; } = "";
 
-        public detail_line(string? _line_header, string? _line_details)
+        public detail_line(string? _line_header, string _line_details)
         {
             line_header = _line_header;
             line_details = _line_details;
@@ -297,12 +297,12 @@
     {
         public string? type_header { get; set; }
         public string? type_value { get; set; }
-        public string? source_value { get; set; }
+        public string source_value { get; set; } = "";
         public string? date_value { get; set; }
         public string? link_value { get; set; }
 
         public ident_line(string? _type_header, string? _type_value, 
-                          string? _source_value, string? _date_value, string? _link_value)
+                          string _source_value, string? _date_value, string? _link_value)
         {
             type_header = _type_header;
             type_value = _type_value;
@@ -316,11 +316,11 @@
     {
         public string? contrib_type { get; set; }
         public string? person_name { get; set; }
-        public string? affiliation { get; set; }
+        public string affiliation { get; set; } = "";
 
 
         public person_line(string? _contrib_type, string? _person_name,
-                          string? _affiliation)
+                          string _affiliation)
         {
             contrib_type = _contrib_type;
             person_name = _person_name;
@@ -363,7 +363,7 @@
                             title_strings = new();
                             foreach (study_title st in study_titles)
                             {
-                                if (st.title_text != study_name)
+                                if (!string.IsNullOrEmpty(st.title_text) && st.title_text != study_name)
                                 {
                                     title_strings.Add(new detail_line(
                                                           (st.title_type?.name ?? "") +
@@ -383,12 +383,19 @@
                             identifier_strings = new();
                             foreach (study_identifier si in study_identifiers)
                             {
-                                identifier_strings.Add(new ident_line(si.identifier_type?.name ?? "",
-                                                       si.identifier_value,
-                                                       (si.source?.name ?? "") + (string.IsNullOrEmpty(si.source?.ror_id) ? "" : " [ROR Id: " + si.source?.ror_id + "]"),
-                                                       (string.IsNullOrEmpty(si.identifier_date) ? "" : si.identifier_date),
-                                                       (string.IsNullOrEmpty(si.identifier_link) ? "" : si.identifier_link)
-                                                       ));
+                                string source_name = si.source?.name ?? "";
+                                if (source_name != "")
+                                {
+                                    if (!string.IsNullOrEmpty(si.source?.ror_id))
+                                    {
+                                        source_name = "<a href=\"" + si.source?.ror_id + "\" target=\"_blank\">" + source_name + "</a>";
+                                    }
+
+                                    identifier_strings.Add(new ident_line(si.identifier_type?.name ?? "",
+                                                           si.identifier_value, source_name,
+                                                           (string.IsNullOrEmpty(si.identifier_date) ? "" : si.identifier_date),
+                                                           (string.IsNullOrEmpty(si.identifier_link) ? "" : si.identifier_link)));
+                                }
                             }
                         }
 
@@ -465,26 +472,43 @@
                                 string affiliation = "";
                                 if (!string.IsNullOrEmpty(sp.person_affiliation))
                                 {
-                                    affiliation = sp.person_affiliation;
+                                    string affil_string = sp.person_affiliation;
                                     if (sp.affiliation_org is not null)
                                     {
-                                        bool org_details_started = false;
-                                        if (!string.IsNullOrEmpty(sp.affiliation_org.name)
-                                            && sp.affiliation_org.name != affiliation)
-                                        {
-                                            affiliation += "     [";
-                                            affiliation += "Org: " + sp.affiliation_org.name;
-                                            org_details_started = true;
-                                        }
+                                        bool RORpresent = string.IsNullOrEmpty(sp.affiliation_org.ror_id) ? false : true;
 
-                                        if (!string.IsNullOrEmpty(sp.affiliation_org.ror_id))
+                                        if (!string.IsNullOrEmpty(sp.affiliation_org.name))
                                         {
-                                            affiliation += org_details_started ? ", " : "     [";
-                                            affiliation += "ROR Id: " + sp.affiliation_org.ror_id;
-                                            org_details_started = true;
+                                            if (sp.affiliation_org.name != affil_string)
+                                            {
+                                                if (RORpresent)
+                                                {
+                                                    affiliation = affil_string + "&nbsp;&nbsp;[Org: <a href =\"" + sp.affiliation_org.ror_id +
+                                                                               "\" target=\"_blank\">" + sp.affiliation_org.name + "</a>]";
+                                                }
+                                                else
+                                                {
+                                                    affiliation = affil_string + "&nbsp;&nbsp;[Org: " + sp.affiliation_org.name + "]";
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if (RORpresent)
+                                                {
+                                                    affiliation = "<a href=\"" + sp.affiliation_org.ror_id + "\" target=\"_blank\">" + affil_string + "</a>";
+                                                }
+                                                else
+                                                {
+                                                    affiliation = affil_string; // org but no ror, but same as the affiliation
+                                                }
+                                            }
                                         }
-                                        affiliation += org_details_started ? "]" : "";
                                     }
+                                    else
+                                    {
+                                        affiliation = affil_string; // no org - just the affiliation string
+                                    }
+
                                 }
 
                                 string pname = sp.person_full_name ?? "no name given";
@@ -503,11 +527,12 @@
                             org_strings = new();
                             foreach (study_organisation so in study_organisations)
                             {
-                                org_strings.Add(new detail_line(
-                                                    so.contrib_type?.name ?? "",
-                                                    so.org_details?.name ?? "" +
-                                                    (string.IsNullOrEmpty(so.org_details?.ror_id) ? "" : " [ROR Id: " + so.org_details.ror_id + "]"))
-                                );
+                                string source_name = so.org_details?.name ?? "";
+                                if (!string.IsNullOrEmpty(so.org_details?.ror_id))
+                                {
+                                    source_name = "<a href=\"" + so.org_details?.ror_id + "\" target=\"_blank\">" + source_name + "</a>";
+                                }
+                                org_strings.Add(new detail_line(so.contrib_type?.name ?? "not given", source_name));
                             }
                         }
 
@@ -628,20 +653,22 @@
                         {
                             site_lines = new();
                             foreach (study_location sc in study_locations)
-                            {
+                            { 
                                 string? site_name = sc.facility?.name;
                                 if (site_name is not null)
                                 {
-                                    string site_location = sc.city_name ?? "";
                                     if (!string.IsNullOrEmpty(sc.facility?.ror_id))
                                     {
-                                        site_name += "  [" + sc.facility?.ror_id + "]";
+                                        site_name = "<a href=\"" + sc.facility?.ror_id + "\" target=\"_blank\">" + site_name + "</a>";
                                     }
 
                                     if (!string.IsNullOrEmpty(sc.status?.name))
                                     {
                                         site_name += "  (" + sc.status.name + ")";
                                     }
+
+                                    string site_location = sc.city_name ?? "";
+
                                     if (!string.IsNullOrEmpty(sc.country_name))
                                     {
                                         site_location += ", " + sc.country_name;
@@ -650,7 +677,6 @@
                                     site_lines.Add(new detail_line(site_name, site_location));
 
                                 }
-                                //sc.status
                             }
                             site_number = site_lines.Count;
                         }

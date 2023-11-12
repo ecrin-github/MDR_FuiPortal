@@ -222,13 +222,13 @@
             </div>
 
             <FluentMenu Anchor="ExportButton" @bind-Open="open" @onmenuchange=OnMenuChange>
-                <FluentMenuItem OnClick="@((e) => Console.WriteLine("Item 1 Clicked"))">
+                <FluentMenuItem>
                     Download JSON
                 </FluentMenuItem>
-                <FluentMenuItem OnClick="@((e) => Console.WriteLine("Item 2 Clicked"))">
+                <FluentMenuItem>
                     Download CSV
                 </FluentMenuItem>
-                <FluentMenuItem OnClick="@((e) => Console.WriteLine("Item 3 Clicked"))">
+                <FluentMenuItem>
                     Download PDF
                 </FluentMenuItem>
             </FluentMenu>
@@ -745,6 +745,7 @@
 
     private void ShowRange(Tuple<int, int> t)
     {
+
         PageSet = ShowSet?.GetRange(t.Item1, t.Item2);
     }
 
@@ -1190,14 +1191,14 @@
         StateHasChanged();
 
         /* for now - to make testing easier
-           if (idType == 11)
-           {
-           searchParamsValue = "NCT01746290";
-        }
-        if (idType == 14)
-            {
-            searchParamsValue = "19.05.CLI";
-        }
+        if (idType == 11)
+        {
+        searchParamsValue = "NCT01746290";
+         }
+         if (idType == 14)
+         {
+         searchParamsValue = "19.05.CLI";
+    }
     */
     }
 
@@ -1206,10 +1207,79 @@
     bool open2 = false;
     private string status = "";
 
-    private void OnMenuChange(MenuChangeEventArgs args)
+    private async Task OnMenuChange(MenuChangeEventArgs args)
     {
         if (args is not null && args.Value is not null)
-            status = $"Item \"{args.Value}\" clicked";
+        {
+            string res = args.Value;
+
+            if (res == "Download JSON")
+            {
+                // Set up and show the dialog -
+                // Await result - 
+
+                string date_string = DateTime.Now.ToString("yyyyMMdd");
+                DialogParameters<Downloader> parameters = new()
+                    {
+                        Title = $"Downloading Search data as JSON",
+                        PrimaryAction = "Download",
+                        SecondaryAction = "Cancel",
+                        Width = "32rem",
+                        Height = "18.5rem",
+                        TrapFocus = true,
+                        Modal = true,
+                        PreventScroll = true
+                    };
+                IDialogReference dialog = await DialogService.ShowDialogAsync<Downloader>(parameters);
+                DialogResult? result = await dialog.Result;
+
+            }
+
+            if (res == "Download CSV")
+            {
+                // Set up and show the dialog -
+                // Await result -
+
+                string date_string = DateTime.Now.ToString("yyyyMMdd");
+                DialogParameters<Downloader> parameters = new()
+                    {
+                        Title = $"Downloading Search data as CSV",
+                        PrimaryAction = "Download",
+                        SecondaryAction = "Cancel",
+                        Width = "32rem",
+                        Height = "18.5rem",
+                        TrapFocus = true,
+                        Modal = true,
+                        PreventScroll = true
+                    };
+                IDialogReference dialog = await DialogService.ShowDialogAsync<Downloader>(parameters);
+                DialogResult? result = await dialog.Result;
+            }
+
+            if (res == "Download PDF")
+            {
+                // Set up and show the dialog -
+                // Await result -
+
+                string date_string = DateTime.Now.ToString("yyyyMMdd");
+                DialogParameters<Downloader> parameters = new()
+                    {
+                        Title = $"Downloading Search data as PDF",
+                        PrimaryAction = "Download",
+                        SecondaryAction = "Cancel",
+                        Width = "32rem",
+                        Height = "18.5rem",
+                        TrapFocus = true,
+                        Modal = true,
+                        PreventScroll = true
+                    };
+                IDialogReference dialog = await DialogService.ShowDialogAsync<Downloader>(parameters);
+                DialogResult? result = await dialog.Result;
+
+            }
+
+        }
+        
     }
 
 
