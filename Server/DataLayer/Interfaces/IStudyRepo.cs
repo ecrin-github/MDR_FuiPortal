@@ -13,7 +13,8 @@ public interface IStudyRepo
 
     public Task<int> FetchCountBySearchByBucket(int search_scope, string search_string, int bucket, FilterParams? fp);
 
-        
+    public Task<string?> FetchOmicsDIData(string qtype, int offset, int limit);
+
     public Task<string>? FetchStudyAllDetailsById(int study_id);
 
     public Task<string?> FetchStudyDetailsById(int study_id);

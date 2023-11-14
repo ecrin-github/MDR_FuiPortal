@@ -228,9 +228,11 @@
                 <FluentMenuItem>
                     Download CSV
                 </FluentMenuItem>
+                <!--
                 <FluentMenuItem>
                     Download PDF
                 </FluentMenuItem>
+                -->
             </FluentMenu>
 
             <p>@status</p>
@@ -252,42 +254,42 @@
 </div>
 
 @code {
-    CheckGroupType? StudyTypeFilter;
-    CheckGroupStatus? StudyStatusFilter;
-    YearSelection? StudyYearFilter;
-    CountrySelection? StudyCountryFilter;
-    CheckGroupObject? StudyObjectFilter;
-    CheckGroupPhase? StudyPhaseFilter;
-    CheckGroupAlloc? StudyAllocFilter;
+        CheckGroupType? StudyTypeFilter;
+        CheckGroupStatus? StudyStatusFilter;
+        YearSelection? StudyYearFilter;
+        CountrySelection? StudyCountryFilter;
+        CheckGroupObject? StudyObjectFilter;
+        CheckGroupPhase? StudyPhaseFilter;
+        CheckGroupAlloc? StudyAllocFilter;
 
-    List<string>? BaseSet;
-    List<string>? BucketSet;
-    List<string>? ShowSet = null!;
-    List<string>? PageSet = null!;
-    PageControl? pagecon;
+        List<string>? BaseSet;
+        List<string>? BucketSet;
+        List<string>? ShowSet = null!;
+        List<string>? PageSet = null!;
+        PageControl? pagecon;
 
-    bool doing_restore = false;
+        bool doing_restore = false;
 
-    int rec_num;
-    int num_recs_per_page = 10;
-    string rec_num_indicator = "No search yet run";
-    int current_page = 1;
-    string page_indicator = "";
-    string search_url_stem = "api/Study";
-    string search_url = "";
-    string search_fb = "";
+        int rec_num;
+        int num_recs_per_page = 10;
+        string rec_num_indicator = "No search yet run";
+        int current_page = 1;
+        string page_indicator = "";
+        string search_url_stem = "api/Study";
+        string search_url = "";
+        string search_fb = "";
 
-    string? searchText;
-    string searchType = "1";
-    string? idText;
-    string? idType = "1";
-    string hidden_attribute = "hidden";
-    string? searchParamsValue;
-    string paramsLabelText = "Parameters";
-    bool SearchPossible = false;
-    string processedPars = "";
-    string searchFeedback = "";
-    bool HideProgress = true;   
+        string? searchText;
+        string searchType = "1";
+        string? idText;
+        string? idType = "1";
+        string hidden_attribute = "hidden";
+        string? searchParamsValue;
+        string paramsLabelText = "Parameters";
+        bool SearchPossible = false;
+        string processedPars = "";
+        string searchFeedback = "";
+        bool HideProgress = true;   
 
     private bool _searchInTTs = true;
     private bool _searchInConds = true;
@@ -1216,66 +1218,74 @@
             if (res == "Download JSON")
             {
                 // Set up and show the dialog -
-                // Await result - 
 
-                string date_string = DateTime.Now.ToString("yyyyMMdd");
-                DialogParameters<Downloader> parameters = new()
+                if (sp is not null)
+                {
+                    string date_string = DateTime.Now.ToString("yyyyMMdd");
+                    sp.storage_name = sp.pars + "_" + date_string;
+                    DialogParameters<SearchParams> parameters = new()
                     {
+                        Content = sp,
                         Title = $"Downloading Search data as JSON",
-                        PrimaryAction = "Download",
                         SecondaryAction = "Cancel",
                         Width = "32rem",
-                        Height = "18.5rem",
+                        Height = "25rem",
                         TrapFocus = true,
                         Modal = true,
                         PreventScroll = true
                     };
-                IDialogReference dialog = await DialogService.ShowDialogAsync<Downloader>(parameters);
-                DialogResult? result = await dialog.Result;
+                    IDialogReference dialog = await DialogService.ShowDialogAsync<JSONDownloader>(sp, parameters);
+                    DialogResult? result = await dialog.Result;
+                }
 
             }
 
             if (res == "Download CSV")
             {
                 // Set up and show the dialog -
-                // Await result -
 
-                string date_string = DateTime.Now.ToString("yyyyMMdd");
-                DialogParameters<Downloader> parameters = new()
-                    {
-                        Title = $"Downloading Search data as CSV",
-                        PrimaryAction = "Download",
-                        SecondaryAction = "Cancel",
-                        Width = "32rem",
-                        Height = "18.5rem",
-                        TrapFocus = true,
-                        Modal = true,
-                        PreventScroll = true
-                    };
-                IDialogReference dialog = await DialogService.ShowDialogAsync<Downloader>(parameters);
-                DialogResult? result = await dialog.Result;
+                if (sp is not null)
+                {
+                     string date_string = DateTime.Now.ToString("yyyyMMdd");
+                    sp.storage_name = sp.pars + "_" + date_string;
+                    DialogParameters<SearchParams> parameters = new()
+                        {
+                            Content = sp,
+                            Title = $"Downloading Search data as CSV",
+                            SecondaryAction = "Cancel",
+                            Width = "32rem",
+                            Height = "25rem",
+                            TrapFocus = true,
+                            Modal = true,
+                            PreventScroll = true
+                        };
+                    IDialogReference dialog = await DialogService.ShowDialogAsync<CSVDownloader>(sp, parameters);
+                    DialogResult? result = await dialog.Result;
+                }
             }
 
             if (res == "Download PDF")
             {
                 // Set up and show the dialog -
-                // Await result -
 
-                string date_string = DateTime.Now.ToString("yyyyMMdd");
-                DialogParameters<Downloader> parameters = new()
-                    {
-                        Title = $"Downloading Search data as PDF",
-                        PrimaryAction = "Download",
-                        SecondaryAction = "Cancel",
-                        Width = "32rem",
-                        Height = "18.5rem",
-                        TrapFocus = true,
-                        Modal = true,
-                        PreventScroll = true
-                    };
-                IDialogReference dialog = await DialogService.ShowDialogAsync<Downloader>(parameters);
-                DialogResult? result = await dialog.Result;
-
+                if (sp is not null)
+                {
+                    string date_string = DateTime.Now.ToString("yyyyMMdd");
+                    sp.storage_name = sp.pars + "_" + date_string;
+                    DialogParameters<SearchParams> parameters = new()
+                        {
+                            Content = sp,
+                            Title = $"Downloading Search data as PDF",
+                            SecondaryAction = "Cancel",
+                            Width = "32rem",
+                            Height = "25rem",
+                            TrapFocus = true,
+                            Modal = true,
+                            PreventScroll = true
+                        };
+                    IDialogReference dialog = await DialogService.ShowDialogAsync<PDFDownloader>(sp, parameters);
+                    DialogResult? result = await dialog.Result;
+                }
             }
 
         }

@@ -104,6 +104,13 @@ public class StudyController : ControllerBase
         return res;
     }
 
+    [HttpGet("OmicsDIdata/{qtype}/{offset:int}/{limit:int}")]
+    public async Task<string?> GetOmicsDIData(string qtype, int offset, int limit)
+    {
+        string? res = await _studyRepo.FetchOmicsDIData(qtype, offset, limit);
+        return res;
+    }
+
 
     [HttpGet("MDRId/{source_id:int}/{sd_sid}")]
     public async Task<int?> GetStudyId(int source_id, string sd_sid)

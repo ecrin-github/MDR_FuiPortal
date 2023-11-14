@@ -1,7 +1,10 @@
 ﻿using Dapper;
 using MDR_FuiPortal.Shared;
+using Microsoft.Extensions.Primitives;
 using Microsoft.Fast.Components.FluentUI.DesignTokens;
 using Npgsql;
+using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace MDR_FuiPortal.Server;
@@ -338,22 +341,27 @@ public class StudyRepo : IStudyRepo
             IEnumerable<string>? object_data = await GetIEnumerable<string>(sql_objects);
             if (object_data?.Any() == true)
             {
-                string final_res = "{\"full_study\": " + study_data;
+                string final_res = "{\"full_study\": " + study_data + ", \"full_objects\": [";
                 int num_to_get = object_data.Count();
-                StringBuilder sb = new StringBuilder(", " + "\"full_objects\": [");
+                StringBuilder sb = new StringBuilder();
                 int n = 1;
                 foreach (string s in object_data)
                 {
-                    sb.Append(s);
-                    if (n != num_to_get)
+                    if (!string.IsNullOrEmpty(s))
                     {
-                        sb.Append(", ");
+                        if (n == 1)
+                        {
+                            sb.Append(s);
+                        }
+                        else
+                        {
+                            sb.Append(", " + s);
+                        }
+                        n++;
                     }
-                    n++;
                 }
                 sb.Append("]}");
                 final_res += sb.ToString();
-
                 return final_res;
             }
             else
@@ -397,7 +405,88 @@ public class StudyRepo : IStudyRepo
         {
             return null;
         }
+    }
 
+
+    public async Task<string?> FetchOmicsDIData(string qtype, int offset, int limit)
+    {
+        string sql_string = "";
+        if (qtype == "CRC")
+        {
+            sql_string = @$"select count(*) as rec_num, string_agg(x.c19p, '') as entries
+                         from
+                         (
+                             select sj.c19p 
+                             from search.lexemes lx 
+                             inner join search.studies_json sj 
+                             on lx.study_id = sj.id 
+                             where
+                             tt_lex @@ to_tsquery('core.mdr_english_config2', '(bowel & cancer) | (colorectal & cancer)') 
+                             or conditions_lex @@ to_tsquery('core.mdr_english_config2', '(bowel & cancer) | (colorectal & cancer)')
+                             order by sj.id 
+                             offset {offset} limit {limit}
+                         ) x";
+        }
+        else if (qtype == "COVID")
+        {
+            sql_string = @$"select count(*) as rec_num, string_agg(x.c19p, '') as entries
+                         from
+                         (
+                             select sj.c19p 
+                             from search.lexemes lx 
+                             inner join search.studies_json sj 
+                             on lx.study_id = sj.id 
+                             where
+                             tt_lex @@ to_tsquery('core.mdr_english_config2', 'covid | coronavirus | SARS-2') 
+                             or conditions_lex @@ to_tsquery('core.mdr_english_config2', 'covid | coronavirus | SARS-2')
+                             order by sj.id 
+                             offset {offset} limit {limit}
+                         ) x";
+        }
+
+        if (sql_string != "")
+        {
+            using var conn = new NpgsqlConnection(_dbConnString);
+            try
+            {
+                QRes? res = await conn.QuerySingleOrDefaultAsync<QRes>(sql_string);
+                if (res is not null)
+                {
+                    string xml_string = $@"<database>
+                              <name>ECRIN MDR</name>
+                              <description>The MDR aggregates metadata describing clinical studies and the  data objects (both inputs and outputs) associated with them. It derives its data from trial registries, bibliographic resources and data repositories.</description>
+	                          <url>https://newmdr.ecrin.org</url>
+                              <release>Nov23</release>
+                              <release_date>2023-11-12</release_date>
+                              <entry_count>{res.rec_num}</entry_count>
+	                          <keywords>clinical research, clinical trials, interventional studies, cohort studies, observational health research</keywords>
+                              <entries>";
+                    xml_string += res.entries;
+                    xml_string += @"</entries>
+                              </database>";
+                    return xml_string;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            catch (Exception e)
+            {
+                string s = e.Message;
+                return null;
+            }
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    private class QRes
+    {
+        public int rec_num { get; set; }
+        public string? entries { get; set; }
     }
 
 
