@@ -51,6 +51,31 @@ public class StudyController : ControllerBase
     }
 
 
+    [HttpGet("BySearch/Summaries/{scope:int}/{pars}/{offset:int}/{limit:int}")]
+    public async Task<List<string>> GetStudySummariesBySearch(int scope, string pars, int offset, int limit)
+    {
+        var res = await _studyRepo.FetchStudySummariesBySearch(scope, pars, offset, limit);
+        if (res?.Any() == true)
+        {
+            return res;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+
+    [HttpGet("BySearch/Count/{scope:int}/{pars}")]
+    public async Task<int?> GetStudyCountBySearch(int scope, string pars)
+    {
+        var res = await _studyRepo.FetchStudyCountBySearch(scope, pars);
+        return res;
+
+    }
+
+
+
     [HttpGet("ByRegId/{type_id:int}/{reg_id}")]
     public async Task<List<string>> GetStudyByTypeAndId(int type_id, string reg_id)
     {
@@ -92,9 +117,10 @@ public class StudyController : ControllerBase
 
 
     [HttpGet("AllDetails/{study_id:int}")]
-    public async Task<string>? GetStudyAllDetailsById(int study_id)
+    public async Task<string?> GetStudyAllDetailsById(int study_id)
     {
-        return await _studyRepo.FetchStudyAllDetailsById(study_id);
+        string? res = await _studyRepo.FetchStudyAllDetailsById(study_id);
+        return res;
     }
 
     [HttpGet("StudyDetails/{study_id:int}")]
@@ -120,6 +146,9 @@ public class StudyController : ControllerBase
     }
 
 
+    /*
+     * To do
+     * 
     [HttpGet("/iec/{study_id:int}")]
     public async Task<List<IECLine>?> GetStudyIEC(int study_id)
     {
@@ -127,6 +156,7 @@ public class StudyController : ControllerBase
         var listres = res is not null ? res.ToList() : null;
         return listres;
     }
+    */
 
 }
 

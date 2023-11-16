@@ -219,8 +219,8 @@ public class StudyRepo : IStudyRepo
             }
             else if (search_scope == 3)
             {
-                scope_string = $@"  (tt_lex @@ to_tsquery('core.mdr_english_config2', '{search_pars}') 
-                                 or conditions_lex @@ to_tsquery('core.mdr_english_config2', '{search_pars}')) ";
+                scope_string = $@"  (  (tt_lex @@ to_tsquery('core.mdr_english_config2', '{search_pars}')) 
+                                 OR    (conditions_lex @@ to_tsquery('core.mdr_english_config2', '{search_pars}')) ) ";
             }
             prior_clause_added = true;
             sql_where_clauses += scope_string;
@@ -319,7 +319,19 @@ public class StudyRepo : IStudyRepo
     }
 
 
-    public async Task<string>? FetchStudyAllDetailsById(int study_id)
+    public async Task<string?> FetchStudyDetailsById(int study_id)
+    {
+        // for testing 2044457 = TNT trial
+
+        string sql_study = @$"select full_study
+                           from search.studies_json s
+                           where s.id = {study_id}";
+
+        return await GetSingleRecord<string>(sql_study);
+    }
+
+
+    public async Task<string?> FetchStudyAllDetailsById(int study_id)
     {
         // for testing 2044457 = TNT trial
 
@@ -376,19 +388,6 @@ public class StudyRepo : IStudyRepo
     }
 
 
-    public async Task<string?> FetchStudyDetailsById(int study_id)
-    {
-        // for testing 2044457 = TNT trial
-
-        string sql_study = @$"select full_study
-                           from search.studies_json s
-                           where s.id = {study_id}";
-
-        return await GetSingleRecord<string>(sql_study);
-    }
-
-
-
     public async Task<int?> FetchStudyId(int source_id, string sd_sid)
     {
         // source_id = 100126 and sd_sid = 'ISRCTN04968978'
@@ -408,7 +407,156 @@ public class StudyRepo : IStudyRepo
     }
 
 
-    public async Task<string?> FetchOmicsDIData(string qtype, int offset, int limit)
+    public async Task<int?> FetchStudyCountBySearch(int scope, string pars)
+    {
+        int TotalRecords = 0;
+        string search_pars = process_pars(pars);
+        string search_string = ObtainSearchParsWhereClauses(scope, search_pars);
+        
+        using var conn = new NpgsqlConnection(_dbConnString);
+        try
+        {
+            for (int b = 1; b < 21; b++)
+            {
+                string sql_string = $"select count(*) from search.lexemes lx ";
+                sql_string += $" where lx.bucket = {b} ";
+                sql_string += search_string;
+                int res = await conn.QueryFirstOrDefaultAsync<int>(sql_string);
+                TotalRecords += res;
+            }
+            return TotalRecords;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+
+    public async Task<List<string>?> FetchStudySummariesBySearch(int scope, string pars, int start_number, int amount)
+    {
+        if (amount > 1000)
+        {
+            amount = 1000;
+        }
+        int last_number = start_number + amount - 1;
+        int running_total = 0;
+
+        List<string> search_results = new();
+        string search_pars = process_pars(pars);
+        using var conn = new NpgsqlConnection(_dbConnString);
+        string search_string = ObtainSearchParsWhereClauses(scope, search_pars);
+
+        try
+        {
+            for (int b = 1; b < 21; b++)
+            {
+                string sql_string = $"select study_json from search.lexemes lx ";
+                sql_string += $" where lx.bucket = {b} ";
+                sql_string += search_string;
+                sql_string += $" order by study_id ";
+                IEnumerable<string>? res = (await GetIEnumerable<string>(sql_string));
+
+                if (res?.Any() == true)
+                {
+                    List<string> res_list = res.ToList();
+                    int bucket_amount = res.Count();      
+                    //int new_running_total = running_total + bucket_amount;
+
+                    if (running_total < start_number)  // not yet reached start of rerquired set
+                    {
+                        if (running_total + bucket_amount < start_number)
+                        {
+                            // do nothing - still have not reached the requested records!
+                        }
+                        else
+                        {
+                            int bucket_start_pos = start_number - running_total;
+                            if (running_total + bucket_amount > last_number)
+                            {
+                                int bucket_end_pos = last_number - running_total;
+
+                                // This bucket load contains both start and end of the required studies
+                                // Add records in this bucket between the bucket_start_pos and the bucket_end_pos
+
+                                search_results = res_list.GetRange(bucket_start_pos, amount);
+                                break;
+                            }
+                            else
+                            {
+                                // Add all of this bucket load to the existing set of search results;
+                                // starting at the bucket_start_pos;
+                                int number_to_add = bucket_amount - bucket_start_pos;
+                                search_results = res_list.GetRange(bucket_start_pos, number_to_add);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // study data collection must have already begun
+
+                        if (running_total + bucket_amount > last_number)
+                        {
+                            // This bucket load contains both start and end of the required studies
+                            // Add records in this bucket between the bucket_start_pos and the bucket_end_pos
+
+                            int amount_to_add = last_number - running_total;
+                            search_results.AddRange(res_list.GetRange(0, amount_to_add));
+                            break;
+                        }
+                        else
+                        {
+                            // Add all of this bucket load to the existing set of search results;
+
+                            search_results.AddRange(res_list);
+                        }
+
+                    }
+                    running_total = running_total + bucket_amount;
+                }
+            }
+            if (search_results?.Any() == true)
+            {
+                return search_results;  // get to here from breaking out of loop or running out of buckets
+            }
+            else
+            {
+                return null;
+            }
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+
+    private string ObtainSearchParsWhereClauses(int search_scope, string search_pars)
+    {
+        string scope_string = "";
+        if (search_pars != "ALL STUDIES")
+        {
+            if (search_scope == 1)
+            {
+                scope_string = $" AND (tt_lex @@ to_tsquery('core.mdr_english_config2', '{search_pars}')) ";
+            }
+            else if (search_scope == 2)
+            {
+                scope_string = $" AND (conditions_lex @@ to_tsquery('core.mdr_english_config2', '{search_pars}')) ";
+            }
+            else if (search_scope == 3)
+            {
+                scope_string = $@" AND
+                          (               (tt_lex @@ to_tsquery('core.mdr_english_config2', '{search_pars}')) 
+                              OR  (conditions_lex @@ to_tsquery('core.mdr_english_config2', '{search_pars}')) )";
+            }
+        }
+        return scope_string;
+    }
+
+
+
+        public async Task<string?> FetchOmicsDIData(string qtype, int offset, int limit)
     {
         string sql_string = "";
         if (qtype == "CRC")
@@ -452,12 +600,14 @@ public class StudyRepo : IStudyRepo
                 QRes? res = await conn.QuerySingleOrDefaultAsync<QRes>(sql_string);
                 if (res is not null)
                 {
+                    string date_string = DateTime.Now.ToString("yyyy-MM-dd");
+                    string release_string = DateTime.Now.ToString("MMMyy");
                     string xml_string = $@"<database>
                               <name>ECRIN MDR</name>
                               <description>The MDR aggregates metadata describing clinical studies and the  data objects (both inputs and outputs) associated with them. It derives its data from trial registries, bibliographic resources and data repositories.</description>
 	                          <url>https://newmdr.ecrin.org</url>
-                              <release>Nov23</release>
-                              <release_date>2023-11-12</release_date>
+                              <release>{release_string}</release>
+                              <release_date>{date_string}</release_date>
                               <entry_count>{res.rec_num}</entry_count>
 	                          <keywords>clinical research, clinical trials, interventional studies, cohort studies, observational health research</keywords>
                               <entries>";
