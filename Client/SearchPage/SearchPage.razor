@@ -1114,8 +1114,7 @@
             { new Option<string> { Value = "39", Text = "NIH CTRP ID"} },
             { new Option<string> { Value = "40", Text = "DAIDS ID"} },
             { new Option<string> { Value = "42", Text = "NHBLI ID" } },
-            { new Option<string> { Value = "45", Text = "Obsolete NTR number" } },
-            { new Option<string> { Value = "45", Text = "CDR Number" } }
+            { new Option<string> { Value = "45", Text = "Obsolete NTR number" } }
         };
 
         roman_suffixes = new()
@@ -1421,6 +1420,7 @@
                                 StudyCountryFilter?.SetFilters(currentFP.countries, currentFP.country_names);
                                 StudyObjectFilter?.SetFilters(currentFP.objects);
                                 StudyPhaseFilter?.SetFilters(currentFP.phase);
+                                StudyAllocFilter?.SetFilters(currentFP.alloc);
                             }
                         }
 
