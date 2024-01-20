@@ -1,21 +1,59 @@
-﻿@implements IDialogContentComponent<SearchParams>
+﻿@inject IJSRuntime JS
+
+@using System.Text
+@using Newtonsoft.Json
+@implements IDialogContentComponent<DialogData>
 
 <p>A default name for the file is given below. Please edit this name if you wish, before saving (max 60 chars).</p>
-<FluentTextArea Rows="1" Cols="60" @bind-Value="@Content.storage_name"></FluentTextArea>
+<FluentTextArea Rows="1" Cols="60" @bind-Value="@Content.SearchParams!.storage_name"></FluentTextArea>
 <p></p>
-<p><i>To do!</i></p>
-<!--
-<a id="download" class="btn" href="/dl_files/test.csv" download="test.csv"
-   role="button" target="=_top">Download</a>
--->
-
-
+<button @onclick="DownloadJson" class="btn">Download JSON</button>
+<script>
+  window.downloadJsonFile = async (fileName, contentStreamReference) => {
+    const arrayBuffer = await contentStreamReference.arrayBuffer();
+    const blob = new Blob([arrayBuffer]);
+    const url = URL.createObjectURL(blob);
+    const anchorElement = document.createElement('a');
+    anchorElement.href = url;
+    anchorElement.download = fileName ?? '';
+    anchorElement.click();
+    anchorElement.remove();
+    URL.revokeObjectURL(url);
+  }
+</script>
 @code {
     [Parameter]
-    public SearchParams Content { get; set; } = default!;
+    public DialogData Content { get; set; } = default!;
 
+    private Stream GetFileStream()
+    {
+        var sb = new StringBuilder();
+        foreach (var s in Content.BaseSet)
+        {
+            sb.Append(s);
+        }
+        var data = JsonConvert.SerializeObject(new List<string>{sb.ToString()});
+        return GetStreamWithStreamWriter(data);
+    }
 
-
+    private static Stream GetStreamWithStreamWriter(string sampleString, Encoding? encoding = null)
+    {
+        encoding ??= Encoding.UTF8;
+        var stream = new MemoryStream(encoding.GetByteCount(sampleString));
+        using var writer = new StreamWriter(stream, encoding, -1, true);
+        writer.Write(sampleString);
+        writer.Flush();
+        stream.Position = 0;
+        return stream;
+    }
+    
+    private async Task DownloadJson()
+    {
+        var fileStream = GetFileStream();
+        var fileName = Content.SearchParams!.storage_name + ".json";
+        using var streamRef = new DotNetStreamReference(stream: fileStream);
+        await JS.InvokeVoidAsync("downloadJsonFile", fileName, streamRef);
+    }
 }
 
 

@@ -1,22 +1,121 @@
-﻿@implements IDialogContentComponent<SearchParams>
+﻿@inject IJSRuntime JS
+
+@using System.Text
+@using CsvHelper
+@using Newtonsoft.Json
+@using System.Globalization
+@using System.Reflection
+@using ServiceStack
+@using ServiceStack.Text
+@using CsvWriter = CsvHelper.CsvWriter
+@using JsonSerializer = System.Text.Json.JsonSerializer
+@implements IDialogContentComponent<DialogData>
 
 <p>A default name for the file is given below. Please edit this name if you wish, before saving (max 60 chars).</p>
-<FluentTextArea Rows="1" Cols="60" @bind-Value="@Content.storage_name"></FluentTextArea>
+<FluentTextArea Rows="1" Cols="60" @bind-Value="@Content.SearchParams!.storage_name"></FluentTextArea>
 <p></p>
-<p><i>To do!</i></p>
-<!--
-<a id="download" class="btn" href="/dl_files/test.csv" download="test.csv"
-   role="button" target="=_top">Download</a>
--->
+<button @onclick="DownloadCsv" class="btn">Download CSV</button>
+<script>
+  window.downloadCsvFile = async (fileName, contentStreamReference) => {
+    const arrayBuffer = await contentStreamReference.arrayBuffer();
+    const blob = new Blob([arrayBuffer]);
+    const url = URL.createObjectURL(blob);
+    const anchorElement = document.createElement('a');
+    anchorElement.href = url;
+    anchorElement.download = fileName ?? '';
+    anchorElement.click();
+    anchorElement.remove();
+    URL.revokeObjectURL(url);
+  }
+</script>
 
 
 
 @code {
     [Parameter]
-    public SearchParams Content { get; set; } = default!;
+    public DialogData Content { get; set; } = default!;
 
+    private static string ToCsvCustom<T>(string separator, IEnumerable<T> objectlist)
+    {
+        Type t = typeof(T);
+        FieldInfo[] fields = t.GetFields();
 
+        string header = String.Join(separator, fields.Select(f => f.Name).ToArray());
 
+        StringBuilder csvdata = new StringBuilder();
+        csvdata.AppendLine(header);
+
+        foreach (var o in objectlist) 
+            csvdata.AppendLine(ToCsvFieldsCustom(separator, fields, o));
+
+        return csvdata.ToString();
+    }
+
+    private static string ToCsvFieldsCustom(string separator, FieldInfo[] fields, object o)
+    {
+        StringBuilder linie = new StringBuilder();
+
+        foreach (var f in fields)
+        {
+            if (linie.Length > 0)
+                linie.Append(separator);
+
+            var x = f.GetValue(o);
+
+            if (x != null)
+                linie.Append(x.ToString());
+        }
+
+        return linie.ToString();
+    }
+
+    private Stream GetFileStream()
+    {
+        var data = new List<StudySummary>();
+        foreach (var studyString in Content.BaseSet)
+        {
+            var study = JsonSerializer.Deserialize<StudySummary>(studyString);
+            if (study == null)
+            {
+                continue;
+            }
+
+            data.Add(study);
+        }
+        var sb = new StringBuilder();
+        sb.AppendLine("study_id,study_name,description,dss,start_year," +
+                      "start_month,type_id,type_name,status_id,status_name," +
+                      "gender_elig,min_age,max_age,phase_id,alloc_id,feature_list,has_objects," +
+                      "country_list,conditions_list,provenance");
+        foreach (var d in data)
+        {
+            sb.AppendLine($"{d.study_id},{d.study_name},{d.description}" +
+                          $"{d.dss},{d.start_year},{d.start_month},{d.type_id}," +
+                          $"{d.type_name},{d.status_id},{d.status_name},{d.gender_elig}," +
+                          $"{d.min_age},{d.max_age},{d.phase_id},{d.alloc_id},{d.feature_list}," +
+                          $"{d.has_objects},{d.country_list},{d.condition_list},{d.provenance}");
+        }
+        return GetStreamWithStreamWriter(sb.ToString());
+    }
+
+    private static Stream GetStreamWithStreamWriter(string sampleString, Encoding? encoding = null)
+    {
+        encoding ??= Encoding.UTF8;
+        var stream = new MemoryStream(encoding.GetByteCount(sampleString));
+        using var writer = new StreamWriter(stream, encoding, -1, true);
+        writer.Write(sampleString);
+        writer.Flush();
+        stream.Position = 0;
+        return stream;
+    }
+    
+    private async Task DownloadCsv()
+    {
+        var fileStream = GetFileStream();
+        var fileName = Content.SearchParams!.storage_name + ".csv";
+        using var streamRef = new DotNetStreamReference(stream: fileStream);
+        await JS.InvokeVoidAsync("downloadCsvFile", fileName, streamRef);
+    }
 }
 
 

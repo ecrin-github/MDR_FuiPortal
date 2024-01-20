@@ -21,6 +21,7 @@ builder.Services.AddSingleton<ITreeRepo, TreeRepo>();
 builder.Services.AddScoped<IObjectRepo, ObjectRepo>();
 builder.Services.AddScoped<IStudyRepo, StudyRepo>();
 
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
@@ -35,6 +36,9 @@ else
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
@@ -59,7 +63,11 @@ domain/port hosting and subpath hosting of multiple Blazor WebAssembly client ap
  ***************************************************************/
 
 app.UseBlazorFrameworkFiles();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Files")),
+    RequestPath = "/Files"
+});
 
 app.UseRouting();
 

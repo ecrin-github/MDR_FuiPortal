@@ -1233,7 +1233,14 @@
                         Modal = true,
                         PreventScroll = true
                     };
-                    IDialogReference dialog = await DialogService.ShowDialogAsync<JSONDownloader>(sp, parameters);
+                    var dialogData = new DialogData
+                    {
+                        SearchParams = sp,
+                        BaseSet = BaseSet!,
+                        PageSet = PageSet!,
+                        BucketSet = BucketSet!,
+                    };
+                    IDialogReference dialog = await DialogService.ShowDialogAsync<JSONDownloader>(dialogData, parameters);
                     DialogResult? result = await dialog.Result;
                 }
 
@@ -1258,7 +1265,14 @@
                             Modal = true,
                             PreventScroll = true
                         };
-                    IDialogReference dialog = await DialogService.ShowDialogAsync<CSVDownloader>(sp, parameters);
+                    var dialogData = new DialogData
+                    {
+                        SearchParams = sp,
+                        BaseSet = BaseSet!,
+                        PageSet = PageSet!,
+                        BucketSet = BucketSet!,
+                    };
+                    IDialogReference dialog = await DialogService.ShowDialogAsync<CSVDownloader>(dialogData, parameters);
                     DialogResult? result = await dialog.Result;
                 }
             }
