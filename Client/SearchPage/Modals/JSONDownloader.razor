@@ -27,12 +27,16 @@
 
     private Stream GetFileStream()
     {
-        var sb = new StringBuilder();
+        var studies = new List<StudySummary>();
         foreach (var s in Content.BaseSet)
         {
-            sb.Append(s);
+            var study = JsonConvert.DeserializeObject<StudySummary>(s);
+            if (study != null)
+            {
+                studies.Add(study);
+            }
         }
-        var data = JsonConvert.SerializeObject(new List<string>{sb.ToString()});
+        var data = JsonConvert.SerializeObject(studies);
         return GetStreamWithStreamWriter(data);
     }
 

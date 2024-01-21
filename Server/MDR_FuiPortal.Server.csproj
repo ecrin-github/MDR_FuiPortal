@@ -41,9 +41,5 @@
     <ProjectReference Include="..\Shared\MDR_FuiPortal.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Files\" />
-  </ItemGroup>
-
 
 </Project>

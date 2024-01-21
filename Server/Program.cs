@@ -63,11 +63,6 @@ domain/port hosting and subpath hosting of multiple Blazor WebAssembly client ap
  ***************************************************************/
 
 app.UseBlazorFrameworkFiles();
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Files")),
-    RequestPath = "/Files"
-});
 
 app.UseRouting();
 

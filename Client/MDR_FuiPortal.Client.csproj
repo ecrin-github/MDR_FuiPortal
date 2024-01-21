@@ -53,8 +53,4 @@
 		<None Update="Shared/InfoPanel.razor.css;" CssScope="b-aboutpanel" />
  </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Files\" />
-  </ItemGroup>
-
 </Project>
