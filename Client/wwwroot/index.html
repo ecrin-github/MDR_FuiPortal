@@ -9,7 +9,7 @@
     <meta http-equiv="Expires" content="0" />
 
     <title>MDR_FuiPortal</title>
-    <!-- <base href="/" /> -->
+    <base href="/" />
 
     <script type="text/javascript">
         var appBase = document.createElement('base');
@@ -18,6 +18,28 @@
             appBase.href = "/";
         }
         document.head.appendChild(appBase);
+        window.downloadJsonFile = async (fileName, contentStreamReference) => {
+            const arrayBuffer = await contentStreamReference.arrayBuffer();
+            const blob = new Blob([arrayBuffer]);
+            const url = URL.createObjectURL(blob);
+            const anchorElement = document.createElement('a');
+            anchorElement.href = url;
+            anchorElement.download = fileName ?? '';
+            anchorElement.click();
+            anchorElement.remove();
+            URL.revokeObjectURL(url);
+        }
+        window.downloadCsvFile = async (fileName, contentStreamReference) => {
+            const arrayBuffer = await contentStreamReference.arrayBuffer();
+            const blob = new Blob([arrayBuffer]);
+            const url = URL.createObjectURL(blob);
+            const anchorElement = document.createElement('a');
+            anchorElement.href = url;
+            anchorElement.download = fileName ?? '';
+            anchorElement.click();
+            anchorElement.remove();
+            URL.revokeObjectURL(url);
+        }
     </script>
     <link href="_content/Microsoft.Fast.Components.FluentUI/css/reboot.css" rel="stylesheet" />
     <link href="css/spinkit.css" rel="stylesheet" />

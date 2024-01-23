@@ -1,13 +1,9 @@
 using MDR_FuiPortal.Server;
 using Microsoft.Fast.Components.FluentUI;
-using System.Reflection;
-
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.Extensions.FileProviders;
 
 
-var builder = WebApplication.CreateBuilder(args);
+var options = new WebApplicationOptions() { WebRootPath = "wwwroot"};
+var builder = WebApplication.CreateBuilder(options);
 
 // Add services to the container.
 

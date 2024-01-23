@@ -8,19 +8,7 @@
 <FluentTextArea Rows="1" Cols="60" @bind-Value="@Content.SearchParams!.storage_name"></FluentTextArea>
 <p></p>
 <button @onclick="DownloadJson" class="btn">Download JSON</button>
-<script>
-  window.downloadJsonFile = async (fileName, contentStreamReference) => {
-    const arrayBuffer = await contentStreamReference.arrayBuffer();
-    const blob = new Blob([arrayBuffer]);
-    const url = URL.createObjectURL(blob);
-    const anchorElement = document.createElement('a');
-    anchorElement.href = url;
-    anchorElement.download = fileName ?? '';
-    anchorElement.click();
-    anchorElement.remove();
-    URL.revokeObjectURL(url);
-  }
-</script>
+
 @code {
     [Parameter]
     public DialogData Content { get; set; } = default!;
