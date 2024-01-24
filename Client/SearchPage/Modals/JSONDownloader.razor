@@ -8,7 +8,6 @@
 <FluentTextArea Rows="1" Cols="60" @bind-Value="@Content.SearchParams!.storage_name"></FluentTextArea>
 <p></p>
 <button @onclick="DownloadJson" class="btn">Download JSON</button>
-
 @code {
     [Parameter]
     public DialogData Content { get; set; } = default!;
