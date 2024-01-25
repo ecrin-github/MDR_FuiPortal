@@ -1,11 +1,8 @@
 ﻿using Dapper;
 using MDR_FuiPortal.Shared;
-using Microsoft.Extensions.Primitives;
-using Microsoft.Fast.Components.FluentUI.DesignTokens;
 using Npgsql;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
 using System.Text;
+using System.Xml.Linq;
 
 namespace MDR_FuiPortal.Server;
 
@@ -610,10 +607,45 @@ public class StudyRepo : IStudyRepo
                               <release_date>{date_string}</release_date>
                               <entry_count>{res.rec_num}</entry_count>
 	                          <keywords>clinical research, clinical trials, interventional studies, cohort studies, observational health research</keywords>
-                              <entries>";
-                    xml_string += res.entries;
-                    xml_string += @"</entries>
-                              </database>";
+                              ";
+                    var entries = "<entries>";
+                    entries += res.entries;
+                    entries += "</entries>";
+
+                    var updEntriesSb = new StringBuilder(); 
+                    updEntriesSb.Append("<entries>");
+                    
+                    var xDoc = XDocument.Parse(entries);
+                    foreach (var entry in xDoc.Descendants("entry"))
+                    {
+                        var location = (string)entry.Descendants("field")
+                            .First(x => (string)x.Attribute("name") == "location");
+                        var split_string = location.Split(',');
+                        if (split_string.Length <= 1)
+                        {
+                            updEntriesSb.Append(entry);
+                            continue;
+                        }
+
+                        var additionalFields = entry.Descendants("additional_fields").First();
+                        additionalFields.Descendants("field")
+                            .First(x => (string)x.Attribute("name") == "location").Remove();
+                        
+                        var locationsStringBuilder = new StringBuilder();
+                        foreach (var location_string in split_string)
+                        {
+                            locationsStringBuilder.Append($"<field name=\"location\">{location_string}</field>");
+                            additionalFields.Add(new XElement("field", new XAttribute("name", "location"), location_string.Trim()));
+                        }
+                        
+                        updEntriesSb.Append(entry);
+                    }
+                    
+                    updEntriesSb.Append("</entries>");
+
+                    
+                    xml_string += updEntriesSb.ToString();
+                    xml_string += "</database>";
                     return xml_string;
                 }
                 else
