@@ -21,12 +21,12 @@
 
     private static string ToCsvCustom<T>(string separator, IEnumerable<T> objectlist)
     {
-        Type t = typeof(T);
-        FieldInfo[] fields = t.GetFields();
+        var t = typeof(T);
+        var fields = t.GetFields();
 
-        string header = String.Join(separator, fields.Select(f => f.Name).ToArray());
+        var header = string.Join(separator, fields.Select(f => f.Name).ToArray());
 
-        StringBuilder csvdata = new StringBuilder();
+        var csvdata = new StringBuilder();
         csvdata.AppendLine(header);
 
         foreach (var o in objectlist) 
@@ -37,20 +37,20 @@
 
     private static string ToCsvFieldsCustom(string separator, FieldInfo[] fields, object o)
     {
-        StringBuilder linie = new StringBuilder();
+        var line = new StringBuilder();
 
         foreach (var f in fields)
         {
-            if (linie.Length > 0)
-                linie.Append(separator);
+            if (line.Length > 0)
+                line.Append(separator);
 
             var x = f.GetValue(o);
 
             if (x != null)
-                linie.Append(x.ToString());
+                line.Append(x);
         }
 
-        return linie.ToString();
+        return line.ToString();
     }
 
     private Stream GetFileStream()
@@ -67,21 +67,47 @@
             data.Add(study);
         }
         var sb = new StringBuilder();
-        sb.AppendLine("study_id,study_name,description,dss,start_year," +
-                      "start_month,type_id,type_name,status_id,status_name," +
-                      "gender_elig,min_age,max_age,phase_id,alloc_id,feature_list,has_objects," +
-                      "country_list,conditions_list,provenance");
+        sb.AppendLine("study_id;study_name;description;dss;start_year;" +
+                      "start_month;type_id;type_name;status_id;status_name;" +
+                      "gender_elig;min_age;max_age;phase_id;alloc_id;feature_list;has_objects;" +
+                      "country_list;conditions_list;provenance");
         foreach (var d in data)
         {
-            sb.AppendLine($"{d.study_id},{d.study_name},{d.description}" +
-                          $"{d.dss},{d.start_year},{d.start_month},{d.type_id}," +
-                          $"{d.type_name},{d.status_id},{d.status_name},{d.gender_elig}," +
-                          $"{d.min_age},{d.max_age},{d.phase_id},{d.alloc_id},{d.feature_list}," +
-                          $"{d.has_objects},{d.country_list},{d.condition_list},{d.provenance}");
+            sb.AppendLine($"{d.study_id};{CleanString(d.study_name)};" +
+                          $"{CleanString(d.description)};" +
+                          $"{CleanString(d.dss)};" +
+                          $"{d.start_year};{d.start_month};{d.type_id};" +
+                          $"{CleanString(d.type_name)};" +
+                          $"{d.status_id};" +
+                          $"{CleanString(d.status_name)};" +
+                          $"{CleanString(d.gender_elig)};" +
+                          $"{CleanString(d.min_age)};" +
+                          $"{CleanString(d.max_age)};" +
+                          $"{d.phase_id};{d.alloc_id};" +
+                          $"{CleanString(d.feature_list)};" +
+                          $"{CleanString(d.has_objects)};" +
+                          $"{CleanString(d.country_list)};" +
+                          $"{CleanString(d.condition_list)};" +
+                          $"{CleanString(d.provenance)}");
         }
         return GetStreamWithStreamWriter(sb.ToString());
     }
 
+    private static string CleanString(string? s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return "null";
+        var sb = new StringBuilder();
+        var cleanString = s.Replace("\n", " ").Replace("\r", " ");
+        foreach (var c in cleanString) {
+            if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' 
+                || c == '_' || c == ' ' || c == ':') 
+            {
+                sb.Append(c);
+            }
+        }
+        return sb.ToString();
+    }
+    
     private static Stream GetStreamWithStreamWriter(string sampleString, Encoding? encoding = null)
     {
         encoding ??= Encoding.UTF8;
