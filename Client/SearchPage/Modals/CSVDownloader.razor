@@ -67,27 +67,27 @@
             data.Add(study);
         }
         var sb = new StringBuilder();
-        sb.AppendLine("study_id;study_name;description;dss;start_year;" +
-                      "start_month;type_id;type_name;status_id;status_name;" +
-                      "gender_elig;min_age;max_age;phase_id;alloc_id;feature_list;has_objects;" +
-                      "country_list;conditions_list;provenance");
+        sb.AppendLine("study_id,study_name,description,dss,start_year," +
+                      "start_month,type_id,type_name,status_id,status_name," +
+                      "gender_elig,min_age,max_age,phase_id,alloc_id,feature_list,has_objects," +
+                      "country_list,conditions_list,provenance");
         foreach (var d in data)
         {
-            sb.AppendLine($"{d.study_id};{CleanString(d.study_name)};" +
-                          $"{CleanString(d.description)};" +
-                          $"{CleanString(d.dss)};" +
-                          $"{d.start_year};{d.start_month};{d.type_id};" +
-                          $"{CleanString(d.type_name)};" +
-                          $"{d.status_id};" +
-                          $"{CleanString(d.status_name)};" +
-                          $"{CleanString(d.gender_elig)};" +
-                          $"{CleanString(d.min_age)};" +
-                          $"{CleanString(d.max_age)};" +
-                          $"{d.phase_id};{d.alloc_id};" +
-                          $"{CleanString(d.feature_list)};" +
-                          $"{CleanString(d.has_objects)};" +
-                          $"{CleanString(d.country_list)};" +
-                          $"{CleanString(d.condition_list)};" +
+            sb.AppendLine($"{d.study_id},{CleanString(d.study_name)}," +
+                          $"{CleanString(d.description)}," +
+                          $"{CleanString(d.dss)}," +
+                          $"{d.start_year},{d.start_month},{d.type_id}," +
+                          $"{CleanString(d.type_name)}," +
+                          $"{d.status_id}," +
+                          $"{CleanString(d.status_name)}," +
+                          $"{CleanString(d.gender_elig)}," +
+                          $"{CleanString(d.min_age)}," +
+                          $"{CleanString(d.max_age)}," +
+                          $"{d.phase_id};{d.alloc_id}," +
+                          $"{CleanString(d.feature_list)}," +
+                          $"{CleanString(d.has_objects)}," +
+                          $"{CleanString(d.country_list)}," +
+                          $"{CleanString(d.condition_list)}," +
                           $"{CleanString(d.provenance)}");
         }
         return GetStreamWithStreamWriter(sb.ToString());
@@ -95,7 +95,7 @@
 
     private static string CleanString(string? s)
     {
-        if (string.IsNullOrWhiteSpace(s)) return "null";
+        if (string.IsNullOrWhiteSpace(s)) return "'null'";
         var sb = new StringBuilder();
         var cleanString = s.Replace("\n", " ").Replace("\r", " ");
         foreach (var c in cleanString) {
@@ -105,7 +105,7 @@
                 sb.Append(c);
             }
         }
-        return sb.ToString();
+        return "'" + sb.ToString() + "'";
     }
     
     private static Stream GetStreamWithStreamWriter(string sampleString, Encoding? encoding = null)
