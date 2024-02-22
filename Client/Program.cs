@@ -15,6 +15,7 @@ builder.Services.AddScoped(sp =>
         });
 builder.Services.AddFluentUIComponents();
 builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddBlazorBootstrap();
 
 var app = builder.Build();
 await app.RunAsync();

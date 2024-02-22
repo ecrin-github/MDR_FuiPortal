@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using BlazorBootstrap
 @inject NavigationManager NavManager
 @inject IJSRuntime _jsRuntime;
 
@@ -117,7 +118,14 @@
                         on <span class="red-text">1.3 million digital objects</span>.
                     </p>
                 </div>
-
+                <div>
+                    <h2>Trials by start year</h2>
+                    <BarChart @ref="trialsByStartYearChart" Width="800" Class="mt-4 mb-5"/>
+                </div>
+                <div>
+                    <h2>Trials by type</h2>
+                    <BarChart @ref="trialsByTypeChart" Width="800" Class="mt-4 mb-5"/>
+                </div>
             </div>
             <div id="arrow-area">
                 <div class="rt-arrow-button">
@@ -133,6 +141,16 @@
 
 @code {
 
+    private BarChart  trialsByStartYearChart = default!;
+    private BarChartOptions  trialsByStartYearChartOptions = default!;
+    private ChartData trialsByStartYearChartData = default!;
+    
+    private BarChart  trialsByTypeChart = default!;
+    private BarChartOptions  trialsByTypeChartOptions = default!;
+    private ChartData trialsByTypeChartData = default!;
+    
+    private Random random = new();
+    
     void NavigateToSearch()
     {
         NavManager.NavigateTo("/Search");
@@ -143,9 +161,66 @@
         if (firstRender)
         {
             await _jsRuntime.InvokeVoidAsync("setWindowName", "home");
+            await trialsByStartYearChart.InitializeAsync(trialsByStartYearChartData, trialsByStartYearChartOptions);
+            await trialsByTypeChart.InitializeAsync(trialsByTypeChartData, trialsByTypeChartOptions);
         }
         await base.OnAfterRenderAsync(firstRender);
     }
 
+    protected override void OnInitialized()
+    {
+        var studiesByTypeDataset = new Dictionary<string, int>
+        {
+            { "Interventional" , 2 },
+            { "Observational" , 3 },
+            { "Non" , 4 },
+            { "Others" , 5 },
+        };
+        
+        var studiesByStartYearDataset = new Dictionary<string, int>
+        {
+            { "2022" , 2 },
+            { "2023" , 3 },
+            { "2024" , 4 }
+        };
+        
+        trialsByTypeChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByTypeDataset), Datasets = GetDefaultDataSets(studiesByTypeDataset) };
+        trialsByTypeChartOptions = new BarChartOptions { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.X } };
+        
+        trialsByStartYearChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByStartYearDataset), Datasets = GetDefaultDataSets(studiesByStartYearDataset) };
+        trialsByStartYearChartOptions = new BarChartOptions { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.X } };
+    }
+
+    
+    #region Data Preparation
+    private List<IChartDataset> GetDefaultDataSets(IDictionary<string, int> data)
+    {
+        return new List<IChartDataset> { GetRandomLineChartDataset(data) };
+    }
+
+    private BarChartDataset GetRandomLineChartDataset(IDictionary<string, int> data)
+    {
+        var c = ColorBuilder.CategoricalTwelveColors[random.Next(12)].ToColor();
+        return new BarChartDataset
+        {
+            Label = "Number of studies",
+            Data = GetRandomData(data),
+            BackgroundColor = new List<string> { c.ToRgbString() },
+            BorderColor = new List<string> { c.ToRgbString() },
+            BorderWidth = new List<double> { 2 },
+        };
+    }
+
+    private static List<double> GetRandomData(IDictionary<string, int> entries)
+    {
+        return entries.Select(entry => entry.Value).Select(dummy => (double)dummy).ToList();
+    }
+
+    private static List<string> GetDefaultDataLabels(IDictionary<string, int> data)
+    {
+        return data.Select(e => e.Key).ToList();
+    }
+
+    #endregion Data Preparation
 }
 
