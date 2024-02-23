@@ -1,8 +1,12 @@
-﻿using Dapper;
+﻿using System.Collections;
+using System.Runtime.CompilerServices;
+using Dapper;
 using MDR_FuiPortal.Shared;
 using Npgsql;
 using System.Text;
 using System.Xml.Linq;
+using ServiceStack;
+using ServiceStack.Text;
 
 namespace MDR_FuiPortal.Server;
 
@@ -661,6 +665,115 @@ public class StudyRepo : IStudyRepo
         }
         else
         {
+            return null;
+        }
+    }
+
+    public async Task<int> GetTotalStudiesCount()
+    {
+        using var conn = new NpgsqlConnection(_dbConnString);
+        try
+        {
+            var sqlString = $"select count(*) from core.studies";
+            var res = await conn.QueryAsync<int>(sqlString);
+            return res.First();
+        }
+        catch (Exception e)
+        {
+            var s = e.Message;
+            return 0;
+        }
+    }
+
+    public async Task<IDictionary<string, long>> GetStudyCountByStudyType()
+    {
+        var data = new Dictionary<string, long>();
+        using var conn = new NpgsqlConnection(_dbConnString);
+        try
+        {
+            var sqlQuery = new StringBuilder();
+            sqlQuery.Append("select");
+            sqlQuery.Append("(select count(id) from core.studies where study_type_id = 11) as Interventional,");
+            sqlQuery.Append("(select count(id) from core.studies where study_type_id = 12) as Observational,");
+            sqlQuery.Append("(select count(id) from core.studies where study_type_id = 13) as Patient_R,");
+            sqlQuery.Append("(select count(id) from core.studies where study_type_id = 14) as Expanded_A,");
+            sqlQuery.Append("(select count(id) from core.studies where study_type_id = 15) as Funded_P,");
+            sqlQuery.Append("(select count(id) from core.studies where study_type_id = 16) as Other");
+            
+            var res = await conn.QueryAsync<object>(sqlQuery.ToString());
+            foreach (var r in (IEnumerable)res.First())
+            {
+                if (r is KeyValuePair<string, object> entry)
+                {
+                    switch (entry.Key.ToUpper())
+                    {
+                        case "INTERVENTIONAL":
+                            data.Add("Interventional", (long)entry.Value);
+                            break;
+                        case "OBSERVATIONAL":
+                            data.Add("Observational", (long)entry.Value);
+                            break;
+                        case "PATIENT_R":
+                            data.Add("Patient registry", (long)entry.Value);
+                            break;
+                        case "EXPANDED_A":
+                            data.Add("Expanded access", (long)entry.Value);
+                            break;
+                        case "FUNDED_P":
+                            data.Add("Funded programme", (long)entry.Value);
+                            break;
+                        case "OTHER":
+                            data.Add("Other", (long)entry.Value);
+                            break;
+                    }
+                }
+            }
+            
+            return data;
+        }
+        catch (Exception e)
+        {
+            var s = e.Message;
+            return null;
+        }
+    }
+
+    public async Task<IDictionary<string, long>> GetStudyCountByStudyStartYear()
+    {
+var data = new Dictionary<string, long>();
+        using var conn = new NpgsqlConnection(_dbConnString);
+        try
+        {
+            var sqlQuery = new StringBuilder();
+            sqlQuery.Append("select");
+            sqlQuery.Append("(select count(id) from core.studies where study_start_year < 2019) as before_2019,");
+            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2019) as y_2019,");
+            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2020) as y_2020,");
+            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2021) as y_2021,");
+            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2022) as y_2022,");
+            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2023) as y_2023");
+            
+            var res = await conn.QueryAsync<object>(sqlQuery.ToString());
+            foreach (var r in (IEnumerable)res.First())
+            {
+                if (r is KeyValuePair<string, object> entry)
+                {
+                    if (entry.Key.ToUpper().Equals("BEFORE_2019"))
+                    {
+                        data.Add("Before 2019", (long)entry.Value);
+                    }
+                    else
+                    {
+                        data.Add(entry.Key.Split("_").Last(), (long)entry.Value);
+                    }
+                }
+            }
+            
+            return data;
+        }
+        catch (Exception e)
+        {
+            var s = e.Message;
             return null;
         }
     }

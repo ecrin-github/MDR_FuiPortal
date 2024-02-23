@@ -28,11 +28,16 @@ public interface IStudyRepo
 
     public Task<string?> FetchOmicsDIData(string qtype, int offset, int limit);
 
+    Task<int> GetTotalStudiesCount();
+    
+    Task<IDictionary<string, long>> GetStudyCountByStudyType();
+    
+    Task<IDictionary<string, long>> GetStudyCountByStudyStartYear();
 
     //public Task<IEnumerable<string>?> FetchPageStudiesBySearch(int search_scope, string search_string,
     //    int page_start, int page_size, FilterParams? fp);
 
     //public Task<int> FetchStudyCountBySearch(int search_scope, string search_string, FilterParams? fp);
-    
+
     //public Task<IEnumerable<IECLine>?> FetchStudyIEC(int study_id);
 }

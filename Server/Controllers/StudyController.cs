@@ -1,4 +1,5 @@
-﻿using MDR_FuiPortal.Server.Controllers;
+﻿using System.Security.Cryptography.X509Certificates;
+using MDR_FuiPortal.Server.Controllers;
 using MDR_FuiPortal.Shared;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
@@ -145,6 +146,26 @@ public class StudyController : ControllerBase
         return res;
     }
 
+    [HttpGet("stats/total")]
+    public async Task<int> GetTotalStudiesCount()
+    {
+        var res = await _studyRepo.GetTotalStudiesCount();
+        return res;
+    }
+    
+    [HttpGet("stats/by-study-type")]
+    public async Task<IDictionary<string, long>> GetStudiesCountByType()
+    {
+        var res = await _studyRepo.GetStudyCountByStudyType();
+        return res;
+    }
+    
+    [HttpGet("stats/by-start-year")]
+    public async Task<IDictionary<string, long>> GetStudiesCountByStartYear()
+    {
+        var res = await _studyRepo.GetStudyCountByStudyStartYear();
+        return res;
+    }
 
     /*
      * To do

@@ -1,7 +1,9 @@
 ﻿@page "/"
 @using BlazorBootstrap
+@using System.Net
 @inject NavigationManager NavManager
 @inject IJSRuntime _jsRuntime;
+@inject HttpClient Http;
 
 <PageTitle>MDR Home</PageTitle>
 
@@ -119,12 +121,12 @@
                     </p>
                 </div>
                 <div>
-                    <h2>Trials by start year</h2>
-                    <BarChart @ref="trialsByStartYearChart" Width="800" Class="mt-4 mb-5"/>
-                </div>
-                <div>
                     <h2>Trials by type</h2>
                     <BarChart @ref="trialsByTypeChart" Width="800" Class="mt-4 mb-5"/>
+                </div>
+                <div>
+                    <h2>Trials by start year</h2>
+                    <BarChart @ref="trialsByStartYearChart" Width="800" Class="mt-4 mb-5"/>
                 </div>
             </div>
             <div id="arrow-area">
@@ -140,7 +142,8 @@
 
 
 @code {
-
+    string statsBaseUrl = "api/Study";
+    
     private BarChart  trialsByStartYearChart = default!;
     private BarChartOptions  trialsByStartYearChartOptions = default!;
     private ChartData trialsByStartYearChartData = default!;
@@ -150,6 +153,10 @@
     private ChartData trialsByTypeChartData = default!;
     
     private Random random = new();
+
+    IDictionary<string, long> studiesByTypeDataset = new Dictionary<string, long>();
+    IDictionary<string, long> studiesByStartYearDataset = new Dictionary<string, long>();
+    int totalStudies = 0;
     
     void NavigateToSearch()
     {
@@ -158,6 +165,15 @@
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
     {
+        studiesByTypeDataset = await Http.GetFromJsonAsync<Dictionary<string, long>>("api/Study/stats/by-study-type");
+        studiesByStartYearDataset = await Http.GetFromJsonAsync<Dictionary<string, long>>("api/Study/stats/by-start-year"); 
+        
+        trialsByTypeChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByTypeDataset), Datasets = GetDefaultDataSets(studiesByTypeDataset) };
+        trialsByTypeChartOptions = new BarChartOptions { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.X } };
+        
+        trialsByStartYearChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByStartYearDataset), Datasets = GetDefaultDataSets(studiesByStartYearDataset) };
+        trialsByStartYearChartOptions = new BarChartOptions { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.X } };
+        
         if (firstRender)
         {
             await _jsRuntime.InvokeVoidAsync("setWindowName", "home");
@@ -167,38 +183,18 @@
         await base.OnAfterRenderAsync(firstRender);
     }
 
-    protected override void OnInitialized()
+    private async Task<T?> GetDataFromUrlAsync<T>(string url)
     {
-        var studiesByTypeDataset = new Dictionary<string, int>
-        {
-            { "Interventional" , 2 },
-            { "Observational" , 3 },
-            { "Non" , 4 },
-            { "Others" , 5 },
-        };
-        
-        var studiesByStartYearDataset = new Dictionary<string, int>
-        {
-            { "2022" , 2 },
-            { "2023" , 3 },
-            { "2024" , 4 }
-        };
-        
-        trialsByTypeChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByTypeDataset), Datasets = GetDefaultDataSets(studiesByTypeDataset) };
-        trialsByTypeChartOptions = new BarChartOptions { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.X } };
-        
-        trialsByStartYearChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByStartYearDataset), Datasets = GetDefaultDataSets(studiesByStartYearDataset) };
-        trialsByStartYearChartOptions = new BarChartOptions { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.X } };
+        return await Http.GetFromJsonAsync<T>(url);
     }
-
     
     #region Data Preparation
-    private List<IChartDataset> GetDefaultDataSets(IDictionary<string, int> data)
+    private List<IChartDataset> GetDefaultDataSets(IDictionary<string, long> data)
     {
         return new List<IChartDataset> { GetRandomLineChartDataset(data) };
     }
 
-    private BarChartDataset GetRandomLineChartDataset(IDictionary<string, int> data)
+    private BarChartDataset GetRandomLineChartDataset(IDictionary<string, long> data)
     {
         var c = ColorBuilder.CategoricalTwelveColors[random.Next(12)].ToColor();
         return new BarChartDataset
@@ -211,12 +207,12 @@
         };
     }
 
-    private static List<double> GetRandomData(IDictionary<string, int> entries)
+    private static List<double> GetRandomData(IDictionary<string, long> entries)
     {
         return entries.Select(entry => entry.Value).Select(dummy => (double)dummy).ToList();
     }
 
-    private static List<string> GetDefaultDataLabels(IDictionary<string, int> data)
+    private static List<string> GetDefaultDataLabels(IDictionary<string, long> data)
     {
         return data.Select(e => e.Key).ToList();
     }
