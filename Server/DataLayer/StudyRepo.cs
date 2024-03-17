@@ -55,6 +55,13 @@ public class StudyRepo : IStudyRepo
     }
 
 
+    public async Task<IEnumerable<string>?> FetchStudyByRegId(string reg_Id)
+    {
+        var sql_string = $@"select study_json from search.idents
+                              where ident_value = '{reg_Id}'";
+        return await GetIEnumerable<string>(sql_string);
+    }
+
     public async Task<IEnumerable<string>?> FetchStudyByTypeAndId(int type_id, string reg_Id)
     {
         var sql_string = $@"select study_json from search.idents

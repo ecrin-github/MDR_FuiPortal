@@ -5,6 +5,8 @@ namespace MDR_FuiPortal.Server;
 
 public interface IStudyRepo
 {
+    public Task<IEnumerable<string>?> FetchStudyByRegId(string reg_Id);
+
     public Task<IEnumerable<string>?> FetchStudyByTypeAndId(int type_id, string reg_Id);
 
     public Task<IEnumerable<string>?> FetchStudiesByPMID(int pmid);

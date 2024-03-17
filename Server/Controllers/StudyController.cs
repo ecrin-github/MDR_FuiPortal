@@ -91,6 +91,21 @@ public class StudyController : ControllerBase
             return res.ToList();
         }
     }
+    
+    [HttpGet("ByRegId/{reg_id}")]
+    public async Task<List<string>> GetStudyByRegId(string reg_id)
+    {
+        var res =  await _studyRepo.FetchStudyByRegId(reg_id);
+        if (res?.Any() != true)
+        {
+            string res_content = "null result";
+            return new List<string>() { res_content };
+        }
+        else
+        {
+            return res.ToList();
+        }
+    }
 
 
     [HttpGet("ByPMID/{pmid:int}")]
