@@ -70,7 +70,7 @@
         sb.AppendLine("study_id,study_name,description,dss,start_year," +
                       "start_month,type_id,type_name,status_id,status_name," +
                       "gender_elig,min_age,max_age,phase_id,alloc_id,feature_list,has_objects," +
-                      "country_list,conditions_list,provenance");
+                      "country_list,conditions_list,provenance,study_identifiers");
         foreach (var d in data)
         {
             sb.AppendLine($"{d.study_id},{CleanString(d.study_name)}," +
@@ -88,7 +88,8 @@
                           $"{CleanString(d.has_objects)}," +
                           $"{CleanString(d.country_list)}," +
                           $"{CleanString(d.condition_list)}," +
-                          $"{CleanString(d.provenance)}");
+                          $"{CleanString(d.provenance)}," +
+                          $"{JsonSerializer.Serialize(d.study_identifiers)}");
         }
         return GetStreamWithStreamWriter(sb.ToString());
     }

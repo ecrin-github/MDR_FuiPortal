@@ -28,6 +28,7 @@ public class StudySummary
     public string? country_list { get; set; }
     public string? condition_list { get; set; }
     public string? provenance { get; set; }
+    public IList<study_identifier>? study_identifiers { get; set; } = new List<study_identifier>();
     public List<ObjectSummary>? objects { get; set; }
 }
 

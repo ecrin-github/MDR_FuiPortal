@@ -7,6 +7,7 @@ using System.Text;
 using System.Xml.Linq;
 using ServiceStack;
 using ServiceStack.Text;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace MDR_FuiPortal.Server;
 
@@ -36,6 +37,27 @@ public class StudyRepo : IStudyRepo
             return default(T);
         }
     }
+    
+    private async Task<string?> GetSingleRecord(string sql_string)
+    {
+        using var conn = new NpgsqlConnection(_dbConnString);
+        try
+        {
+            var res = await conn.QueryFirstOrDefaultAsync<string>(sql_string);
+            
+            var summary = JsonSerializer.Deserialize<StudySummary>(res);
+            var details = await FetchStudyDetailsById(summary!.study_id);
+            var deserializedDetails = JsonSerializer.Deserialize<JSONFullStudy>(details!);
+            summary.study_identifiers = deserializedDetails?.study_identifiers;
+            
+            return JsonSerializer.Serialize(summary);
+        }
+        catch (Exception e)
+        {
+            string s = e.Message;
+            return string.Empty;
+        }
+    }
 
 
     private async Task<IEnumerable<T>?> GetIEnumerable<T>(string sql_string)
@@ -45,7 +67,6 @@ public class StudyRepo : IStudyRepo
         {
             var res = await conn.QueryAsync<T>(sql_string);
             return res;
-
         }
         catch (Exception e)
         {
@@ -54,19 +75,62 @@ public class StudyRepo : IStudyRepo
         }
     }
 
+    private async Task<IEnumerable<string>?> GetIEnumerable(string sql_string)
+    {
+        using var conn = new NpgsqlConnection(_dbConnString);
+        try
+        {
+            var res = await conn.QueryAsync<string>(sql_string);
+            if (!res.Any())
+            {
+                return res;
+            }
+
+            var ids = "(";
+            for (int i = 0; i < res.Count(); i++)
+            {
+                var s = JsonSerializer.Deserialize<StudySummary>(res.ElementAt(i));
+                ids += s.study_id.ToString();
+                if (i != (res.Count() - 1))
+                {
+                    ids += ", ";
+                }
+
+                ids += ")";
+            }
+            
+            var details = await FetchStudyDetailsByIds(ids);
+            var deserializedDetails = details.Select(d => JsonSerializer.Deserialize<JSONFullStudy>(d)).ToList();
+            var summariesAsString = new List<string>();
+            foreach (var r in res)
+            {
+                var summary = JsonSerializer.Deserialize<StudySummary>(r);
+                var info = deserializedDetails.FirstOrDefault(x => x.id == summary.study_id);
+                summary.study_identifiers = info == null ? new List<study_identifier>() : info.study_identifiers;
+                summariesAsString.Add(JsonSerializer.Serialize(summary));
+            }
+
+            return summariesAsString;
+        }
+        catch (Exception e)
+        {
+            string s = e.Message;
+            return null;
+        }
+    }
 
     public async Task<IEnumerable<string>?> FetchStudyByRegId(string reg_Id)
     {
         var sql_string = $@"select study_json from search.idents
                               where ident_value = '{reg_Id}'";
-        return await GetIEnumerable<string>(sql_string);
+        return await GetIEnumerable(sql_string);
     }
 
     public async Task<IEnumerable<string>?> FetchStudyByTypeAndId(int type_id, string reg_Id)
     {
         var sql_string = $@"select study_json from search.idents
                               where ident_type = {type_id} and ident_value = '{reg_Id}'";
-        return await GetIEnumerable<string>(sql_string);
+        return await GetIEnumerable(sql_string);
     }
 
 
@@ -74,7 +138,7 @@ public class StudyRepo : IStudyRepo
     {
         var sql_string = $@"select study_json from search.pmids
                               where pmid = {pmid}";
-        return await GetIEnumerable<string>(sql_string);
+        return await GetIEnumerable(sql_string);
     }
 
 
@@ -88,7 +152,7 @@ public class StudyRepo : IStudyRepo
             sql_string += ObtainSQLJoinClauses(fp);
         }
         sql_string += ObtainSQLWhereClauses(search_scope, search_pars, fp);
-        return await GetIEnumerable<string>(sql_string);
+        return await GetIEnumerable(sql_string);
     }
 
 
@@ -104,7 +168,7 @@ public class StudyRepo : IStudyRepo
         sql_string += $" where lx.bucket = {bucket} ";
         sql_string += ObtainSQLWhereClauses(search_scope, search_pars, fp, true);
 
-        return await GetIEnumerable<string>(sql_string);
+        return await GetIEnumerable(sql_string);
     }
 
 
@@ -145,7 +209,7 @@ public class StudyRepo : IStudyRepo
         }
         sql_string += ObtainSQLWhereClauses(search_scope, search_pars, fp);
         sql_string += $" order by study_id  offset {page_start} limit {page_size}";
-        return await GetIEnumerable<string>(sql_string);
+        return await GetIEnumerable(sql_string);
     }
 
 
@@ -322,7 +386,7 @@ public class StudyRepo : IStudyRepo
         string sql_string = $@"select s.study_json
                              from search.lexemes s
                              where s.study_id = {study_id}";
-        return await GetSingleRecord<string>(sql_string);
+        return await GetSingleRecord(sql_string);
 
     }
 
@@ -336,6 +400,17 @@ public class StudyRepo : IStudyRepo
                            where s.id = {study_id}";
 
         return await GetSingleRecord<string>(sql_study);
+    }
+    
+    private async Task<IEnumerable<string>?> FetchStudyDetailsByIds(string ids)
+    {
+        // for testing 2044457 = TNT trial
+
+        string sql_study = @$"select full_study
+                           from search.studies_json s
+                           where s.id in {ids}";
+
+        return await GetIEnumerable<string>(sql_study);
     }
 
 
@@ -358,7 +433,7 @@ public class StudyRepo : IStudyRepo
         string? study_data = await GetSingleRecord<string>(sql_study);
         if (study_data is not null)
         {
-            IEnumerable<string>? object_data = await GetIEnumerable<string>(sql_objects);
+            IEnumerable<string>? object_data = await GetIEnumerable(sql_objects);
             if (object_data?.Any() == true)
             {
                 string final_res = "{\"full_study\": " + study_data + ", \"full_objects\": [";
@@ -463,7 +538,7 @@ public class StudyRepo : IStudyRepo
                 sql_string += $" where lx.bucket = {b} ";
                 sql_string += search_string;
                 sql_string += $" order by study_id ";
-                IEnumerable<string>? res = (await GetIEnumerable<string>(sql_string));
+                IEnumerable<string>? res = (await GetIEnumerable(sql_string));
 
                 if (res?.Any() == true)
                 {
