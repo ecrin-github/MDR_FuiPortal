@@ -95,8 +95,10 @@ public class StudyRepo : IStudyRepo
                 {
                     ids += ", ";
                 }
-
-                ids += ")";
+                else
+                {
+                    ids += ")";
+                }
             }
             
             var details = await FetchStudyDetailsByIds(ids);
