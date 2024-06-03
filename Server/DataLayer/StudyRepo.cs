@@ -15,9 +15,11 @@ public class StudyRepo : IStudyRepo
 {
     private readonly string _dbConnString;
     private readonly string _aggsConnString;
+    private readonly ILookUpRepo _lookUpRepo;
 
-    public StudyRepo(ICredentials creds)
+    public StudyRepo(ICredentials creds, ILookUpRepo lookUpRepo)
     {
+        _lookUpRepo = lookUpRepo;
         _dbConnString = creds.GetConnectionString("mdr");
         _aggsConnString = creds.GetConnectionString("aggs");
     }
@@ -402,6 +404,58 @@ public class StudyRepo : IStudyRepo
                            where s.id = {study_id}";
 
         return await GetSingleRecord<string>(sql_study);
+    }
+    
+    public async Task<IEnumerable<string>?> GetStudiesByCountriesListAsync(IList<string> countries, 
+        int pageSize, int pageNumber)
+    {
+        var countriesFromDb = await _lookUpRepo.FetchCountries();
+        if (countriesFromDb.Count() == 0)
+        {
+            throw new InvalidOperationException(
+                "Can not get countries from DB to compare with the countries list from the query");
+        }
+        
+        var countriesIds = "(";
+        for (int i = 0; i < countries.Count(); i++)
+        {
+            countriesIds += countriesFromDb.FirstOrDefault(x => x.name!.Equals(countries[i])).id;
+            if (i != (countries.Count() - 1))
+            {
+                countriesIds += ", ";
+            }
+            else
+            {
+                countriesIds += ")";
+            }
+        }
+
+        var offset = CalculateOffset(pageNumber, pageSize);
+        
+        string sql_study = @$"select distinct study_id
+                           from search.countries s
+                           where s.country_id in {countriesIds}
+                           order by study_id limit {pageSize} offset {offset}";
+
+        var res = await GetIEnumerable<int>(sql_study);
+
+        var resList = res.ToList();
+        
+        var ids = "(";
+        for (var k = 0; k < resList.Count(); k++)
+        {
+            ids += resList[k];
+            if (k != (res.Count() - 1))
+            {
+                ids += ", ";
+            }
+            else
+            {
+                ids += ")";
+            }
+        }
+        
+        return await FetchStudyDetailsByIds(ids);
     }
     
     private async Task<IEnumerable<string>?> FetchStudyDetailsByIds(string ids)
@@ -862,17 +916,35 @@ var data = new Dictionary<string, long>();
         }
     }
 
+    
+
     private class QRes
     {
         public int rec_num { get; set; }
         public string? entries { get; set; }
     }
 
-
-
     public async Task<IEnumerable<IECLine>?> FetchStudyIEC(int study_id)
     {
         string sql_string = " ";
         return await GetIEnumerable<IECLine>(sql_string);
+    }
+    
+    
+    private static int CalculateOffset(int pageNumber, int pageSize)
+    {
+        var startingIndex = (pageNumber - 1) * pageSize;
+        if (startingIndex == 1 && pageSize == 1)
+        {
+            return 0;
+        }
+        
+        return startingIndex;
+    }
+
+    /// <inheritdoc />
+    private static int CalculateTotalPages(int totalRecords, int pageSize)
+    {
+        return (int)Math.Ceiling((double)(totalRecords / pageSize));
     }
 }

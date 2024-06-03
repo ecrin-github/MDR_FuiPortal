@@ -75,7 +75,30 @@ public class StudyController : ControllerBase
 
     }
 
+    [HttpGet("ByCountries")]
+    public async Task<IActionResult> GetStudiesByCountriesAsync([FromQuery] string countries, 
+        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        if (string.IsNullOrWhiteSpace(countries))
+        {
+            return NoContent();
+        }
 
+        List<string> countriesList = null;
+
+        if (!countries.Contains(','))
+        {
+            countriesList?.Add(countries);
+        }
+        else
+        {
+            countriesList = countries.Split(",").ToList();
+        }
+
+        var res = await _studyRepo.GetStudiesByCountriesListAsync(countriesList, pageSize, pageNumber);
+        
+        return Ok(res);
+    }
 
     [HttpGet("ByRegId/{type_id:int}/{reg_id}")]
     public async Task<List<string>> GetStudyByTypeAndId(int type_id, string reg_id)

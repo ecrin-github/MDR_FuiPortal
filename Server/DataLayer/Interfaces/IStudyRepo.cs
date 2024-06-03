@@ -35,6 +35,8 @@ public interface IStudyRepo
     Task<IDictionary<string, long>> GetStudyCountByStudyType();
     
     Task<IDictionary<string, long>> GetStudyCountByStudyStartYear();
+    
+    Task<IEnumerable<string>?> GetStudiesByCountriesListAsync(IList<string> countries, int pageSize, int pageNumber);
 
     //public Task<IEnumerable<string>?> FetchPageStudiesBySearch(int search_scope, string search_string,
     //    int page_start, int page_size, FilterParams? fp);
