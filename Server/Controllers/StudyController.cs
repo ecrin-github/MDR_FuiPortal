@@ -84,11 +84,11 @@ public class StudyController : ControllerBase
             return NoContent();
         }
 
-        List<string> countriesList = null;
+        List<string> countriesList = new List<string>();
 
         if (!countries.Contains(','))
         {
-            countriesList?.Add(countries);
+            countriesList.Add(countries);
         }
         else
         {
