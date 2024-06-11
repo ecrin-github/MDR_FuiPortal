@@ -432,7 +432,7 @@ public class StudyRepo : IStudyRepo
             }
         }
 
-        var sql_total_numbers = @$"select count(distinct study_id)
+        var sql_total_numbers = @$"select count(*)
                            from search.countries s
                            where s.country_id in {countriesIds}";
 
