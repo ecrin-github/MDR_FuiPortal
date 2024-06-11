@@ -81,10 +81,10 @@ public class StudyController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(countries))
         {
-            return NoContent();
+            return NotFound("Countries list is missing.");
         }
 
-        List<string> countriesList = new List<string>();
+        var countriesList = new List<string>();
 
         if (!countries.Contains(','))
         {
@@ -97,7 +97,7 @@ public class StudyController : ControllerBase
 
         var res = await _studyRepo.GetStudiesByCountriesListAsync(countriesList, pageSize, pageNumber);
         
-        return Ok(res);
+        return Ok(new PaginatedStudyResponse(res.count, pageNumber, pageSize, res.res));
     }
 
     [HttpGet("ByRegId/{type_id:int}/{reg_id}")]
@@ -204,6 +204,13 @@ public class StudyController : ControllerBase
         var res = await _studyRepo.GetStudyCountByStudyStartYear();
         return res;
     }
+    
+    [HttpGet("stats/total-studies-and-objects")]
+    public async Task<IDictionary<string, long>> GetTotalStudiesAndObjects()
+    {
+        var res = await _studyRepo.GetTotalStudiesAndObjectsAsync();
+        return res;
+    }
 
     /*
      * To do
@@ -219,3 +226,8 @@ public class StudyController : ControllerBase
 
 }
 
+public record PaginatedStudyResponse(
+    long Total,
+    int PageNumber,
+    int PageSize,
+    IEnumerable<string> Result);

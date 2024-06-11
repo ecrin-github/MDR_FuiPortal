@@ -406,7 +406,7 @@ public class StudyRepo : IStudyRepo
         return await GetSingleRecord<string>(sql_study);
     }
     
-    public async Task<IEnumerable<string>?> GetStudiesByCountriesListAsync(IList<string> countries, 
+    public async Task<(int count, IEnumerable<string>? res)> GetStudiesByCountriesListAsync(IList<string> countries, 
         int pageSize, int pageNumber)
     {
         var countriesFromDb = await _lookUpRepo.FetchCountries();
@@ -419,7 +419,9 @@ public class StudyRepo : IStudyRepo
         var countriesIds = "(";
         for (int i = 0; i < countries.Count(); i++)
         {
-            countriesIds += countriesFromDb.FirstOrDefault(x => x.name!.Equals(countries[i])).id;
+            var countryName = countries[i].Trim();
+            var countryFromDb = countriesFromDb.FirstOrDefault(x => x.name!.Equals(countryName));
+            countriesIds += countryFromDb.id;
             if (i != (countries.Count() - 1))
             {
                 countriesIds += ", ";
@@ -430,6 +432,12 @@ public class StudyRepo : IStudyRepo
             }
         }
 
+        var sql_total_numbers = @$"select count(distinct study_id)
+                           from search.countries s
+                           where s.country_id in {countriesIds}";
+
+        var r = await GetIEnumerable<int>(sql_total_numbers);
+        
         var offset = CalculateOffset(pageNumber, pageSize);
         
         string sql_study = @$"select distinct study_id
@@ -454,10 +462,36 @@ public class StudyRepo : IStudyRepo
                 ids += ")";
             }
         }
+
+        var paginatedResult = await FetchStudyDetailsByIds(ids);
         
-        return await FetchStudyDetailsByIds(ids);
+        return (r.FirstOrDefault(0), paginatedResult);
     }
-    
+
+    public async Task<IDictionary<string, long>> GetTotalStudiesAndObjectsAsync()
+    {
+        using var conn = new NpgsqlConnection(_dbConnString);
+        try
+        {
+            var sqlString = $"select count(*) from core.studies union select count(*) from core.data_objects";
+            var res = await conn.QueryAsync<int>(sqlString);
+            return new Dictionary<string, long>()
+            {
+                {"studiesCount", res.First()},
+                {"objectsCount", res.Last()}
+            };
+        }
+        catch (Exception e)
+        {
+            var s = e.Message;
+            return new Dictionary<string, long>()
+            {
+                {"studiesCount", 0},
+                {"objectsCount", 0}
+            };
+        }
+    }
+
     private async Task<IEnumerable<string>?> FetchStudyDetailsByIds(string ids)
     {
         // for testing 2044457 = TNT trial
