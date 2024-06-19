@@ -182,6 +182,12 @@
         }
         await base.OnAfterRenderAsync(firstRender);
     }
+    protected async override Task OnInitializedAsync() 
+    {
+        string statsBaseUrl = "api/Study/stats/total-studies-and-objects";
+        var totalStats = await Http.GetFromJsonAsync<Dictionary<string,long>>(statsBaseUrl);
+        Console.WriteLine(totalStats);
+    }
 
     private async Task<T?> GetDataFromUrlAsync<T>(string url)
     {
