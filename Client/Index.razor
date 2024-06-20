@@ -115,9 +115,9 @@
                 </div>
                 <div>
                     <p class="expl-text">
-                        Currently (as of October 2023) the MDR includes details on <span class="red-text">800,000 studies</span> and, including all types
+                        Currently (as of October 2023) the MDR includes details on <span class="red-text"> @totalStats.studiesCount studies</span> and, including all types
                         of digital object (all registry entries, papers, documents and data sets, etc.)
-                        on <span class="red-text">1.3 million digital objects</span>.
+                        on <span class="red-text">@totalStats.objectsCount digital objects</span>.
                     </p>
                 </div>
                 <div>
@@ -156,12 +156,18 @@
 
     IDictionary<string, long> studiesByTypeDataset = new Dictionary<string, long>();
     IDictionary<string, long> studiesByStartYearDataset = new Dictionary<string, long>();
-    int totalStudies = 0;
+    TotalStats totalStats;
     
     void NavigateToSearch()
     {
         NavManager.NavigateTo("/Search");
     }  
+        protected async override Task OnInitializedAsync() 
+    {
+        string statsBaseUrl = "api/Study/stats/total-studies-and-objects";
+        totalStats = await Http.GetFromJsonAsync<TotalStats>(statsBaseUrl);
+    }
+
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
     {
@@ -181,12 +187,6 @@
             await trialsByTypeChart.InitializeAsync(trialsByTypeChartData, trialsByTypeChartOptions);
         }
         await base.OnAfterRenderAsync(firstRender);
-    }
-    protected async override Task OnInitializedAsync() 
-    {
-        string statsBaseUrl = "api/Study/stats/total-studies-and-objects";
-        var totalStats = await Http.GetFromJsonAsync<Dictionary<string,long>>(statsBaseUrl);
-        Console.WriteLine(totalStats);
     }
 
     private async Task<T?> GetDataFromUrlAsync<T>(string url)
