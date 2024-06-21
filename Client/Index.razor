@@ -115,18 +115,18 @@
                 </div>
                 <div>
                     <p class="expl-text">
-                        Currently (as of October 2023) the MDR includes details on <span class="red-text"> @totalStats.studiesCount studies</span> and, including all types
+                        Currently (as of October 2023) the MDR includes details on <span class="red-text"> @totalStudies studies</span> and, including all types
                         of digital object (all registry entries, papers, documents and data sets, etc.)
-                        on <span class="red-text">@totalStats.objectsCount digital objects</span>.
+                        on <span class="red-text">@totalObject digital objects</span>.
                     </p>
                 </div>
                 <div>
                     <h2>Trials by type</h2>
-                    <BarChart @ref="trialsByTypeChart" Width="800" Class="mt-4 mb-5"/>
+                    <PieChart @ref="trialByTypePieChart" Width="500" Class="mt-4 mb-5" />
                 </div>
                 <div>
                     <h2>Trials by start year</h2>
-                    <BarChart @ref="trialsByStartYearChart" Width="800" Class="mt-4 mb-5"/>
+                    <LineChart @ref="trialsByStartYearLineChart" Width="800" Class="mt-4 mb-5" />                
                 </div>
             </div>
             <div id="arrow-area">
@@ -143,20 +143,23 @@
 
 @code {
     string statsBaseUrl = "api/Study";
-    
-    private BarChart  trialsByStartYearChart = default!;
-    private BarChartOptions  trialsByStartYearChartOptions = default!;
+    private LineChart trialsByStartYearLineChart = default!;
+    private LineChartOptions trialsByStartYearLineChartOptions = default!;
     private ChartData trialsByStartYearChartData = default!;
+
     
-    private BarChart  trialsByTypeChart = default!;
-    private BarChartOptions  trialsByTypeChartOptions = default!;
-    private ChartData trialsByTypeChartData = default!;
-    
+    private PieChart trialByTypePieChart = default!;
+    private PieChartOptions trialByTypePieChartOptions = default!;
+    private ChartData trialByTypeChartData = default!;
+    private string[]? backgroundColors;
+
     private Random random = new();
 
     IDictionary<string, long> studiesByTypeDataset = new Dictionary<string, long>();
     IDictionary<string, long> studiesByStartYearDataset = new Dictionary<string, long>();
     TotalStats totalStats;
+    int? totalStudies = 0;
+    int? totalObject = 0;
     
     void NavigateToSearch()
     {
@@ -166,6 +169,10 @@
     {
         string statsBaseUrl = "api/Study/stats/total-studies-and-objects";
         totalStats = await Http.GetFromJsonAsync<TotalStats>(statsBaseUrl);
+        if (totalStats is not null) {
+            totalStudies = totalStats.studiesCount;
+            totalObject = totalStats.objectsCount;
+        }
     }
 
 
@@ -173,18 +180,20 @@
     {
         studiesByTypeDataset = await Http.GetFromJsonAsync<Dictionary<string, long>>("api/Study/stats/by-study-type");
         studiesByStartYearDataset = await Http.GetFromJsonAsync<Dictionary<string, long>>("api/Study/stats/by-start-year"); 
-        
-        trialsByTypeChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByTypeDataset), Datasets = GetDefaultDataSets(studiesByTypeDataset) };
-        trialsByTypeChartOptions = new BarChartOptions { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.X } };
-        
+
         trialsByStartYearChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByStartYearDataset), Datasets = GetDefaultDataSets(studiesByStartYearDataset) };
-        trialsByStartYearChartOptions = new BarChartOptions { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.X } };
+        trialsByStartYearLineChartOptions = new() { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.Index } };
+        
+        backgroundColors = ColorBuilder.CategoricalTwelveColors;
+        trialByTypeChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByTypeDataset), Datasets = GetDefaultPieDataSets(studiesByTypeDataset) };
+        trialByTypePieChartOptions = new PieChartOptions { Responsive = true, } ;
+
         
         if (firstRender)
         {
             await _jsRuntime.InvokeVoidAsync("setWindowName", "home");
-            await trialsByStartYearChart.InitializeAsync(trialsByStartYearChartData, trialsByStartYearChartOptions);
-            await trialsByTypeChart.InitializeAsync(trialsByTypeChartData, trialsByTypeChartOptions);
+            await trialsByStartYearLineChart.InitializeAsync(trialsByStartYearChartData, trialsByStartYearLineChartOptions);
+            await trialByTypePieChart.InitializeAsync(trialByTypeChartData, trialByTypePieChartOptions);
         }
         await base.OnAfterRenderAsync(firstRender);
     }
@@ -199,18 +208,43 @@
     {
         return new List<IChartDataset> { GetRandomLineChartDataset(data) };
     }
-
-    private BarChartDataset GetRandomLineChartDataset(IDictionary<string, long> data)
+        private List<IChartDataset> GetDefaultPieDataSets(IDictionary<string, long> data)
     {
-        var c = ColorBuilder.CategoricalTwelveColors[random.Next(12)].ToColor();
-        return new BarChartDataset
+        return new List<IChartDataset> { GetRandomPieChartDataset(data) };
+    }
+
+    private LineChartDataset GetRandomLineChartDataset(IDictionary<string, long> data)
+    {
+        var c = ColorBuilder.CategoricalTwelveColors[random.Next(1)].ToColor();
+
+
+        return new LineChartDataset()
+            {
+                Label = "Number of studies",
+                Data = GetRandomData(data),
+                BackgroundColor = new List<string> { c.ToRgbString() },
+                BorderColor = new List<string> { c.ToRgbString() },
+                BorderWidth = new List<double> { 2 },
+                HoverBorderWidth = new List<double> { 4 },
+                PointBackgroundColor = new List<string> { c.ToRgbString() },
+                PointRadius = new List<int> { 0 }, // hide points
+                PointHoverRadius = new List<int> { 4 },
+            };
+    }
+
+    private PieChartDataset GetRandomPieChartDataset(IDictionary<string, long> data)
+    {
+        return new() { Label = "Number of studies", Data = GetRandomData(data), BackgroundColor = GetRandomBackgroundColors() };
+    }
+      private List<string> GetRandomBackgroundColors()
+    {
+        var colors = new List<string>();
+        for (var index = 0; index < 12; index++)
         {
-            Label = "Number of studies",
-            Data = GetRandomData(data),
-            BackgroundColor = new List<string> { c.ToRgbString() },
-            BorderColor = new List<string> { c.ToRgbString() },
-            BorderWidth = new List<double> { 2 },
-        };
+            colors.Add(backgroundColors![index]);
+        }
+
+        return colors;
     }
 
     private static List<double> GetRandomData(IDictionary<string, long> entries)
