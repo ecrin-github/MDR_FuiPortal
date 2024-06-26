@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using BlazorBootstrap
 @using System.Net
+@using JsonSerializer = System.Text.Json.JsonSerializer;
 @inject NavigationManager NavManager
 @inject IJSRuntime _jsRuntime;
 @inject HttpClient Http;
@@ -168,8 +169,9 @@
         protected async override Task OnInitializedAsync() 
     {
         string statsBaseUrl = "api/Study/stats/total-studies-and-objects";
-        totalStats = await Http.GetFromJsonAsync<TotalStats>(statsBaseUrl);
-        if (totalStats is not null) {
+        var totalStatsRes = await Http.GetStringAsync(statsBaseUrl);
+        if (!String.IsNullOrEmpty(totalStatsRes)) {
+            totalStats = JsonSerializer.Deserialize<TotalStats>(totalStatsRes);
             totalStudies = totalStats.studiesCount;
             totalObject = totalStats.objectsCount;
         }
@@ -178,22 +180,31 @@
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
     {
-        studiesByTypeDataset = await Http.GetFromJsonAsync<Dictionary<string, long>>("api/Study/stats/by-study-type");
-        studiesByStartYearDataset = await Http.GetFromJsonAsync<Dictionary<string, long>>("api/Study/stats/by-start-year"); 
-
-        trialsByStartYearChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByStartYearDataset), Datasets = GetDefaultDataSets(studiesByStartYearDataset) };
-        trialsByStartYearLineChartOptions = new() { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.Index } };
-        
-        backgroundColors = ColorBuilder.CategoricalTwelveColors;
-        trialByTypeChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByTypeDataset), Datasets = GetDefaultPieDataSets(studiesByTypeDataset) };
-        trialByTypePieChartOptions = new PieChartOptions { Responsive = true, } ;
-
+        var studyByTypeRes = await Http.GetStringAsync("api/Study/stats/by-study-type");
+        var studyByYearRes = await Http.GetStringAsync("api/Study/stats/by-start-year");
+        if (!String.IsNullOrEmpty(studyByTypeRes)) 
+        {
+            studiesByStartYearDataset = JsonSerializer.Deserialize<Dictionary<string, long>>(studyByTypeRes);
+            trialsByStartYearChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByStartYearDataset), Datasets = GetDefaultDataSets(studiesByStartYearDataset) };
+            trialsByStartYearLineChartOptions = new() { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.Index } };
+        }
+        if (!String.IsNullOrEmpty(studyByYearRes))
+        {
+            studiesByTypeDataset = JsonSerializer.Deserialize<Dictionary<string, long>>(studyByYearRes);
+            backgroundColors = ColorBuilder.CategoricalTwelveColors;
+            trialByTypeChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByTypeDataset), Datasets = GetDefaultPieDataSets(studiesByTypeDataset) };
+            trialByTypePieChartOptions = new PieChartOptions { Responsive = true, } ;
+        }
         
         if (firstRender)
         {
             await _jsRuntime.InvokeVoidAsync("setWindowName", "home");
-            await trialsByStartYearLineChart.InitializeAsync(trialsByStartYearChartData, trialsByStartYearLineChartOptions);
-            await trialByTypePieChart.InitializeAsync(trialByTypeChartData, trialByTypePieChartOptions);
+            if (trialsByStartYearChartData != null) {
+                await trialsByStartYearLineChart.InitializeAsync(trialsByStartYearChartData, trialsByStartYearLineChartOptions);
+            }
+            if (trialByTypeChartData != null) {
+                await trialByTypePieChart.InitializeAsync(trialByTypeChartData, trialByTypePieChartOptions);
+            }
         }
         await base.OnAfterRenderAsync(firstRender);
     }
