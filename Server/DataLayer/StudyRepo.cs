@@ -912,35 +912,54 @@ public class StudyRepo : IStudyRepo
 
     public async Task<IDictionary<string, long>> GetStudyCountByStudyStartYear()
     {
-var data = new Dictionary<string, long>();
+        var data = new Dictionary<string, long>();
         using var conn = new NpgsqlConnection(_dbConnString);
         try
         {
             var sqlQuery = new StringBuilder();
-            sqlQuery.Append("select");
-            sqlQuery.Append("(select count(id) from core.studies where study_start_year < 2019) as before_2019,");
-            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2019) as y_2019,");
-            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2020) as y_2020,");
-            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2021) as y_2021,");
-            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2022) as y_2022,");
-            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2023) as y_2023");
+            sqlQuery.Append("select study_start_year, count(*) from core.studies group by study_start_year");
             
             var res = await conn.QueryAsync<object>(sqlQuery.ToString());
-            foreach (var r in (IEnumerable)res.First())
+            List<string> dataYear = new List<string>();
+            List<long> dataCount = new List<long>();
+            long yearNotKnown = 0;
+            if (res is IEnumerable<object> r)
             {
-                if (r is KeyValuePair<string, object> entry)
-                {
-                    if (entry.Key.ToUpper().Equals("BEFORE_2019"))
-                    {
-                        data.Add("Before 2019", (long)entry.Value);
-                    }
-                    else
-                    {
-                        data.Add(entry.Key.Split("_").Last(), (long)entry.Value);
+                foreach(IDictionary<string, object> r1 in r) {
+                    foreach(var r2 in r1) {
+                        if(r2 is KeyValuePair<string, object> entry)
+                        {
+                            if (entry.Key.ToUpper().Equals("STUDY_START_YEAR"))
+                            {
+                                int year = Convert.ToInt32(entry.Value);
+                                if (entry.Value == null || year > 2025)
+                                {
+                                    dataYear.Add("Others");
+                                }
+                                else 
+                                {
+                                    string val = entry.Value.ToString();
+                                    dataYear.Add((string)val);
+                                }
+                            }
+                            if (entry.Key.ToUpper().Equals("COUNT"))
+                            {
+                                dataCount.Add((long)entry.Value);
+                            }
+
+                        }
                     }
                 }
-            }
-            
+                for (var i = 0; i < dataYear.Count; i++)
+                {
+                    if (dataYear[i].Contains("Others")) {
+                        yearNotKnown = yearNotKnown + dataCount[i];
+                    } else {
+                        data.Add(dataYear[i], dataCount[i]);
+                    }
+                }
+                data.Add("Not Known", (long)yearNotKnown);
+            }            
             return data;
         }
         catch (Exception e)

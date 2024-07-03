@@ -182,15 +182,15 @@
     {
         var studyByTypeRes = await Http.GetStringAsync("api/Study/stats/by-study-type");
         var studyByYearRes = await Http.GetStringAsync("api/Study/stats/by-start-year");
-        if (!String.IsNullOrEmpty(studyByTypeRes)) 
+        if (!String.IsNullOrEmpty(studyByYearRes)) 
         {
-            studiesByStartYearDataset = JsonSerializer.Deserialize<Dictionary<string, long>>(studyByTypeRes);
+            studiesByStartYearDataset = JsonSerializer.Deserialize<Dictionary<string, long>>(studyByYearRes);
             trialsByStartYearChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByStartYearDataset), Datasets = GetDefaultDataSets(studiesByStartYearDataset) };
             trialsByStartYearLineChartOptions = new() { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.Index } };
         }
-        if (!String.IsNullOrEmpty(studyByYearRes))
+        if (!String.IsNullOrEmpty(studyByTypeRes))
         {
-            studiesByTypeDataset = JsonSerializer.Deserialize<Dictionary<string, long>>(studyByYearRes);
+            studiesByTypeDataset = JsonSerializer.Deserialize<Dictionary<string, long>>(studyByTypeRes);
             backgroundColors = ColorBuilder.CategoricalTwelveColors;
             trialByTypeChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByTypeDataset), Datasets = GetDefaultPieDataSets(studiesByTypeDataset) };
             trialByTypePieChartOptions = new PieChartOptions { Responsive = true, } ;
