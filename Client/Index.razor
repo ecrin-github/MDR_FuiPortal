@@ -185,14 +185,14 @@
         if (!String.IsNullOrEmpty(studyByYearRes)) 
         {
             studiesByStartYearDataset = JsonSerializer.Deserialize<Dictionary<string, long>>(studyByYearRes);
-            trialsByStartYearChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByStartYearDataset), Datasets = GetDefaultDataSets(studiesByStartYearDataset) };
+            trialsByStartYearChartData = new ChartData { Labels = GetYearDataLabels(studiesByStartYearDataset), Datasets = GetDefaultDataSets(studiesByStartYearDataset) };
             trialsByStartYearLineChartOptions = new() { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.Index } };
         }
         if (!String.IsNullOrEmpty(studyByTypeRes))
         {
             studiesByTypeDataset = JsonSerializer.Deserialize<Dictionary<string, long>>(studyByTypeRes);
             backgroundColors = ColorBuilder.CategoricalTwelveColors;
-            trialByTypeChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByTypeDataset), Datasets = GetDefaultPieDataSets(studiesByTypeDataset) };
+            trialByTypeChartData = new ChartData { Labels = GetTypeDataLabels(studiesByTypeDataset), Datasets = GetDefaultPieDataSets(studiesByTypeDataset) };
             trialByTypePieChartOptions = new PieChartOptions { Responsive = true, } ;
         }
         
@@ -232,7 +232,7 @@
         return new LineChartDataset()
             {
                 Label = "Number of studies",
-                Data = GetRandomData(data),
+                Data = GetYearData(data),
                 BackgroundColor = new List<string> { c.ToRgbString() },
                 BorderColor = new List<string> { c.ToRgbString() },
                 BorderWidth = new List<double> { 2 },
@@ -245,7 +245,7 @@
 
     private PieChartDataset GetRandomPieChartDataset(IDictionary<string, long> data)
     {
-        return new() { Label = "Number of studies", Data = GetRandomData(data), BackgroundColor = GetRandomBackgroundColors() };
+        return new() { Label = "Number of studies", Data = GetTypeData(data), BackgroundColor = GetRandomBackgroundColors() };
     }
       private List<string> GetRandomBackgroundColors()
     {
@@ -258,12 +258,22 @@
         return colors;
     }
 
-    private static List<double> GetRandomData(IDictionary<string, long> entries)
+    private static List<double> GetYearData(IDictionary<string, long> entries)
+    {
+        var datainter = entries.Where(d => Int32.Parse(d.Key) > 2000);
+        return datainter.Select(entry => entry.Value).Select(dummy => (double)dummy).ToList();
+    }
+    private static List<double> GetTypeData(IDictionary<string, long> entries)
     {
         return entries.Select(entry => entry.Value).Select(dummy => (double)dummy).ToList();
     }
 
-    private static List<string> GetDefaultDataLabels(IDictionary<string, long> data)
+    private static List<string> GetYearDataLabels(IDictionary<string, long> data)
+    {
+        var datainter = data.Where(d => Int32.Parse(d.Key) > 2000);
+        return datainter.Select(e => e.Key).ToList();
+    }
+    private static List<string> GetTypeDataLabels(IDictionary<string, long> data)
     {
         return data.Select(e => e.Key).ToList();
     }

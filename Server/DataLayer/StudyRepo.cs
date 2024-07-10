@@ -958,7 +958,7 @@ public class StudyRepo : IStudyRepo
                         data.Add(dataYear[i], dataCount[i]);
                     }
                 }
-                data.Add("Not Known", (long)yearNotKnown);
+                data.Add("0000", (long)yearNotKnown);
             }            
             return data;
         }
