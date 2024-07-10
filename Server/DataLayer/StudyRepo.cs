@@ -467,6 +467,66 @@ public class StudyRepo : IStudyRepo
         
         return (r.FirstOrDefault(0), paginatedResult);
     }
+    
+    public async Task<(int count, IEnumerable<Dictionary<string, string>>? res)> GetStudyIdsByCountriesListAsync(IList<string> countries, 
+        int pageSize, int pageNumber)
+    {
+        var countriesFromDb = await _lookUpRepo.FetchCountries();
+        if (countriesFromDb.Count() == 0)
+        {
+            throw new InvalidOperationException(
+                "Can not get countries from DB to compare with the countries list from the query");
+        }
+        
+        var countriesIds = "(";
+        for (int i = 0; i < countries.Count(); i++)
+        {
+            var countryName = countries[i].Trim();
+            var countryFromDb = countriesFromDb.FirstOrDefault(x => x.name!.Equals(countryName));
+            countriesIds += countryFromDb.id;
+            if (i != (countries.Count() - 1))
+            {
+                countriesIds += ", ";
+            }
+            else
+            {
+                countriesIds += ")";
+            }
+        }
+
+        var sql_total_numbers = @$"select count(*)
+                           from search.countries s
+                           where s.country_id in {countriesIds}";
+
+        var r = await GetIEnumerable<int>(sql_total_numbers);
+        
+        var offset = CalculateOffset(pageNumber, pageSize);
+        
+        string sql_study = @$"select study_id, ident_value from search.idents
+                           where study_id in (select study_id from search.countries where country_id in {countriesIds})
+                           order by study_id limit {pageSize} offset {offset}";
+
+        var res = await GetIEnumerable<object>(sql_study);
+
+        var resList = res.ToList();
+
+        var studyResult = new List<Dictionary<string, string>>();
+
+        foreach (var studyRecord in resList)
+        {
+            var dictValue = new Dictionary<string, string>();
+            if (studyRecord is not ICollection<KeyValuePair<string, object>> castValue) continue;
+            dictValue.Add("mdr_study_id", castValue.First().Value.ToString());
+            dictValue.Add("identifier_value", castValue.Last().Value.ToString());
+            
+            studyResult.Add(dictValue);
+        }
+
+        // var outputResult = new List<string>();
+        // outputResult.Add(JsonSerializer.Serialize(studyResult));
+        
+        return (r.FirstOrDefault(0), studyResult);
+    }
 
     public async Task<IDictionary<string, long>> GetTotalStudiesAndObjectsAsync()
     {
