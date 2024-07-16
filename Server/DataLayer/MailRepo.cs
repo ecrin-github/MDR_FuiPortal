@@ -1,19 +1,16 @@
 using MDR_FuiPortal.Shared;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Net;
 using System.Net.Mail;
+using Microsoft.Extensions.Options;
 
 namespace MDR_FuiPortal.Server;
 
-public class  MailRepo: IMailRepo
+public class MailRepo : IMailRepo
 {
-    private readonly MailSettings _mailConfig;
-    public MailRepo(MailSettings mailConfig)
+    private readonly MailConfigModel _mailConfig;
+    public MailRepo(IOptions<MailConfigModel> mailConfig)
     {
-        _mailConfig = mailConfig;
+        _mailConfig = mailConfig.Value;
     }
 
     public async Task SendEmailAsync(string ToEmail, string Subject, string Body)
