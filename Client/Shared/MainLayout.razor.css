@@ -180,7 +180,7 @@ main {
 main > .content {
     height: calc(100vh - 8rem);
     max-height: calc(100vh - 8rem);
-    overflow-y: hidden;
+    /* overflow-y: hidden; */
     background-color: var(--bg-colour);
 }
 

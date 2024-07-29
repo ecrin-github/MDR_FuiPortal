@@ -8,7 +8,7 @@
 
 <PageTitle>MDR Home</PageTitle>
 
-<div class="top-bar">
+@* <div class="top-bar">
 
    <div class="tb-button">
             <a class="tb-link" href="https://ecrin.org/" target="_blank">
@@ -35,11 +35,134 @@
             <span id="link-contact" class="link-text">Contact Us</span>
             </a>
         </div>
+</div> *@
+<div class="container-fluid">
+    <div class="row top-bar">
+        <div class="col-md-2 offset-md-1">
+            <a class="tb-link" href="https://ecrin.org/" target="_blank">
+            <span id="link-ecrin" class="link-text">ECRIN website</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a class="tb-link" href="/About" target="about">
+            <span id="link-about" class="link-text">About the MDR</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+             <a class="tb-link" href="/Disclaimer" target="disclaimer">
+            <span id="link-disclaimer" class="link-text">Legal Disclaimer</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a class="tb-link" href="/Guide" target="guide">
+            <span id="link-guide" class="link-text">User Guide</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a class="tb-link" href="/Contact" target="contact">
+            <span id="link-contact" class="link-text">Contact Us</span>
+            </a>
+        </div>
     </div>
+    <div class="row">
+        <div class="col-md-5 p-0">
+            <img src="/images/jumbo-pic_larger.png" alt="metadata graphic" />
+        </div>
+        <div class="col-md-7 jumbo-flex">
+            <h1 class="jt-main mx-4"><b>Clinical Research</b></h1>
+            <h1 class="jt-main mx-4"><b>Metadata Repository</b></h1>
+            <p class="jt-sub mx-4">
+                <i>A global resource for discovering clinical studies and associated resources and material</i>
+            </p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8 px-5 pt-5">
+            <div class="expl-div">
+                <p class="expl-text">
+                    <b>The clinical research metadata repository (MDR)</b>,
+                    is a searchable database of all registered clinical studies,
+                    together with links to the source registry pages, the results entries
+                    or results summary files, linked papers, protocols, data collection
+                    forms and many other related documents, and data sets,
+                    whenever those objects are available.
+                </p>
+                <p class="expl-text">
+                    For data sets, which are most often under controlled access,
+                    links may be to web pages with details of the application process for access.
+                </p>
+            </div>
 
-<div id="body-outer">
-    <div id="body-main">
-        <div class="jumbotron jumbotron-fluid">
+            <div class="expl-div">
+                <p class="expl-text">
+                    <b>Discovering studies and objects within the MDR</b> can be done by searching for
+                    specified words and terms or by using specific study identifiers.
+                    Searches can be refined by various filters – for example by study type
+                    or status, by linked object type, or by phase or start year.
+                </p>
+                <p class="expl-text">
+                    Search results can also be exported as JSON or CSV files.
+                    More complete details can be displayed (and printed) for any of the selected studies.
+                </p>
+            </div>
+
+            <div class="expl-div">
+                <p></p>
+                <span class="expl-text">
+                    <b>For more detailed help in using the system</b> please use the 'User Guide' link above,
+                    or, <b><i>on all other pages</i></b>, please use the
+                </span>
+
+                <div style="display: inline-block" class="black-bg-text">
+                    <img height="14" width="18" src="/icons/question-mark-sign-icon.svg" alt="question mark icon" />
+                    <span class="link-text">Guide</span>
+                </div>
+                <span class="expl-text">link at the top right of the screen.</span>
+                <br /><br />
+                <span class="expl-text">
+                    <b>For more detailed information about the system</b> please use the 'About the MDR' link above,
+                    or, <b><i>on all other pages</i></b>, please use the
+                </span>
+                <div style="display: inline-block" class="black-bg-text">
+                    <img height="14" width="18" src="/icons/information-mark-sign-icon.svg" alt="question mark icon" />
+                    <span class="link-text">About</span>
+                </div>
+                <span class="expl-text">link at the top right of the screen.</span>
+                <p></p>
+            </div>
+            <div>
+                <p class="expl-text">
+                    Currently (as of October 2023) the MDR includes details on <span class="red-text"> @totalStudies
+                        studies</span> and, including all types
+                    of digital object (all registry entries, papers, documents and data sets, etc.)
+                    on <span class="red-text">@totalObject digital objects</span>.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4 pt-5 text-center">
+            <button class="btn btn-primary button-class">
+                <a href="/Search" target="search" class="link-as-large-button" >
+                    Search the MDR >>>
+                </a>
+            </button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Studies by start year</h2>
+            <LineChart @ref="trialsByStartYearLineChart" Width="600" Class="mt-4 mb-5 pt-5" />                
+        </div>
+        <div class="col-md-4">
+            <h2>Studies by type</h2>
+            <PieChart @ref="trialByTypePieChart" Width="350" Class="mt-4 mb-5" />
+
+        </div>
+    </div>
+</div>
+
+@* <div id="body-outer">
+    <div id="body-main"> *@
+        @* <div class="jumbotron jumbotron-fluid">
             <div class="jumbo-flex">
                 <div id="jumbo-pic">
                     <img src="/images/jumbo-pic_larger.png" alt="metadata graphic" />
@@ -55,8 +178,8 @@
                     </p>
                 </div>
             </div>
-        </div>
-        <div class="text-flex">
+        </div> *@
+        @* <div class="text-flex">
             <div id="text-content">
                 <div class="expl-div">
                     <p class="expl-text">
@@ -129,17 +252,17 @@
                     <h2>Studies by type</h2>
                     <PieChart @ref="trialByTypePieChart" Width="500" Class="mt-4 mb-5" />
                 </div>
-            </div>
-            <div id="arrow-area">
+            </div> *@
+            @* <div id="arrow-area">
                 <div class="rt-arrow-button">
                     <a href="/Search" target="search" class="link-as-large-button" >
                        Search the MDR >>>
                     </a>
                 </div>
-            </div>
-        </div>
+            </div> *@
+        @* </div>
     </div>
-</div>
+</div> *@
 
 
 @code {

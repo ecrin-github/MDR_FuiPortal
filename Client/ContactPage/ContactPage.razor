@@ -1,4 +1,7 @@
 ﻿@page "/Contact"
+@using System.ComponentModel.DataAnnotations;
+@inject HttpClient Http;
+
 
 
 <PageTitle>Contact MDR Team</PageTitle>
@@ -11,60 +14,111 @@
             <h1>Contact us</h1>
         </div>
         <div class="container">
+            <EditForm Model="model" >
+                <DataAnnotationsValidator />
             <div class="row form-group">
                 <div class="col-md-12">
-                    <label for="reason" class="text-capitalize" style="font-size:12px; color:#5979af;font-weight:bold">Reason for contacting us</label>
-                    <select id="reason" class="form-control">
+                    <label for="reason" class="text-capitalize" style="font-size:12px; color:#5979af;font-weight:bold">Reason for contacting us<sup>*</sup></label>
+                    <input type="text" id="reason" class="form-control" placeholder="Reason" @bind="model.reason">
+                    <ValidationMessage For="() => model.reason" />
+                    @* <select id="reason" class="form-control">
                         <option value="null">select an option</option>
-                    </select>
+                    </select> *@
                 </div>
             </div>
             <div class="row form-group pt-2">
                 <div class="col-md-12">
                     <label for="message" class="text-capitalize" style="font-size:12px; color:#5979af;font-weight:bold">message</label>
-                    <textarea cols="30" rows="5" id="message" class="form-control" placeholder="Message"></textarea>
+                    <textarea  cols="30" rows="5" id="message" class="form-control" placeholder="Message" @bind="model.message"></textarea>
                 </div>
             </div>
             <div class="row form-group pt-2">
                 <div class="col-md-6">
-                    <label for="firstName" class="text-capitalize"style="font-size:12px; color:#5979af;font-weight:bold">First Name</label>
-                    <input type="text" id="firstName" class="form-control" placeholder="First Name">
+                    <label for="firstName" class="text-capitalize"style="font-size:12px; color:#5979af;font-weight:bold">First Name<sup>*</sup></label>
+                    <input type="text" id="firstName" class="form-control" placeholder="First Name" @bind="model.firstName">
+                    <ValidationMessage For="() => model.firstName" />
                 </div>
                 <div class="col-md-6">
-                    <label for="lastName" class="text-capitalize" style="font-size:12px; color:#5979af;font-weight:bold">Last Name</label>
-                    <input type="text" id="lastName" class="form-control" placeholder="Last Name">
+                    <label for="lastName" class="text-capitalize" style="font-size:12px; color:#5979af;font-weight:bold">Last Name<sup>*</sup></label>
+                    <input type="text" id="lastName" class="form-control" placeholder="Last Name" @bind="model.lastName">
+                    <ValidationMessage For="() => model.lastName" />
                 </div>
             </div>
             <div class="row form-group pt-2">
                 <div class="col-md-12">
-                    <label for="organization" class="text-capitalize"style="font-size:12px; color:#5979af;font-weight:bold">organization</label>
-                    <input type="text" id="organization" class="form-control" placeholder="Organization">
+                    <label for="organization" class="text-capitalize"style="font-size:12px; color:#5979af;font-weight:bold">organization<sup>*</sup></label>
+                    <input type="text" id="organization" class="form-control" placeholder="Organization" @bind="model.organization">
+                    <ValidationMessage For="() => model.organization" />
                 </div>
             </div>
             <div class="row form-group pt-2">
                 <div class="col-md-12">
-                    <label for="email" class="text-capitalize"style="font-size:12px; color:#5979af;font-weight:bold">email</label>
-                    <input type="text" id="email" class="form-control" placeholder="Email">
+                    <label for="email" class="text-capitalize"style="font-size:12px; color:#5979af;font-weight:bold">email<sup>*</sup></label>
+                    <input type="text" id="email" class="form-control" placeholder="Email" @bind="model.email">
+                    <ValidationMessage For="() => model.email" />
                 </div>
             </div>
             <div class="row form-group pt-2">
                 <div class="col-md-12">
-                    <label for="confirmEmail" class="text-capitalize"style="font-size:12px; color:#5979af;font-weight:bold">confirm email</label>
-                    <input type="text" id="confirmEmail" class="form-control" placeholder="Confirm Email">
+                    <label for="confirmEmail" class="text-capitalize"style="font-size:12px; color:#5979af;font-weight:bold">confirm email<sup>*</sup></label>
+                    <input type="text" id="confirmEmail" class="form-control" placeholder="Confirm Email" @bind="model.confirmEmail">
+                    <ValidationMessage For="() => model.confirmEmail" />
                 </div>
             </div>
             <div class="row form-group pt-2 pb-5">
                 <div class="col-md-12 text-center">
-                    <span class="pr-2"><button class="btn btn-primary w-25 text-capitalize">send</button></span>
+                    <span class="pr-2"><button class="btn btn-primary w-25 text-capitalize" @onclick="sendClicked">send</button></span>
                     <button class="btn btn-warning w-25 text-capitalize">cancel</button>
 
                 </div>
             </div>
+            </EditForm>
         </div>
     </div>
 </div>
 
 @code {
+    public class emailForm
+    {
+        [Required(ErrorMessage="Please provide the reason for contacting")]
+        public string? reason {get; set; }
+        public string? message {get; set; }
+        [Required(ErrorMessage="Please enter your First Name")]
+        public string? firstName {get; set; }
+        [Required(ErrorMessage="Please enter your Last Name")]
+        public string? lastName{get; set; }
+        [Required(ErrorMessage="Please enter your Organization")]
+        public string? organization {get; set; }
+        [Required(ErrorMessage="Please enter your email address")]
+        [EmailAddress(ErrorMessage="Please enter a valid email address")]
+        public string? email {get; set; }
+        [Required(ErrorMessage="Please confirm your email address")]
+        [EmailAddress(ErrorMessage="Please enter a valid email address")]
+        public string? confirmEmail {get; set; }
+    }
+    private emailForm model = new ();
+    private string url = "/api/email/Email/send-email";
+    private string errorMessage;
+    private emailData emailBody = new ();
     
-    
+
+    private async Task sendClicked() 
+    {
+        if (model.email.Equals(model.confirmEmail))
+        {
+            emailBody.toEmail = "datateam@Ecrin.org";
+            emailBody.subject = model.reason;
+            emailBody.message = $"Full Name: {model.firstName} {model.lastName} \nEmail: {model.email}\nOrganization: {model.organization}\nMessage: {model.message}";
+            using var emailReq = await Http.PostAsJsonAsync(url,emailBody);
+            if (!emailReq.IsSuccessStatusCode)
+            {
+                errorMessage = emailReq.ReasonPhrase;
+            }
+            var emailRes = await emailReq.Content.ReadAsStringAsync();
+        } else
+        {
+
+        }
+    }
+
 }
