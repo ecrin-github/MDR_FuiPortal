@@ -1,4 +1,7 @@
 ﻿@page "/Contact"
+@using System.ComponentModel.DataAnnotations;
+@inject HttpClient Http;
+
 
 
 <PageTitle>Contact MDR Team</PageTitle>
@@ -8,199 +11,114 @@
 <div id="body-outer"> 
     <div id="body-main">
         <div>
-            <h1>Contacting us</h1>
-        
-            <p>if you...</p>
-            <ul>
-            <li>Have any suggestions or comments about the MDR</li>
-            <li>Have found errors we should know about</li>
-            <li>Would like to ensure your data is included in the MDR</li>
-            <li>State you do not want your data in the MDR (we hope not)</li>
-            <li>Would like to be involved in the MDR's development</li>
-            <li>Would like to arrange a demonstration or discussion</li>
-            <li>or indeed would like to talk to us for any other reason,</li>
-            </ul>
-        
-            <p>...please contact us at <b>data.team@ecrin.org</b></p>
+            <h1>Contact us</h1>
         </div>
-        <div id="contact-div">
-            <div id= "contact-text">
-                <p>Clicking the 'Contact us' button <i>should</i> open your default mail system,
-                pre-addressed to us at data.team@ecrin.org, <br/>(though please note that sometimes
-                    ad or pop-up blockers may prevent this from happening)
-                </p>
+        <div class="container">
+            <EditForm Model="model" >
+                <DataAnnotationsValidator />
+            <div class="row form-group">
+                <div class="col-md-12">
+                    <label for="reason" class="text-capitalize" style="font-size:12px; color:#5979af;font-weight:bold">Reason for contacting us<sup>*</sup></label>
+                    <input type="text" id="reason" class="form-control" placeholder="Reason" @bind="model.reason">
+                    <ValidationMessage For="() => model.reason" />
+                    @* <select id="reason" class="form-control">
+                        <option value="null">select an option</option>
+                    </select> *@
+                </div>
             </div>
-            <div id="contact-button-area">
-                 <a href="mailto:data.team@ecrin.org?subject=MDR...&body=">
-                     <span class="link-as-button">Contact us</span>
-                 </a>
+            <div class="row form-group pt-2">
+                <div class="col-md-12">
+                    <label for="message" class="text-capitalize" style="font-size:12px; color:#5979af;font-weight:bold">message</label>
+                    <textarea  cols="30" rows="5" id="message" class="form-control" placeholder="Message" @bind="model.message"></textarea>
+                </div>
             </div>
-        </div>
-        <div>
-            <p>One of us will try to get back to you as soon as we can.</p>
-               
-            <h3>Who are the MDR Team?</h3>
-            <p>The team responsible for the MDR, as well as many of the other data-related projects in ECRIN, are:</p>
-        
-            <table>
-                <tr>
-                    <td>
-                        <img height="200" width="200" src="/images/people/Christian.jpg" alt="Christian Ohmann photo" />
-                    </td>
-                    <td>
-                        <p><b>Professor Christian Ohmann - ECRIN Network Committee Chair</b></p>
-                        <p>
-                            Christian has a PhD in mathematics, an interim examination in medicine and a habilitation in the field
-                            of “Theoretical Surgery”. He was the head of the Coordination Centre for Clinical Trials (KKS) at the Medical
-                            Faculty of the Heinrich Heine University Duesseldorf, Germany (1999-2014) and is now retired. He is
-                            currently the German representative and Chair of ECRIN’s Network Committee and the chair of the Independent
-                            Certification Board of ECRIN-ERIC. He has major competence and experience in the field of clinical trials
-                            and clinical research informatics and was participant in many EU FP7, H2020, Horizon Europe and
-                            IMI-funded projects.
-                        </p>
-                        <p>
-                            Christian developed the original conception of the MDR in 2016, and has orchestrated the development of
-                            the system ever since, marshalling resources in different projects, co-ordinating with collaborators and
-                            contributing organisations, designing testing and overseeing the design and development process.
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <img height="200" width="200" src="/images/people/Maria.jpg" alt="Maria Panagiotopoulou photo" />
-                    </td>
-                    <td>
-                        <p><b>Maria Panagiotopoulou - ECRIN data projects manager</b></p>
-                        <p>
-                            Maria is the Data Projects Manager at ECRIN. As such, she is involved in infrastructure development
-                            projects aiming to create tools, guidelines and strategic partnerships to further develop the European
-                            clinical research community and facilitate multinational trials. Maria holds a PhD in Biotechnology and
-                            has been involved in FP7, H2020  and Horizon Europe projects in life sciences since 2013.
-                        </p>
-                        <p>
-                            As part of her work within ECRIN, Maria supports the various tasks related to the MDR development and
-                            promotes its adoption from a variety of projects and initiatives.
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <img height="200" width="200" src="/images/people/Mihaela.jpg" alt="Mihaela Matei photo" />
-                    </td>
-                    <td>
-                        <p><b>Mihaela Matei - ECRIN legal and regulatory officer</b></p>
-                        <p>
-                            Legal and regulatory officer of ECRIN. Mihaela has been directly involved in the revision
-                            of the biomedical research legislation in France and at European level. She holds degrees
-                            in law, ethics and political philosophy from the University of Sorbonne, Paris and
-                            Faculties of Law and Political Science, Montpellier. She was a Visiting Scholar at
-                            Yale University’s Center for Bioethics and at the Hastings Center joint program in
-                            Ethics and Health Policy where she trained in Bioethics. She also trained in
-                            intellectual property and industrial property field at Pierre and Marie Curie Faculty
-                            of Medicine.
-                        </p>
-                        <p>
-                            As part of her duties within ECRIN, Mihaela has provided the necessary legal expertise and
-                            analysis for the MDR development team.
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <img height="200" width="200" src="" alt="Sergio Contrino photo" />
-                    </td>
-                    <td>
-                        <p><b>Sergio Contrino - Head of Data Projects</b></p>
-                        <p>.</p>
-                        <p>.</p>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <img height="200" width="200" src="" alt="Swarna photo" />
-                    </td>
-                    <td>
-                        <p><b>Swarna ....</b></p>
-                        <p>
-                            .
-                        </p>
-                        <p>
-                            .
-                        </p>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <img height="200" width="200" src="/images/people/Arthur.jpg" alt="Arthur Smaal photo" />
-                    </td>
-                    <td>
-                        <p><b>Arthur Smaal - Information Systems Officer</b></p>
-                        <p>.</p>
-                        <p>.</p>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <img height="200" width="200" src="/images/people/Sergei.jpg" alt="Sergei Goryanin photo" />
-                    </td>
-                    <td>
-                        <p><b>Sergey Goryanin - Data scientist </b></p>
-                        <p>
-                            Sergei is a Data Scientist at ECRIN. He did his master degree in Data Management and
-                            Data Science, and also has a medical background (MD Therapeutics) and experience in
-                            software and full stack web development. He was involved in as variety of infrastructure
-                            development projects aiming to create tools, services, guidelines and strategic
-                            partnerships to further develop the European clinical research community and
-                            facilitate multinational
-                            trials.
-                        </p>
-                        <p>
-                            As part of his work within ECRIN, Sergei supported various tasks related to the MDR
-                            including the development of the original portal and indexing of data using Elasticsearch,
-                            and promoted its adoption with a variety of projects and initiatives.
-                        </p>
-                    </td>
-                </tr>
-            </table>
-            <br /><br />
-            <p><b><i>In the past the team also included:</i></b></p>
+            <div class="row form-group pt-2">
+                <div class="col-md-6">
+                    <label for="firstName" class="text-capitalize"style="font-size:12px; color:#5979af;font-weight:bold">First Name<sup>*</sup></label>
+                    <input type="text" id="firstName" class="form-control" placeholder="First Name" @bind="model.firstName">
+                    <ValidationMessage For="() => model.firstName" />
+                </div>
+                <div class="col-md-6">
+                    <label for="lastName" class="text-capitalize" style="font-size:12px; color:#5979af;font-weight:bold">Last Name<sup>*</sup></label>
+                    <input type="text" id="lastName" class="form-control" placeholder="Last Name" @bind="model.lastName">
+                    <ValidationMessage For="() => model.lastName" />
+                </div>
+            </div>
+            <div class="row form-group pt-2">
+                <div class="col-md-12">
+                    <label for="organization" class="text-capitalize"style="font-size:12px; color:#5979af;font-weight:bold">organization<sup>*</sup></label>
+                    <input type="text" id="organization" class="form-control" placeholder="Organization" @bind="model.organization">
+                    <ValidationMessage For="() => model.organization" />
+                </div>
+            </div>
+            <div class="row form-group pt-2">
+                <div class="col-md-12">
+                    <label for="email" class="text-capitalize"style="font-size:12px; color:#5979af;font-weight:bold">email<sup>*</sup></label>
+                    <input type="text" id="email" class="form-control" placeholder="Email" @bind="model.email">
+                    <ValidationMessage For="() => model.email" />
+                </div>
+            </div>
+            <div class="row form-group pt-2">
+                <div class="col-md-12">
+                    <label for="confirmEmail" class="text-capitalize"style="font-size:12px; color:#5979af;font-weight:bold">confirm email<sup>*</sup></label>
+                    <input type="text" id="confirmEmail" class="form-control" placeholder="Confirm Email" @bind="model.confirmEmail">
+                    <ValidationMessage For="() => model.confirmEmail" />
+                </div>
+            </div>
+            <div class="row form-group pt-2 pb-5">
+                <div class="col-md-12 text-center">
+                    <span class="pr-2"><button class="btn btn-primary w-25 text-capitalize" @onclick="sendClicked">send</button></span>
+                    <button class="btn btn-warning w-25 text-capitalize">cancel</button>
 
-            <table>
-                <tr>
-                    <td>
-                        <img height="200" width="200" src="/images/people/Steve 02.jpg" alt="Steve Canham photo" />
-                    </td>
-                    <td>
-                        <p><b>Steve Canham - IT and Data Consultant (to 2023)</b></p>
-                        <p>
-                            A specialist in clinical trial data systems and data management, with 20 years' experience
-                            with clinical research systems. From 2002 - 2011 he was head of the IT team at the trials
-                            unit at the Institute of Cancer Research, London. From 2011 he ran his own consultancy
-                            business, was a member of the UK's international Registration Panel for clinical trials
-                            units, and was heavily involved in ECRIN’s Data Centre Certification programme, acting
-                            as an auditor, the manager of the auditing process, and the chair of successive
-                            reviews of the standards. He has participated for ECRIN in a variety of H2020 and Horizon Europe
-                            research projects.
-                        </p>
-
-                        <p>
-                            Steve was involved with the MDR from its inception, working with Christian Ohmann to
-                            develop the ECRIN metadata schema for clinical research data objects, and then designing,
-                            developing and documenting the ‘back-end’ systems that identify, extract, store and aggregate
-                            data from various sources into a single database. He also designed and developed the
-                            current web portal and the Postgres indexing systems used for searching and filtering
-                            MDR data.
-                        </p>
-                    </td>
-                </tr>
-            </table>
-
-            <AnchorNavigation />
+                </div>
+            </div>
+            </EditForm>
         </div>
     </div>
 </div>
 
 @code {
+    public class emailForm
+    {
+        [Required(ErrorMessage="Please provide the reason for contacting")]
+        public string? reason {get; set; }
+        public string? message {get; set; }
+        [Required(ErrorMessage="Please enter your First Name")]
+        public string? firstName {get; set; }
+        [Required(ErrorMessage="Please enter your Last Name")]
+        public string? lastName{get; set; }
+        [Required(ErrorMessage="Please enter your Organization")]
+        public string? organization {get; set; }
+        [Required(ErrorMessage="Please enter your email address")]
+        [EmailAddress(ErrorMessage="Please enter a valid email address")]
+        public string? email {get; set; }
+        [Required(ErrorMessage="Please confirm your email address")]
+        [EmailAddress(ErrorMessage="Please enter a valid email address")]
+        public string? confirmEmail {get; set; }
+    }
+    private emailForm model = new ();
+    private string url = "/api/email/Email/send-email";
+    private string errorMessage;
+    private emailData emailBody = new ();
     
-    
+
+    private async Task sendClicked() 
+    {
+        if (model.email.Equals(model.confirmEmail))
+        {
+            emailBody.toEmail = "datateam@Ecrin.org";
+            emailBody.subject = model.reason;
+            emailBody.message = $"Full Name: {model.firstName} {model.lastName} \nEmail: {model.email}\nOrganization: {model.organization}\nMessage: {model.message}";
+            using var emailReq = await Http.PostAsJsonAsync(url,emailBody);
+            if (!emailReq.IsSuccessStatusCode)
+            {
+                errorMessage = emailReq.ReasonPhrase;
+            }
+            var emailRes = await emailReq.Content.ReadAsStringAsync();
+        } else
+        {
+
+        }
+    }
+
 }

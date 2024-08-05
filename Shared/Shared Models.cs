@@ -34,3 +34,15 @@ public class Organisation
     public string? name { get; set; }
     public string? ror_id { get; set; }
 }
+
+public class TotalStats
+{
+    public int? objectsCount {get; set;}
+    public int? studiesCount {get; set;}
+}
+public class emailData
+{
+    public string? toEmail {get; set; }
+    public string? subject {get; set; }
+    public string? message{get; set; }
+}

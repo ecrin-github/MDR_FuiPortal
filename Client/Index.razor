@@ -1,13 +1,14 @@
 ﻿@page "/"
 @using BlazorBootstrap
 @using System.Net
+@using JsonSerializer = System.Text.Json.JsonSerializer;
 @inject NavigationManager NavManager
 @inject IJSRuntime _jsRuntime;
 @inject HttpClient Http;
 
 <PageTitle>MDR Home</PageTitle>
 
-<div class="top-bar">
+@* <div class="top-bar">
 
    <div class="tb-button">
             <a class="tb-link" href="https://ecrin.org/" target="_blank">
@@ -34,11 +35,134 @@
             <span id="link-contact" class="link-text">Contact Us</span>
             </a>
         </div>
+</div> *@
+<div class="container-fluid">
+    <div class="row top-bar">
+        <div class="col-md-2 offset-md-1">
+            <a class="tb-link" href="https://ecrin.org/" target="_blank">
+            <span id="link-ecrin" class="link-text">ECRIN website</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a class="tb-link" href="/About" target="about">
+            <span id="link-about" class="link-text">About the MDR</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+             <a class="tb-link" href="/Disclaimer" target="disclaimer">
+            <span id="link-disclaimer" class="link-text">Legal Disclaimer</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a class="tb-link" href="/Guide" target="guide">
+            <span id="link-guide" class="link-text">User Guide</span>
+            </a>
+        </div>
+        <div class="col-md-2">
+            <a class="tb-link" href="/Contact" target="contact">
+            <span id="link-contact" class="link-text">Contact Us</span>
+            </a>
+        </div>
     </div>
+    <div class="row">
+        <div class="col-md-5 p-0">
+            <img src="/images/jumbo-pic_larger.png" alt="metadata graphic" />
+        </div>
+        <div class="col-md-7 jumbo-flex">
+            <h1 class="jt-main mx-4"><b>Clinical Research</b></h1>
+            <h1 class="jt-main mx-4"><b>Metadata Repository</b></h1>
+            <p class="jt-sub mx-4">
+                <i>A global resource for discovering clinical studies and associated resources and material</i>
+            </p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8 px-5 pt-5">
+            <div class="expl-div">
+                <p class="expl-text">
+                    <b>The clinical research metadata repository (MDR)</b>,
+                    is a searchable database of all registered clinical studies,
+                    together with links to the source registry pages, the results entries
+                    or results summary files, linked papers, protocols, data collection
+                    forms and many other related documents, and data sets,
+                    whenever those objects are available.
+                </p>
+                <p class="expl-text">
+                    For data sets, which are most often under controlled access,
+                    links may be to web pages with details of the application process for access.
+                </p>
+            </div>
 
-<div id="body-outer">
-    <div id="body-main">
-        <div class="jumbotron jumbotron-fluid">
+            <div class="expl-div">
+                <p class="expl-text">
+                    <b>Discovering studies and objects within the MDR</b> can be done by searching for
+                    specified words and terms or by using specific study identifiers.
+                    Searches can be refined by various filters – for example by study type
+                    or status, by linked object type, or by phase or start year.
+                </p>
+                <p class="expl-text">
+                    Search results can also be exported as JSON or CSV files.
+                    More complete details can be displayed (and printed) for any of the selected studies.
+                </p>
+            </div>
+
+            <div class="expl-div">
+                <p></p>
+                <span class="expl-text">
+                    <b>For more detailed help in using the system</b> please use the 'User Guide' link above,
+                    or, <b><i>on all other pages</i></b>, please use the
+                </span>
+
+                <div style="display: inline-block" class="black-bg-text">
+                    <img height="14" width="18" src="/icons/question-mark-sign-icon.svg" alt="question mark icon" />
+                    <span class="link-text">Guide</span>
+                </div>
+                <span class="expl-text">link at the top right of the screen.</span>
+                <br /><br />
+                <span class="expl-text">
+                    <b>For more detailed information about the system</b> please use the 'About the MDR' link above,
+                    or, <b><i>on all other pages</i></b>, please use the
+                </span>
+                <div style="display: inline-block" class="black-bg-text">
+                    <img height="14" width="18" src="/icons/information-mark-sign-icon.svg" alt="question mark icon" />
+                    <span class="link-text">About</span>
+                </div>
+                <span class="expl-text">link at the top right of the screen.</span>
+                <p></p>
+            </div>
+            <div>
+                <p class="expl-text">
+                    Currently (as of October 2023) the MDR includes details on <span class="red-text"> @totalStudies
+                        studies</span> and, including all types
+                    of digital object (all registry entries, papers, documents and data sets, etc.)
+                    on <span class="red-text">@totalObject digital objects</span>.
+                </p>
+            </div>
+        </div>
+        <div class="col-md-4 pt-5 text-center">
+            <button class="btn btn-primary button-class">
+                <a href="/Search" target="search" class="link-as-large-button" >
+                    Search the MDR >>>
+                </a>
+            </button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <h2>Studies by start year</h2>
+            <LineChart @ref="trialsByStartYearLineChart" Width="600" Class="mt-4 mb-5 pt-5" />                
+        </div>
+        <div class="col-md-4">
+            <h2>Studies by type</h2>
+            <PieChart @ref="trialByTypePieChart" Width="350" Class="mt-4 mb-5" />
+
+        </div>
+    </div>
+</div>
+
+@* <div id="body-outer">
+    <div id="body-main"> *@
+        @* <div class="jumbotron jumbotron-fluid">
             <div class="jumbo-flex">
                 <div id="jumbo-pic">
                     <img src="/images/jumbo-pic_larger.png" alt="metadata graphic" />
@@ -54,8 +178,8 @@
                     </p>
                 </div>
             </div>
-        </div>
-        <div class="text-flex">
+        </div> *@
+        @* <div class="text-flex">
             <div id="text-content">
                 <div class="expl-div">
                     <p class="expl-text">
@@ -115,70 +239,95 @@
                 </div>
                 <div>
                     <p class="expl-text">
-                        Currently (as of October 2023) the MDR includes details on <span class="red-text">800,000 studies</span> and, including all types
+                        Currently (as of October 2023) the MDR includes details on <span class="red-text"> @totalStudies studies</span> and, including all types
                         of digital object (all registry entries, papers, documents and data sets, etc.)
-                        on <span class="red-text">1.3 million digital objects</span>.
+                        on <span class="red-text">@totalObject digital objects</span>.
                     </p>
                 </div>
                 <div>
-                    <h2>Trials by type</h2>
-                    <BarChart @ref="trialsByTypeChart" Width="800" Class="mt-4 mb-5"/>
+                    <h2>Studies by start year</h2>
+                    <LineChart @ref="trialsByStartYearLineChart" Width="800" Class="mt-4 mb-5" />                
                 </div>
                 <div>
-                    <h2>Trials by start year</h2>
-                    <BarChart @ref="trialsByStartYearChart" Width="800" Class="mt-4 mb-5"/>
+                    <h2>Studies by type</h2>
+                    <PieChart @ref="trialByTypePieChart" Width="500" Class="mt-4 mb-5" />
                 </div>
-            </div>
-            <div id="arrow-area">
+            </div> *@
+            @* <div id="arrow-area">
                 <div class="rt-arrow-button">
                     <a href="/Search" target="search" class="link-as-large-button" >
                        Search the MDR >>>
                     </a>
                 </div>
-            </div>
-        </div>
+            </div> *@
+        @* </div>
     </div>
-</div>
+</div> *@
 
 
 @code {
     string statsBaseUrl = "api/Study";
-    
-    private BarChart  trialsByStartYearChart = default!;
-    private BarChartOptions  trialsByStartYearChartOptions = default!;
+    private LineChart trialsByStartYearLineChart = default!;
+    private LineChartOptions trialsByStartYearLineChartOptions = default!;
     private ChartData trialsByStartYearChartData = default!;
+
     
-    private BarChart  trialsByTypeChart = default!;
-    private BarChartOptions  trialsByTypeChartOptions = default!;
-    private ChartData trialsByTypeChartData = default!;
-    
+    private PieChart trialByTypePieChart = default!;
+    private PieChartOptions trialByTypePieChartOptions = default!;
+    private ChartData trialByTypeChartData = default!;
+    private string[]? backgroundColors;
+
     private Random random = new();
 
     IDictionary<string, long> studiesByTypeDataset = new Dictionary<string, long>();
     IDictionary<string, long> studiesByStartYearDataset = new Dictionary<string, long>();
-    int totalStudies = 0;
+    TotalStats totalStats;
+    int? totalStudies = 0;
+    int? totalObject = 0;
     
     void NavigateToSearch()
     {
         NavManager.NavigateTo("/Search");
     }  
+        protected async override Task OnInitializedAsync() 
+    {
+        string statsBaseUrl = "api/Study/stats/total-studies-and-objects";
+        var totalStatsRes = await Http.GetStringAsync(statsBaseUrl);
+        if (!String.IsNullOrEmpty(totalStatsRes)) {
+            totalStats = JsonSerializer.Deserialize<TotalStats>(totalStatsRes);
+            totalStudies = totalStats.studiesCount;
+            totalObject = totalStats.objectsCount;
+        }
+    }
+
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
     {
-        studiesByTypeDataset = await Http.GetFromJsonAsync<Dictionary<string, long>>("api/Study/stats/by-study-type");
-        studiesByStartYearDataset = await Http.GetFromJsonAsync<Dictionary<string, long>>("api/Study/stats/by-start-year"); 
-        
-        trialsByTypeChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByTypeDataset), Datasets = GetDefaultDataSets(studiesByTypeDataset) };
-        trialsByTypeChartOptions = new BarChartOptions { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.X } };
-        
-        trialsByStartYearChartData = new ChartData { Labels = GetDefaultDataLabels(studiesByStartYearDataset), Datasets = GetDefaultDataSets(studiesByStartYearDataset) };
-        trialsByStartYearChartOptions = new BarChartOptions { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.X } };
+        var studyByTypeRes = await Http.GetStringAsync("api/Study/stats/by-study-type");
+        var studyByYearRes = await Http.GetStringAsync("api/Study/stats/by-start-year");
+        if (!String.IsNullOrEmpty(studyByYearRes)) 
+        {
+            studiesByStartYearDataset = JsonSerializer.Deserialize<Dictionary<string, long>>(studyByYearRes);
+            trialsByStartYearChartData = new ChartData { Labels = GetYearDataLabels(studiesByStartYearDataset), Datasets = GetDefaultDataSets(studiesByStartYearDataset) };
+            trialsByStartYearLineChartOptions = new() { Responsive = true, Interaction = new Interaction { Mode = InteractionMode.Index } };
+        }
+        if (!String.IsNullOrEmpty(studyByTypeRes))
+        {
+            studiesByTypeDataset = JsonSerializer.Deserialize<Dictionary<string, long>>(studyByTypeRes);
+            backgroundColors = ColorBuilder.CategoricalTwelveColors;
+            trialByTypeChartData = new ChartData { Labels = GetTypeDataLabels(studiesByTypeDataset), Datasets = GetDefaultPieDataSets(studiesByTypeDataset) };
+            trialByTypePieChartOptions = new PieChartOptions { Responsive = true, } ;
+        }
         
         if (firstRender)
         {
             await _jsRuntime.InvokeVoidAsync("setWindowName", "home");
-            await trialsByStartYearChart.InitializeAsync(trialsByStartYearChartData, trialsByStartYearChartOptions);
-            await trialsByTypeChart.InitializeAsync(trialsByTypeChartData, trialsByTypeChartOptions);
+            if (trialsByStartYearChartData != null) {
+                await trialsByStartYearLineChart.InitializeAsync(trialsByStartYearChartData, trialsByStartYearLineChartOptions);
+            }
+            if (trialByTypeChartData != null) {
+                await trialByTypePieChart.InitializeAsync(trialByTypeChartData, trialByTypePieChartOptions);
+            }
         }
         await base.OnAfterRenderAsync(firstRender);
     }
@@ -193,26 +342,61 @@
     {
         return new List<IChartDataset> { GetRandomLineChartDataset(data) };
     }
-
-    private BarChartDataset GetRandomLineChartDataset(IDictionary<string, long> data)
+        private List<IChartDataset> GetDefaultPieDataSets(IDictionary<string, long> data)
     {
-        var c = ColorBuilder.CategoricalTwelveColors[random.Next(12)].ToColor();
-        return new BarChartDataset
-        {
-            Label = "Number of studies",
-            Data = GetRandomData(data),
-            BackgroundColor = new List<string> { c.ToRgbString() },
-            BorderColor = new List<string> { c.ToRgbString() },
-            BorderWidth = new List<double> { 2 },
-        };
+        return new List<IChartDataset> { GetRandomPieChartDataset(data) };
     }
 
-    private static List<double> GetRandomData(IDictionary<string, long> entries)
+    private LineChartDataset GetRandomLineChartDataset(IDictionary<string, long> data)
+    {
+        var c = ColorBuilder.CategoricalTwelveColors[random.Next(1)].ToColor();
+
+
+        return new LineChartDataset()
+            {
+                Label = "Number of studies",
+                Data = GetYearData(data),
+                BackgroundColor = new List<string> { c.ToRgbString() },
+                BorderColor = new List<string> { c.ToRgbString() },
+                BorderWidth = new List<double> { 2 },
+                HoverBorderWidth = new List<double> { 4 },
+                PointBackgroundColor = new List<string> { c.ToRgbString() },
+                PointRadius = new List<int> { 0 }, // hide points
+                PointHoverRadius = new List<int> { 4 },
+            };
+    }
+
+    private PieChartDataset GetRandomPieChartDataset(IDictionary<string, long> data)
+    {
+        return new() { Label = "Number of studies", Data = GetTypeData(data), BackgroundColor = GetRandomBackgroundColors() };
+    }
+      private List<string> GetRandomBackgroundColors()
+    {
+        var colors = new List<string>();
+        for (var index = 0; index < 12; index++)
+        {
+            colors.Add(backgroundColors![index]);
+        }
+
+        return colors;
+    }
+
+    private static List<double> GetYearData(IDictionary<string, long> entries)
+    {
+        var datainter = entries.Where(d => Int32.Parse(d.Key) > 2000);
+        return datainter.Select(entry => entry.Value).Select(dummy => (double)dummy).ToList();
+    }
+    private static List<double> GetTypeData(IDictionary<string, long> entries)
     {
         return entries.Select(entry => entry.Value).Select(dummy => (double)dummy).ToList();
     }
 
-    private static List<string> GetDefaultDataLabels(IDictionary<string, long> data)
+    private static List<string> GetYearDataLabels(IDictionary<string, long> data)
+    {
+        var datainter = data.Where(d => Int32.Parse(d.Key) > 2000);
+        return datainter.Select(e => e.Key).ToList();
+    }
+    private static List<string> GetTypeDataLabels(IDictionary<string, long> data)
     {
         return data.Select(e => e.Key).ToList();
     }

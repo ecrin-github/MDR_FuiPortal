@@ -1,4 +1,5 @@
 using MDR_FuiPortal.Server;
+using MDR_FuiPortal.Shared;
 using Microsoft.Fast.Components.FluentUI;
 
 
@@ -14,8 +15,12 @@ builder.Services.AddFluentUIComponents();
 builder.Services.AddSingleton<ICredentials, Credentials>();
 builder.Services.AddSingleton<ILookUpRepo, LookUpRepo>();
 builder.Services.AddSingleton<ITreeRepo, TreeRepo>();
+builder.Services.Configure<MailConfigModel>(
+    builder.Configuration.GetSection(MailConfigModel.SectionName)
+);
 builder.Services.AddScoped<IObjectRepo, ObjectRepo>();
 builder.Services.AddScoped<IStudyRepo, StudyRepo>();
+builder.Services.AddScoped<IMailRepo, MailRepo>();
 
 builder.Services.AddSwaggerGen();
 

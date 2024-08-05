@@ -1,30 +1,6 @@
-﻿#body-outer {
-    position: absolute;
-    top: 8.5rem;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow-y: hidden;
-    
-}
-
-#body-main {
-    background-color: var(--bg-colour);
-    overflow-y: auto;
-    max-height: 100%;
-}
-
-.top-bar {
+﻿.top-bar {
     background-color: var(--link-bg-colour);
     color: var(--link-colour);
-    left: 0;
-    height: 2.5rem;
-    max-height: 2.5rem;
-    width: 100vw;
-    position: fixed;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
 }
 
 /* Applied to equally spaced buttons in the top bar */
@@ -83,16 +59,8 @@
 .jumbo-flex {
     color: var(--jt-colour);
     background-color: var(--jt-bg-colour);
-    width: 100%;
-    height: 240px;
-    display: flex;
-    flex-direction: row;
-    justify-content: start;
 }
 
-#jumbo-pic {
-    flex: 0 0 576px;
-}
 
 #jt-text {
     flex: 1 1;
@@ -103,8 +71,6 @@
 .jt-main {
     font: var(--jt-big);
     color: var(--jt-colour);
-    margin-block-start: 0.5rem;
-    margin-block-end: 0.5rem;
 }
 
 .jt-sub {
@@ -120,6 +86,14 @@
     display: flex;
     flex-direction: row;
     justify-content: start;
+}
+.button-class
+{
+    padding-left: 35px !important;
+    padding-right: 35px !important;
+    padding-top: 25px !important;
+    padding-bottom: 25px !important;
+    background-color: var(--jt-bg-colour) !important;
 }
 
 #text-content {

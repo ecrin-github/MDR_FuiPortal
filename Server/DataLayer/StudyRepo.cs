@@ -467,6 +467,66 @@ public class StudyRepo : IStudyRepo
         
         return (r.FirstOrDefault(0), paginatedResult);
     }
+    
+    public async Task<(int count, IEnumerable<Dictionary<string, string>>? res)> GetStudyIdsByCountriesListAsync(IList<string> countries, 
+        int pageSize, int pageNumber)
+    {
+        var countriesFromDb = await _lookUpRepo.FetchCountries();
+        if (countriesFromDb.Count() == 0)
+        {
+            throw new InvalidOperationException(
+                "Can not get countries from DB to compare with the countries list from the query");
+        }
+        
+        var countriesIds = "(";
+        for (int i = 0; i < countries.Count(); i++)
+        {
+            var countryName = countries[i].Trim();
+            var countryFromDb = countriesFromDb.FirstOrDefault(x => x.name!.Equals(countryName));
+            countriesIds += countryFromDb.id;
+            if (i != (countries.Count() - 1))
+            {
+                countriesIds += ", ";
+            }
+            else
+            {
+                countriesIds += ")";
+            }
+        }
+
+        var sql_total_numbers = @$"select count(*)
+                           from search.countries s
+                           where s.country_id in {countriesIds}";
+
+        var r = await GetIEnumerable<int>(sql_total_numbers);
+        
+        var offset = CalculateOffset(pageNumber, pageSize);
+        
+        string sql_study = @$"select study_id, ident_value from search.idents
+                           where study_id in (select study_id from search.countries where country_id in {countriesIds})
+                           order by study_id limit {pageSize} offset {offset}";
+
+        var res = await GetIEnumerable<object>(sql_study);
+
+        var resList = res.ToList();
+
+        var studyResult = new List<Dictionary<string, string>>();
+
+        foreach (var studyRecord in resList)
+        {
+            var dictValue = new Dictionary<string, string>();
+            if (studyRecord is not ICollection<KeyValuePair<string, object>> castValue) continue;
+            dictValue.Add("mdr_study_id", castValue.First().Value.ToString());
+            dictValue.Add("identifier_value", castValue.Last().Value.ToString());
+            
+            studyResult.Add(dictValue);
+        }
+
+        // var outputResult = new List<string>();
+        // outputResult.Add(JsonSerializer.Serialize(studyResult));
+        
+        return (r.FirstOrDefault(0), studyResult);
+    }
 
     public async Task<IDictionary<string, long>> GetTotalStudiesAndObjectsAsync()
     {
@@ -912,35 +972,54 @@ public class StudyRepo : IStudyRepo
 
     public async Task<IDictionary<string, long>> GetStudyCountByStudyStartYear()
     {
-var data = new Dictionary<string, long>();
+        var data = new Dictionary<string, long>();
         using var conn = new NpgsqlConnection(_dbConnString);
         try
         {
             var sqlQuery = new StringBuilder();
-            sqlQuery.Append("select");
-            sqlQuery.Append("(select count(id) from core.studies where study_start_year < 2019) as before_2019,");
-            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2019) as y_2019,");
-            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2020) as y_2020,");
-            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2021) as y_2021,");
-            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2022) as y_2022,");
-            sqlQuery.Append("(select count(id) from core.studies where study_start_year = 2023) as y_2023");
+            sqlQuery.Append("select study_start_year, count(*) from core.studies group by study_start_year");
             
             var res = await conn.QueryAsync<object>(sqlQuery.ToString());
-            foreach (var r in (IEnumerable)res.First())
+            List<string> dataYear = new List<string>();
+            List<long> dataCount = new List<long>();
+            long yearNotKnown = 0;
+            if (res is IEnumerable<object> r)
             {
-                if (r is KeyValuePair<string, object> entry)
-                {
-                    if (entry.Key.ToUpper().Equals("BEFORE_2019"))
-                    {
-                        data.Add("Before 2019", (long)entry.Value);
-                    }
-                    else
-                    {
-                        data.Add(entry.Key.Split("_").Last(), (long)entry.Value);
+                foreach(IDictionary<string, object> r1 in r) {
+                    foreach(var r2 in r1) {
+                        if(r2 is KeyValuePair<string, object> entry)
+                        {
+                            if (entry.Key.ToUpper().Equals("STUDY_START_YEAR"))
+                            {
+                                int year = Convert.ToInt32(entry.Value);
+                                if (entry.Value == null || year > 2025)
+                                {
+                                    dataYear.Add("Others");
+                                }
+                                else 
+                                {
+                                    string val = entry.Value.ToString();
+                                    dataYear.Add((string)val);
+                                }
+                            }
+                            if (entry.Key.ToUpper().Equals("COUNT"))
+                            {
+                                dataCount.Add((long)entry.Value);
+                            }
+
+                        }
                     }
                 }
-            }
-            
+                for (var i = 0; i < dataYear.Count; i++)
+                {
+                    if (dataYear[i].Contains("Others")) {
+                        yearNotKnown = yearNotKnown + dataCount[i];
+                    } else {
+                        data.Add(dataYear[i], dataCount[i]);
+                    }
+                }
+                data.Add("0000", (long)yearNotKnown);
+            }            
             return data;
         }
         catch (Exception e)

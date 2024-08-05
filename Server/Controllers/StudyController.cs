@@ -100,6 +100,31 @@ public class StudyController : ControllerBase
         return Ok(new PaginatedStudyResponse(res.count, pageNumber, pageSize, res.res));
     }
 
+    [HttpGet("StudyIds/ByCountries")]
+    public async Task<IActionResult> GetStudyIdsByCountriesAsync([FromQuery] string countries, 
+        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        if (string.IsNullOrWhiteSpace(countries))
+        {
+            return NotFound("Countries list is missing.");
+        }
+
+        var countriesList = new List<string>();
+
+        if (!countries.Contains(','))
+        {
+            countriesList.Add(countries);
+        }
+        else
+        {
+            countriesList = countries.Split(",").ToList();
+        }
+
+        var res = await _studyRepo.GetStudyIdsByCountriesListAsync(countriesList, pageSize, pageNumber);
+        
+        return Ok(new PaginatedStudyResponse(res.count, pageNumber, pageSize, res.res));
+    }
+    
     [HttpGet("ByRegId/{type_id:int}/{reg_id}")]
     public async Task<List<string>> GetStudyByTypeAndId(int type_id, string reg_id)
     {
@@ -230,4 +255,4 @@ public record PaginatedStudyResponse(
     long Total,
     int PageNumber,
     int PageSize,
-    IEnumerable<string> Result);
+    IEnumerable<object> Result);

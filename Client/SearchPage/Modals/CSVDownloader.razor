@@ -14,7 +14,8 @@
 <p>A default name for the file is given below. Please edit this name if you wish, before saving (max 60 chars).</p>
 <FluentTextArea Rows="1" Cols="60" @bind-Value="@Content.SearchParams!.storage_name"></FluentTextArea>
 <p></p>
-<button @onclick="DownloadCsv" class="btn">Download CSV</button>
+<button @onclick="DownloadCsv" class="btn btn-primary" style="float: right;">Download CSV</button>
+
 @code {
     [Parameter]
     public DialogData Content { get; set; } = default!;
