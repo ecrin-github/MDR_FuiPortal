@@ -33,10 +33,10 @@ public interface IStudyRepo
     Task<int> GetTotalStudiesCount();
     
     Task<IDictionary<string, long>> GetStudyCountByStudyType();
-    
     Task<IDictionary<string, long>> GetStudyCountByStudyStartYear();
     
     Task<(int count, IEnumerable<string>? res)> GetStudiesByCountriesListAsync(IList<string> countries, int pageSize, int pageNumber);
+    Task<(int count, IEnumerable<string>? res)> GetStudiesByCountryAndStartYearAndType(IList<string> countries, int startYearFrom, int startYearTo, string studyType, int pageSize, int pageNumber);
     Task<(int count, IEnumerable<Dictionary<string, string>>? res)> GetStudyIdsByCountriesListAsync(IList<string> countries, int pageSize, int pageNumber);
 
     Task<IDictionary<string, long>> GetTotalStudiesAndObjectsAsync();

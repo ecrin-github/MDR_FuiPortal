@@ -528,6 +528,95 @@ public class StudyRepo : IStudyRepo
         return (r.FirstOrDefault(0), studyResult);
     }
 
+    public async Task<(int count, IEnumerable<string>? res)> GetStudiesByCountryAndStartYearAndType(IList<string> countries, 
+        int startYearFrom, int startYearTo, string studyType,int pageSize, int pageNumber)
+    {
+        var countriesFromDb = await _lookUpRepo.FetchCountries();
+        if (countriesFromDb.Count() == 0)
+        {
+            throw new InvalidOperationException(
+                "Can not get countries from DB to compare with the countries list from the query");
+        }
+        
+        var countriesIds = "(";
+        for (int i = 0; i < countries.Count(); i++)
+        {
+            var countryName = countries[i].Trim();
+            var countryFromDb = countriesFromDb.FirstOrDefault(x => x.name!.Equals(countryName));
+            countriesIds += countryFromDb.id;
+            if (i != (countries.Count() - 1))
+            {
+                countriesIds += ", ";
+            }
+            else
+            {
+                countriesIds += ")";
+            }
+        }        
+        var offset = CalculateOffset(pageNumber, pageSize);
+        int study_type = 0;
+        switch (studyType.ToUpper()) 
+        {
+            case "INTERVENTIONAL":
+                study_type = 11;
+                break;
+            case "OBSERVATIONAL":
+                study_type = 12;
+                break;
+            case "PATIENT_R":
+                study_type = 13;
+                break;
+            case "EXPANDED_A":
+                study_type = 14;
+                break;
+            case "FUNDED_P":
+                study_type = 15;
+                break;
+            case "OTHER":
+                study_type = 16;
+                break;
+        }
+        string s = "";
+        if (startYearTo == 0)
+        {
+            s = $"s.study_start_year = {startYearFrom}";
+        } else
+        {
+            s = $"s.study_start_year between {startYearFrom} and {startYearTo}";
+        }
+        var sql_total_numbers = @$"select count(*)
+                                from core.studies s inner join core.study_countries sc on s.id = sc.study_id 
+                                where s.study_type_id = {study_type} and {s} and sc.country_id in {countriesIds}";
+
+        var r = await GetIEnumerable<int>(sql_total_numbers);
+
+        string sql_study = @$"select distinct s.id from core.studies s inner join core.study_countries sc on s.id = sc.study_id 
+                            where s.study_type_id = {study_type} and {s} and sc.country_id in {countriesIds}
+                            order by s.id limit {pageSize} offset {offset}";
+
+        var res = await GetIEnumerable<int>(sql_study);
+
+        var resList = res.ToList();
+        
+        var ids = "(";
+        for (var k = 0; k < resList.Count(); k++)
+        {
+            ids += resList[k];
+            if (k != (res.Count() - 1))
+            {
+                ids += ", ";
+            }
+            else
+            {
+                ids += ")";
+            }
+        }
+
+        var paginatedResult = await FetchStudyDetailsByIds(ids);
+        
+        return (r.FirstOrDefault(0), paginatedResult);
+    }
+
     public async Task<IDictionary<string, long>> GetTotalStudiesAndObjectsAsync()
     {
         using var conn = new NpgsqlConnection(_dbConnString);
