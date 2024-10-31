@@ -99,6 +99,31 @@ public class StudyController : ControllerBase
         
         return Ok(new PaginatedStudyResponse(res.count, pageNumber, pageSize, res.res));
     }
+    
+    [HttpGet("ByCountries-StartYear-StudyType")]
+    public async Task<IActionResult> GetStudiesByCountriesAsync([FromQuery] string countries, [FromQuery] int startYearFrom, [FromQuery] int startYearTo, [FromQuery] string studyType,
+        [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+    {
+        if (string.IsNullOrWhiteSpace(countries))
+        {
+            return NotFound("Countries list is missing.");
+        }
+
+        var countriesList = new List<string>();
+
+        if (!countries.Contains(','))
+        {
+            countriesList.Add(countries);
+        }
+        else
+        {
+            countriesList = countries.Split(",").ToList();
+        }
+
+        var res = await _studyRepo.GetStudiesByCountryAndStartYearAndType(countriesList, startYearFrom, startYearTo, studyType, pageSize, pageNumber);
+        
+        return Ok(new PaginatedStudyResponse(res.count, pageNumber, pageSize, res.res));
+    }
 
     [HttpGet("StudyIds/ByCountries")]
     public async Task<IActionResult> GetStudyIdsByCountriesAsync([FromQuery] string countries, 
