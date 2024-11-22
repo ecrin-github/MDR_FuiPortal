@@ -43,7 +43,7 @@
                 <span class="card-label">Found at:&nbsp;</span><span class="card-text">@il.source_system</span>
             </div>
             <div class="card-text">
-                <span class="card-label">URL:&nbsp;</span><span class="card-text"><a href=@UpdateBbmriUrl(il.res_url) target="_blank">@UpdateBbmriUrl(il.res_url)</a></span>
+                <span class="card-label">URL:&nbsp;</span><span class="card-text"><a href=@il.res_url target="_blank">@il.res_url</a></span>
             </div>
             @if (@il.res_details != "")
             {
@@ -60,7 +60,7 @@ else
         <span class="card-label">Access details:&nbsp;</span><span class="card-text">@access_description</span>
     </div>
     <div class="card-line">
-        <span class="card-label">Further information at:&nbsp;</span><span class="card-text"><a href=@UpdateBbmriUrl(url) target="_blank">@UpdateBbmriUrl(url)</a></span>
+        <span class="card-label">Further information at:&nbsp;</span><span class="card-text"><a href=@url target="_blank">@url</a></span>
     </div>
 }
 
@@ -280,12 +280,12 @@ else
         }
     }
 
-    string? UpdateBbmriUrl(string? dataObjectUrl)
+    private string UpdateBbmriUrl(string? dataObjectUrl)
     {
         // Check if string is null
         if (string.IsNullOrWhiteSpace(dataObjectUrl))
         {
-            return dataObjectUrl;
+            return "";
         }
         
         // Define a new base URL for BBMRI source
@@ -329,7 +329,7 @@ else
             }
 
             access_type = ob.access_type?.name ?? "No access type provided!";
-            url = ob.access_details?.url ?? "";
+            url =  !string.IsNullOrWhiteSpace(ob.access_details?.url) ? UpdateBbmriUrl(ob.access_details?.url) : "";
             access_description = ob.access_details?.description ?? "";
             version = ob.version ?? "";
 
@@ -348,7 +348,7 @@ else
                     instance_number++;
                     string resource = bi.resource_details?.type_name ?? "";
                     string source_system = bi.system?.name ?? "";
-                    string res_url = bi.access_details?.url ?? "";
+                    string res_url = !string.IsNullOrWhiteSpace(bi.access_details?.url) ? UpdateBbmriUrl(bi.access_details?.url) : "";
 
                     string res_details = "";
                     if (bi.resource_details?.size is not null)
