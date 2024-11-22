@@ -43,7 +43,7 @@
                 <span class="card-label">Found at:&nbsp;</span><span class="card-text">@il.source_system</span>
             </div>
             <div class="card-text">
-                <span class="card-label">URL:&nbsp;</span><span class="card-text"><a href=@il.res_url target="_blank">@il.res_url</a></span>
+                <span class="card-label">URL:&nbsp;</span><span class="card-text"><a href=@UpdateBbmriUrl(il.res_url) target="_blank">@UpdateBbmriUrl(il.res_url)</a></span>
             </div>
             @if (@il.res_details != "")
             {
@@ -60,7 +60,7 @@ else
         <span class="card-label">Access details:&nbsp;</span><span class="card-text">@access_description</span>
     </div>
     <div class="card-line">
-        <span class="card-label">Further information at:&nbsp;</span><span class="card-text"><a href=@url target="_blank">@url</a></span>
+        <span class="card-label">Further information at:&nbsp;</span><span class="card-text"><a href=@UpdateBbmriUrl(url) target="_blank">@UpdateBbmriUrl(url)</a></span>
     </div>
 }
 
@@ -278,6 +278,35 @@ else
             person_name = _person_name;
             affiliation = _affiliation;
         }
+    }
+
+    string? UpdateBbmriUrl(string? dataObjectUrl)
+    {
+        // Check if string is null
+        if (string.IsNullOrWhiteSpace(dataObjectUrl))
+        {
+            return dataObjectUrl;
+        }
+        
+        // Define a new base URL for BBMRI source
+        const string newBaseUrl = "https://directory.bbmri-eric.eu/ERIC/directory/";
+
+        // Define and return if it is not a BBMRI URL
+        if (!dataObjectUrl.StartsWith("https://directory.bbmri-eric.eu/ERIC/"))
+        {
+            return dataObjectUrl;
+        }
+
+        // Checks if it's already a new BBMRI URL
+        if (dataObjectUrl.StartsWith(newBaseUrl))
+        {
+            // Return as it is
+            return dataObjectUrl;
+        }
+        
+        // Start updating the URL
+        var uniqueIdentifier = dataObjectUrl.Substring(url.IndexOf('#')); // Get a part after '#'
+        return newBaseUrl + uniqueIdentifier;
     }
 
     protected override void OnInitialized()
