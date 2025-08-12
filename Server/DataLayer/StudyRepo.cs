@@ -943,27 +943,38 @@ public class StudyRepo : IStudyRepo
                     var xDoc = XDocument.Parse(entries);
                     foreach (var entry in xDoc.Descendants("entry"))
                     {
+                        // Check if the entry has a 'location' field
+                        // If it does, split it by commas and create multiple 'location' fields
+                        // If it does not, just append the entry as is
                         var location = (string)entry.Descendants("field")
-                            .First(x => (string)x.Attribute("name") == "location");
-                        var split_string = location.Split(',');
-                        if (split_string.Length <= 1)
+                            .FirstOrDefault(x => (string)x.Attribute("name") == "location");
+                        if (string.IsNullOrWhiteSpace(location))
                         {
+                            // If location is null or empty, just append the entry as is
                             updEntriesSb.Append(entry);
-                            continue;
                         }
-
-                        var additionalFields = entry.Descendants("additional_fields").First();
-                        additionalFields.Descendants("field")
-                            .First(x => (string)x.Attribute("name") == "location").Remove();
-                        
-                        var locationsStringBuilder = new StringBuilder();
-                        foreach (var location_string in split_string)
+                        else
                         {
-                            locationsStringBuilder.Append($"<field name=\"location\">{location_string}</field>");
-                            additionalFields.Add(new XElement("field", new XAttribute("name", "location"), location_string.Trim()));
-                        }
+                            var split_string = location.Split(',');
+                            if (split_string.Length <= 1)
+                            {
+                                updEntriesSb.Append(entry);
+                                continue;
+                            }
+
+                            var additionalFields = entry.Descendants("additional_fields").First();
+                            additionalFields.Descendants("field")
+                                .First(x => (string)x.Attribute("name") == "location").Remove();
                         
-                        updEntriesSb.Append(entry);
+                            var locationsStringBuilder = new StringBuilder();
+                            foreach (var location_string in split_string)
+                            {
+                                locationsStringBuilder.Append($"<field name=\"location\">{location_string}</field>");
+                                additionalFields.Add(new XElement("field", new XAttribute("name", "location"), location_string.Trim()));
+                            }
+                        
+                            updEntriesSb.Append(entry);
+                        }
                     }
                     
                     updEntriesSb.Append("</entries>");
